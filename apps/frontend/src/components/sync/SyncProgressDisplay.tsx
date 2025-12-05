@@ -14,8 +14,14 @@ export function SyncProgressDisplay({ progress, isConnected }: SyncProgressDispl
   if (!progress) return null
 
   const getProgressValue = () => {
+    // Se não tem current ou total, começa em 0
     if (!progress.current || !progress.total) return 0
-    return (progress.current / progress.total) * 100
+    
+    // Calcula a porcentagem
+    const percentage = (progress.current / progress.total) * 100
+    
+    // Garante que está entre 0 e 100
+    return Math.min(Math.max(percentage, 0), 100)
   }
 
   const getIcon = () => {
@@ -78,8 +84,14 @@ export function SyncProgressDisplay({ progress, isConnected }: SyncProgressDispl
           </div>
 
           {/* Progress Bar */}
-          {progress.stage !== 'completed' && progress.stage !== 'error' && progress.current && progress.total && (
-            <Progress value={getProgressValue()} className="h-2" />
+          {progress.stage !== 'completed' && progress.stage !== 'error' && (
+            <div>
+              {progress.current && progress.total ? (
+                <Progress value={getProgressValue()} className="h-2" />
+              ) : (
+                <Progress value={0} className="h-2" />
+              )}
+            </div>
           )}
 
           {/* Connection Status */}

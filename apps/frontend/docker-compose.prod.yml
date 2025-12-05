@@ -1,0 +1,17 @@
+services:
+  plania-app:
+    build:
+      context: .
+      target: runner  # Usa o stage de produção
+    container_name: plania-design-system-prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    networks:
+      - plania-network
+
+networks:
+  plania-network:
+    driver: bridge

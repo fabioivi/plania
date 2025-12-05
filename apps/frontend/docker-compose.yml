@@ -1,0 +1,24 @@
+services:
+  plania-app:
+    build:
+      context: .
+      target: dev  # Usa o stage de desenvolvimento
+    container_name: plania-design-system
+    restart: always
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+      # Descomentar a linha abaixo se estiver no Windows e hot reload não funcionar
+      # - WATCHPACK_POLLING=true
+    volumes:
+      - .:/app                # Monta o diretório atual no container
+      - /app/node_modules     # Protege node_modules do container
+      - /app/.next            # Protege o cache do Next.js
+    ports:
+      - "3000:3000"
+    networks:
+      - plania-network
+
+networks:
+  plania-network:
+    driver: bridge

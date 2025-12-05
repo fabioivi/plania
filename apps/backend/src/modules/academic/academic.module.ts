@@ -1,0 +1,28 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
+import { AcademicController } from './academic.controller';
+import { AcademicService } from './academic.service';
+import { AcademicCredential } from './academic-credential.entity';
+import { Diary } from './diary.entity';
+import { TeachingPlan } from './teaching-plan.entity';
+import { TeachingPlanHistory } from './teaching-plan-history.entity';
+import { CryptoService } from '../../common/services/crypto.service';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      AcademicCredential,
+      Diary,
+      TeachingPlan,
+      TeachingPlanHistory,
+    ]),
+    BullModule.registerQueue({
+      name: 'auth-queue',
+    }),
+  ],
+  controllers: [AcademicController],
+  providers: [AcademicService, CryptoService],
+  exports: [AcademicService],
+})
+export class AcademicModule {}

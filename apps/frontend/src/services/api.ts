@@ -1,0 +1,204 @@
+import axios, { AxiosError } from 'axios';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para adicionar token JWT automaticamente
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para tratar erros de autenticação
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      // Token expirado ou inválido
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Types
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+}
+
+export interface ApiError {
+  message: string;
+  statusCode?: number;
+}
+
+// Auth API
+export const authApi = {
+  async login(data: LoginRequest): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/login', data);
+    return response.data;
+  },
+
+  async register(data: RegisterRequest): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/register', data);
+    return response.data;
+  },
+};
+
+// Academic Credentials API
+export interface AcademicCredential {
+  id: string;
+  system: string;
+  username: string;
+  isVerified: boolean;
+  lastVerifiedAt: string | null;
+  lastTestedAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+}
+
+export interface SaveCredentialRequest {
+  system: string;
+  username: string;
+  password: string;
+}
+
+export const academicApi = {
+  async getCredentials(): Promise<AcademicCredential[]> {
+    const response = await api.get<AcademicCredential[]>('/academic/credentials');
+    return response.data;
+  },
+
+  async saveCredential(data: SaveCredentialRequest): Promise<AcademicCredential> {
+    const response = await api.post<AcademicCredential>('/academic/credentials', data);
+    return response.data;
+  },
+
+  async testCredential(id: string): Promise<{ success: boolean; isVerified: boolean; lastError: string | null; lastTestedAt: string | null }> {
+    const response = await api.post(`/academic/credentials/${id}/test`);
+    return response.data;
+  },
+
+  async deleteCredential(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`/academic/credentials/${id}`);
+    return response.data;
+  },
+
+  async syncDiaries(): Promise<{ success: boolean; message: string }> {
+    const response = await api.post('/academic/diaries/sync');
+    return response.data;
+  },
+
+  async getDiaries(): Promise<Diary[]> {
+    const response = await api.get<Diary[]>('/academic/diaries');
+    return response.data;
+  },
+
+  async getDiaryTeachingPlans(diaryId: string): Promise<TeachingPlan[]> {
+    const response = await api.get<TeachingPlan[]>(`/academic/diaries/${diaryId}/teaching-plans`);
+    return response.data;
+  },
+
+  async getDiaryWithPlans(diaryId: string): Promise<DiaryWithPlans> {
+    const response = await api.get<DiaryWithPlans>(`/academic/diaries/${diaryId}/with-plans`);
+    return response.data;
+  },
+};
+
+export interface Diary {
+  id: string;
+  externalId: string;
+  disciplina: string;
+  curso: string;
+  turma: string;
+  periodo: string | null;
+  cargaHoraria: string | null;
+  modalidade: string | null;
+  aprovados: number;
+  reprovados: number;
+  emCurso: number;
+  aprovado: boolean;
+  anoLetivo: string | null;
+  semestre: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeachingPlan {
+  id: string;
+  externalId: string;
+  status: string;
+  statusCoord?: string;
+  excluido: boolean;
+  campus?: string;
+  anoSemestre?: string;
+  curso?: string;
+  unidadeCurricular?: string;
+  professores?: string;
+  cargaHorariaTotal?: number;
+  numSemanas?: number;
+  numAulasTeorica?: number;
+  numAulasPraticas?: number;
+  ementa?: string;
+  objetivoGeral?: string;
+  objetivosEspecificos?: string;
+  avaliacaoAprendizagem?: Array<{
+    etapa: string;
+    avaliacao: string;
+    instrumentos: string;
+    dataPrevista: string;
+    valorMaximo: string;
+  }>;
+  observacoesAvaliacoes?: string;
+  recuperacaoAprendizagem?: string;
+  referencias?: string;
+  propostaTrabalho?: Array<{
+    mes: string;
+    periodo: string;
+    numAulas: string;
+    observacoes: string;
+    conteudo: string;
+    metodologia: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DiaryWithPlans extends Diary {
+  teachingPlans: TeachingPlan[];
+}

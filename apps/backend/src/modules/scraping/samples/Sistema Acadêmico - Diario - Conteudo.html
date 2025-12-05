@@ -1,0 +1,853 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0078)https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+                <title>
+            Sistema Acadêmico - Professores        </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://academico.ifms.edu.br/administrativo/favicon.ico" type="image/x-icon" rel="icon"><link href="https://academico.ifms.edu.br/administrativo/favicon.ico" type="image/x-icon" rel="shortcut icon">
+	<link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/bootstrap-responsive.min.css">
+	<link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/jquery.ui.all.css">
+	<link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/tooltipster.css">
+	<link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/datatable.styles.css">
+	<link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/default.css">
+
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery-ui.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery.mask.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/bootstrap.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery_block.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/default.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery.nestable.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/tinymce.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery.tooltipster.min.js.download"></script>
+	<script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jquery.dataTables.min.js.download"></script>
+        <script type="text/javascript">
+            function notificacao_horario_pat() {return false;}
+            $(document).ready(function() {
+                $('.dd').nestable({ /* config options */ });    
+            });
+        </script>
+
+        <style>            
+            .dataTables_processing {
+                background: linear-gradient(
+                    135deg,
+                    rgba(243, 248, 237, 0.98) 0%,    /* #f3f8ed - Verde musgo claro */
+                    rgba(233, 245, 220, 0.98) 100%   /* #e9f5dc */
+                ) !important;
+                color: #3f6212 !important;           /* #3f6212 - Verde musgo escuro */
+                border: 1px solid rgba(101, 163, 13, 0.3) !important;
+                box-shadow: 0 4px 24px rgba(101, 163, 13, 0.15) !important;
+                
+
+                
+                backdrop-filter: blur(12px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(12px) saturate(180%) !important;       
+                
+                color: #1a4532 !important;
+                font-weight: 500 !important;
+                font-size: 16px !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+                letter-spacing: 0.01em !important;
+                line-height: 1.5 !important;
+                
+                /* Espaçamento e dimensões equilibradas */
+                padding: 18px 500px !important;
+                margin: 0 auto !important;
+                
+                /* BORDA COLORIDA PARA DESTAQUE */    
+                border: 1px solid rgba(34, 197, 94, 0.3) !important; 
+                border-radius: 10px !important;
+                
+                /* Bordas claras internas */
+                border-top: 1px solid rgba(255, 255, 255, 0.9) !important;
+                border-left: 1px solid rgba(255, 255, 255, 0.9) !important;
+                
+                /* SOMBRA COM TOQUE DE COR */
+                box-shadow:         
+                    0 4px 24px rgba(34, 197, 94, 0.15), 
+                    0 1px 2px rgba(0, 0, 0, 0.04),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                    
+                    inset 0 -1px 0 rgba(34, 197, 94, 0.1) !important; 
+                
+                /* Posicionamento e layout */
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                z-index: 9999 !important;
+                
+                /* Dimensões controladas */
+                min-width: 220px !important;
+                max-width: 320px !important;
+                text-align: center !important;
+                
+                /* Transição suave para aparecimento */
+                animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                
+                /* Garantir que o texto não quebre mal */
+                word-wrap: break-word !important;
+                white-space: nowrap !important;
+            }
+            
+            @keyframes modalFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -48%) scale(0.96);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+        </style>
+    </head>
+
+    <body style="padding-top: 61px;">
+
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container-fluid">
+                                            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </a>
+                    <a class="brand" href="https://academico.ifms.edu.br/administrativo/">Sistema Acadêmico</a>                        <div class="nav-collapse collapse">
+                            <ul class="nav">   
+                                <li class="dropdown"><a id="56" href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#" role="button" class="dropdown-toggle" data-toggle="dropdown">Registros Acadêmicos <b class="caret"></b></a><ul class="dropdown-menu" role="menu" aria-labelledby="56"><li><a href="https://academico.ifms.edu.br/administrativo/alunos/panorama">Ficha do estudante / Panorama / Histórico</a></li><li><a href="https://academico.ifms.edu.br/administrativo/docentes">Ficha do docente / PAT / Horário</a></li></ul></li><li class="dropdown"><a id="4" href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#" role="button" class="dropdown-toggle" data-toggle="dropdown">Período Letivo <b class="caret"></b></a><ul class="dropdown-menu" role="menu" aria-labelledby="4"><li class="nav-header">Classes</li><li><a href="https://academico.ifms.edu.br/administrativo/correcoes/vincular_classe_ao_moodle">Vincular Classe ao Moodle</a></li></ul></li><li class="dropdown"><a id="14" href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#" role="button" class="dropdown-toggle" data-toggle="dropdown">Matrícula <b class="caret"></b></a><ul class="dropdown-menu" role="menu" aria-labelledby="14"><li class="nav-header">Trabalho de Conclusão de Curso</li><li><a href="https://academico.ifms.edu.br/administrativo/trabalho_conclusao_curso">Cadastrar/Listar TCC</a></li></ul></li><li class="dropdown"><a id="43" href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#" role="button" class="dropdown-toggle" data-toggle="dropdown">Professor <b class="caret"></b></a><ul class="dropdown-menu" role="menu" aria-labelledby="43"><li><a href="https://academico.ifms.edu.br/administrativo/professores">Diários / Estágios / TCC</a></li><li class="divider"></li><li class="nav-header">Horário Docente / PIT</li><li><a href="https://academico.ifms.edu.br/administrativo/docentes/meu_pit">Meu PIT</a></li><li><a href="https://academico.ifms.edu.br/administrativo/docentes/minhas_permanencias">Permanência (PE)</a></li><li><a href="https://academico.ifms.edu.br/administrativo/docentes/minhas_preparacoes">Preparação (P)</a></li><li><a href="https://academico.ifms.edu.br/administrativo/docentes/meus_pats">PATs</a></li></ul></li><li class="dropdown"><a id="19" href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#" role="button" class="dropdown-toggle" data-toggle="dropdown">Configurações <b class="caret"></b></a><ul class="dropdown-menu" role="menu" aria-labelledby="19"><li><a href="https://academico.ifms.edu.br/administrativo/usuarios/alterar_senha">Alterar senha</a></li></ul></li>                            </ul>
+                            <p class="navbar-text pull-right">Logado como: <a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#">fabio.oliveira</a> <a href="https://academico.ifms.edu.br/administrativo/usuarios/logout"><i class="icon-off icon-white" title="SAIR"></i></a></p>
+                        </div>
+                                    </div>
+            </div>
+        </div>
+        <div class="container-fluid meio">
+            <div class="row-fluid no-print"><div class="span12"><ul class="breadcrumb"><li><a href="https://academico.ifms.edu.br/administrativo/">Página Inicial</a> <span class="divider">/</span> </li><li><a href="https://academico.ifms.edu.br/administrativo/Professores">Professores</a><span class="divider">/</span></li><li class="active">Diário de Classe</li></ul></div></div>            <div class="row-fluid">
+                <div class="span12">     
+                <link rel="stylesheet" type="text/css" href="./Sistema Acadêmico - Diario - Conteudo_files/buttons.dataTables.min.css"><script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/dataTables.fixedColumns.min.js.download"></script><script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/dataTables.buttons.min.js.download"></script><script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/jszip.min.js.download"></script><script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/pdfmake.min.js.download"></script><script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/vfs_fonts.js.download"></script><script type="text/javascript" src="./Sistema Acadêmico - Diario - Conteudo_files/buttons.html5.min.js.download"></script>
+<div class="row-fluid imprimir_diario_portrait">	
+	<div class="span12">
+		<h2>Diário de Classe</h2>
+	</div>
+</div>
+<div class="row-fluid">
+	<div class="span12">
+
+	    					<table class="table table-striped table-bordered diario">
+				<tbody><tr>
+					<th>Classe:</th>
+					<td>20252055206BNA-INF-IN16KGERÊNCIA E CONFIGURAÇÕES DE SERVIÇOS DE INTERNETA</td>
+                                        <th>Unidade Curricular (Código) - CH:</th>
+					<td>GERÊNCIA E CONFIGURAÇÕES DE SERVIÇOS DE INTERNET (NA-INF-IN16K) - 60.0h</td>
+                                        <th>Turma:</th>
+					<td>20252055206B</td>
+				</tr>
+				<tr>
+					<th>Professor(es):</th>
+					<td>FABIO DUARTE DE OLIVEIRA<br></td>
+					<th>Curso:</th>
+					<td>Técnico em Informática - Integrado</td>
+                    <th>Aulas Normais Criadas:</th>
+					<td>80 (45min)</td>
+				</tr>
+			</tbody></table>
+			 <ul class="nav nav-tabs no-print">
+				<li class="">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/frequencia">Registro de Frequências</a>				</li>
+				<li class="active">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo">Conteúdo</a>				</li>
+				<li class="">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/avaliacoes">Avaliações</a>				</li>
+				<li class="">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/notas">Notas</a>				</li>
+				<li class="">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/plano_ensino">Plano de Ensino <small><span class="label label-warning">Novo</span></small></a>				</li>				
+                <li class="">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/imprimir">Imprimir</a>				</li>
+								<li class="">
+					<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/resumo">Fechar Diário (Resumo)</a>				</li>
+			</ul>    
+
+							<div id="modal_edit" tabindex="-1" role="dialog" aria-hidden="true" aria-labbeledby="Guia" class="modal fade" style="display:none;max-height: 100%;">
+            	</div>
+
+                <div id="formAdicionarAula" tabindex="-1" role="dialog" aria-hidden="true" aria-labbeledby="Guia" class="modal fade" style="display:none;max-height: 100%;">
+				    	<form action="https://academico.ifms.edu.br/administrativo/Aulas/adicionar" id="AulaDiarioForm" method="post" accept-charset="utf-8"><div style="display:none;"><input type="hidden" name="_method" value="POST"></div>   	
+
+				    <input type="hidden" name="data[Aula][classe_id]" value="79118" id="AulaClasseId">			    				    
+				    <input type="hidden" name="data[Aula][tipo]" value="N" id="AulaTipo"> 			    
+				    <div class="modal-dialog">
+				        <div class="modal-content">
+				            <div class="modal-header ">
+				                <!-- With 'close' => true, or without specifying:
+				                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button> -->
+				                <h4 class="modal-title" id="MyModal1Label">Criar Aula</h4>
+				            </div>
+				            <div class="modal-body ">                
+					            <div class="row-fluid">
+						            <div class="span12">						            	
+								            <div class="span6">
+
+								            	<label for="inputObs"><strong>Data:</strong></label>
+								                <div class="input text"><input name="data[Aula][data_aula]" class="data_completa_jqueryui span5" id="data_aula_normal" required="required" type="text"></div>
+								                <label for="inputObs"><strong>Hora de início:</strong></label>
+												<div class="input text"><input name="data[Aula][horario_inicio]" id="hora_inicio_aula" maxlength="5" class="span6" required="required" type="text" placeholder="__:__" autocomplete="off"></div>
+												<label for="inputObs"><strong>Hora de término:</strong></label>
+												<div class="input text"><input name="data[Aula][horario_fim]" id="hora_fim_aula" maxlength="5" class="span6" required="required" type="text" placeholder="__:__" autocomplete="off"></div>
+								                <label for="inputObs"><strong>Conteúdo ministrado:</strong></label>
+								                <div class="input textarea"><textarea name="data[RegistroAula][conteudo_ministrado]" cols="5" rows="4" maxlength="3000" id="RegistroAulaConteudoMinistrado"></textarea></div>								            </div>
+
+
+											<div class="span6">												
+
+											 	<label class="checkbox-inline"><strong>Aula não presencial?</strong>
+								                <div class="input checkbox"><input type="hidden" name="data[Aula][anp]" id="AulaAnp_" value="0"><input type="checkbox" name="data[Aula][anp]" value="1" id="AulaAnp"></div>							                
+	                                            </label>
+
+	                                            <label for="inputObs"><strong>Observações:</strong></label>
+								                <div class="input textarea"><textarea name="data[Aula][observacao]" cols="5" rows="4" maxlength="600" id="AulaObservacao"></textarea></div>								                
+								                <label for="inputObs"><strong>Justificativa:</strong></label>							                
+								           		<div class="input textarea"><textarea name="data[Aula][justificativa]" cols="5" rows="4" maxlength="255" id="AulaJustificativa"></textarea></div>																												
+											</div>
+										</div>
+									</div>
+					            </div>
+				            </div>
+				            <div class="modal-footer ">
+				                <button class="btn btn-primary btn-primary" type="submit">Adicionar</button>
+				                <button data-dismiss="modal" class="btn btn-default" type="submit">Cancelar</button>
+				            </div>
+				        </div>
+				    </form></div>
+				    				</div>
+
+				<div>                      	
+                  	<a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#formAdicionarAula" role="button" class="btn btn-small btn-success" data-toggle="modal"> 
+                  		<i class="icon-plus icon-white"></i> Adicionar Aula
+                  	</a>
+				</div>
+				<br>
+									<table class="table table-striped table-bordered diario table-condensed">
+						<thead>
+							<tr>
+								<th style="width: 14px"></th>
+								<th style="width: 60px"><center>Data</center></th>
+								<th style="width: 85px"><center>Horário</center></th>
+								<th style="width: 15px">Tipo</th>
+								<th style="width: 40px"><center>Não Presencial</center></th>
+								<th>Conteúdo ministrado</th>
+								<th>Observações</th>
+                                <th>Antecipação/Reposição</th>
+                                <th>Ações</th>  
+							</tr>
+						</thead>
+						<tbody>
+						<tr><td></td><td>13/08/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703975" value="5703975" class="anp"><span id="anp_5703975" <="" span=""></span></td><td id="conteudo_5703975">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703975" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703975"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703975" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703975" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>19/08/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703976" value="5703976" class="anp"><span id="anp_5703976" <="" span=""></span></td><td id="conteudo_5703976">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703976" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703976"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703976" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703976" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>19/08/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703977" value="5703977" class="anp"><span id="anp_5703977" <="" span=""></span></td><td id="conteudo_5703977">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703977" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703977"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703977" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703977" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>19/08/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703978" value="5703978" class="anp"><span id="anp_5703978" <="" span=""></span></td><td id="conteudo_5703978">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703978" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703978"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703978" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703978" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>20/08/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703979" value="5703979" class="anp"><span id="anp_5703979" <="" span=""></span></td><td id="conteudo_5703979">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703979" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703979"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703979" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703979" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>26/08/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703980" value="5703980" class="anp"><span id="anp_5703980" <="" span=""></span></td><td id="conteudo_5703980">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703980" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703980"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703980" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703980" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>26/08/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703981" value="5703981" class="anp"><span id="anp_5703981" <="" span=""></span></td><td id="conteudo_5703981">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703981" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703981"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703981" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703981" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>26/08/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703982" value="5703982" class="anp"><span id="anp_5703982" <="" span=""></span></td><td id="conteudo_5703982">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703982" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703982"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703982" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703982" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>27/08/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703983" value="5703983" class="anp"><span id="anp_5703983" <="" span=""></span></td><td id="conteudo_5703983">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703983" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703983"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703983" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703983" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>30/08/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703984" value="5703984" class="anp"><span id="anp_5703984" <="" span=""></span></td><td id="conteudo_5703984">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703984" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703984"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703984" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703984" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>30/08/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703985" value="5703985" class="anp"><span id="anp_5703985" <="" span=""></span></td><td id="conteudo_5703985">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703985" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703985"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703985" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703985" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>30/08/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703986" value="5703986" class="anp"><span id="anp_5703986" <="" span=""></span></td><td id="conteudo_5703986">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703986" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703986"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703986" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703986" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>02/09/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703987" value="5703987" class="anp"><span id="anp_5703987" <="" span=""></span></td><td id="conteudo_5703987">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703987" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703987"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703987" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703987" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>02/09/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703988" value="5703988" class="anp"><span id="anp_5703988" <="" span=""></span></td><td id="conteudo_5703988">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703988" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703988"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703988" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703988" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>02/09/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703989" value="5703989" class="anp"><span id="anp_5703989" <="" span=""></span></td><td id="conteudo_5703989">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703989" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703989"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703989" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703989" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>03/09/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703990" value="5703990" class="anp"><span id="anp_5703990" <="" span=""></span></td><td id="conteudo_5703990">Serviços de redes de computadores <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703990" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703990"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703990" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703990" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>09/09/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703991" value="5703991" class="anp"><span id="anp_5703991" <="" span=""></span></td><td id="conteudo_5703991">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703991" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703991"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703991" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703991" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>09/09/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703992" value="5703992" class="anp"><span id="anp_5703992" <="" span=""></span></td><td id="conteudo_5703992">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703992" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703992"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703992" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703992" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>09/09/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703993" value="5703993" class="anp"><span id="anp_5703993" <="" span=""></span></td><td id="conteudo_5703993">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703993" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703993"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703993" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703993" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>10/09/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703994" value="5703994" class="anp"><span id="anp_5703994" <="" span=""></span></td><td id="conteudo_5703994">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703994" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703994"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703994" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703994" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>16/09/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703995" value="5703995" class="anp"><span id="anp_5703995" <="" span=""></span></td><td id="conteudo_5703995">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703995" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703995"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703995" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703995" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>16/09/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703996" value="5703996" class="anp"><span id="anp_5703996" <="" span=""></span></td><td id="conteudo_5703996">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703996" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703996"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703996" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703996" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>16/09/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703997" value="5703997" class="anp"><span id="anp_5703997" <="" span=""></span></td><td id="conteudo_5703997">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703997" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703997"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703997" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703997" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>17/09/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703998" value="5703998" class="anp"><span id="anp_5703998" <="" span=""></span></td><td id="conteudo_5703998">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703998" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703998"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703998" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703998" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>23/09/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5703999" value="5703999" class="anp"><span id="anp_5703999" <="" span=""></span></td><td id="conteudo_5703999">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5703999" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5703999"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5703999" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5703999" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>23/09/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704000" value="5704000" class="anp"><span id="anp_5704000" <="" span=""></span></td><td id="conteudo_5704000">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704000" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704000"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704000" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704000" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>23/09/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704001" value="5704001" class="anp"><span id="anp_5704001" <="" span=""></span></td><td id="conteudo_5704001">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704001" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704001"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704001" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704001" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>24/09/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704002" value="5704002" class="anp"><span id="anp_5704002" <="" span=""></span></td><td id="conteudo_5704002">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704002" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704002"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704002" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704002" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>30/09/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704003" value="5704003" class="anp"><span id="anp_5704003" <="" span=""></span></td><td id="conteudo_5704003">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704003" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704003"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704003" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704003" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>30/09/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704004" value="5704004" class="anp"><span id="anp_5704004" <="" span=""></span></td><td id="conteudo_5704004">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704004" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704004"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704004" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704004" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>30/09/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704005" value="5704005" class="anp"><span id="anp_5704005" <="" span=""></span></td><td id="conteudo_5704005">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704005" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704005"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704005" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704005" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>01/10/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704006" value="5704006" class="anp"><span id="anp_5704006" <="" span=""></span></td><td id="conteudo_5704006">Semana de Ciência e Tecnologia <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704006" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704006"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704006" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704006" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td rowspan="2"><i class="icon-random"></i></td><td><em>04/10/2025</em></td><td><em><center>13:00 às 13:45</center></em></td><td><em><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></em></td><td></td><td id="conteudo_5704007"><em>Semana de Ciência e Tecnologia<!-- em--> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704007" title="Editar conteúdo"><i class="icon-edit"></i></a></em></td><td id="obs_5704007"><em></em> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704007" title="Editar observação"><i class="icon-edit"></i></a></td><td></td><td></td></tr><tr><td>01/10/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">A</a></td><td><input type="checkbox" id="5768951" value="5768951" class="anp"><span id="anp_5768951" <="" span=""></span></td><td id="conteudo_5768951">Semana de Ciência e Tecnologia <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5768951" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5768951"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5768951" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/aulas/excluir_aula_antecipacao_reposicao/5768951" class="excluir_ante_repo" id="excluir_ante_repo_5768951" title="Clique para excluir esta aula de Antecipação/Reposição" onclick="return confirm(&#39;Deseja realmente excluir essa antecipação reposição?\n\nLembrando que isso apagará o conteúdo e as frequências lançadas para esta aula.&#39;);">Excluir Antecipação/Reposição</a></td><td></td></tr><tr><td rowspan="2"><i class="icon-random"></i></td><td><em>04/10/2025</em></td><td><em><center>13:45 às 14:30</center></em></td><td><em><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></em></td><td></td><td id="conteudo_5704008"><em>Semana de Ciência e Tecnologia<!-- em--> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704008" title="Editar conteúdo"><i class="icon-edit"></i></a></em></td><td id="obs_5704008"><em></em> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704008" title="Editar observação"><i class="icon-edit"></i></a></td><td></td><td></td></tr><tr><td>01/10/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">A</a></td><td><input type="checkbox" id="5768952" value="5768952" class="anp"><span id="anp_5768952" <="" span=""></span></td><td id="conteudo_5768952">Semana de Ciência e Tecnologia <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5768952" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5768952"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5768952" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/aulas/excluir_aula_antecipacao_reposicao/5768952" class="excluir_ante_repo" id="excluir_ante_repo_5768952" title="Clique para excluir esta aula de Antecipação/Reposição" onclick="return confirm(&#39;Deseja realmente excluir essa antecipação reposição?\n\nLembrando que isso apagará o conteúdo e as frequências lançadas para esta aula.&#39;);">Excluir Antecipação/Reposição</a></td><td></td></tr><tr><td rowspan="2"><i class="icon-random"></i></td><td><em>04/10/2025</em></td><td><em><center>14:30 às 15:15</center></em></td><td><em><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></em></td><td></td><td id="conteudo_5704009"><em>Semana de Ciência e Tecnologia<!-- em--> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704009" title="Editar conteúdo"><i class="icon-edit"></i></a></em></td><td id="obs_5704009"><em></em> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704009" title="Editar observação"><i class="icon-edit"></i></a></td><td></td><td></td></tr><tr><td>01/10/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">A</a></td><td><input type="checkbox" id="5768953" value="5768953" class="anp"><span id="anp_5768953" <="" span=""></span></td><td id="conteudo_5768953">Semana de Ciência e Tecnologia <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5768953" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5768953"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5768953" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/aulas/excluir_aula_antecipacao_reposicao/5768953" class="excluir_ante_repo" id="excluir_ante_repo_5768953" title="Clique para excluir esta aula de Antecipação/Reposição" onclick="return confirm(&#39;Deseja realmente excluir essa antecipação reposição?\n\nLembrando que isso apagará o conteúdo e as frequências lançadas para esta aula.&#39;);">Excluir Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>07/10/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704010" value="5704010" class="anp"><span id="anp_5704010" <="" span=""></span></td><td id="conteudo_5704010">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704010" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704010"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704010" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704010" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>07/10/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704011" value="5704011" class="anp"><span id="anp_5704011" <="" span=""></span></td><td id="conteudo_5704011">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704011" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704011"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704011" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704011" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>07/10/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704012" value="5704012" class="anp"><span id="anp_5704012" <="" span=""></span></td><td id="conteudo_5704012">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704012" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704012"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704012" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704012" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>08/10/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704013" value="5704013" class="anp"><span id="anp_5704013" <="" span=""></span></td><td id="conteudo_5704013">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704013" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704013"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704013" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704013" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>14/10/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704014" value="5704014" class="anp"><span id="anp_5704014" <="" span=""></span></td><td id="conteudo_5704014">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704014" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704014"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704014" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704014" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>14/10/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704015" value="5704015" class="anp"><span id="anp_5704015" <="" span=""></span></td><td id="conteudo_5704015">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704015" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704015"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704015" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704015" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>14/10/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704016" value="5704016" class="anp"><span id="anp_5704016" <="" span=""></span></td><td id="conteudo_5704016">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704016" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704016"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704016" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704016" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>15/10/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704017" value="5704017" class="anp"><span id="anp_5704017" <="" span=""></span></td><td id="conteudo_5704017">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704017" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704017"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704017" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704017" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>18/10/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704018" value="5704018" class="anp"><span id="anp_5704018" <="" span=""></span></td><td id="conteudo_5704018">Computação em Nuvem (SAAS, IAAS, PAAS) <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704018" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704018"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704018" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704018" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>21/10/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704019" value="5704019" class="anp"><span id="anp_5704019" <="" span=""></span></td><td id="conteudo_5704019">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704019" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704019"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704019" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704019" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>21/10/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704020" value="5704020" class="anp"><span id="anp_5704020" <="" span=""></span></td><td id="conteudo_5704020">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704020" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704020"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704020" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704020" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>21/10/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704021" value="5704021" class="anp"><span id="anp_5704021" <="" span=""></span></td><td id="conteudo_5704021">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704021" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704021"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704021" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704021" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>22/10/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704022" value="5704022" class="anp"><span id="anp_5704022" <="" span=""></span></td><td id="conteudo_5704022">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704022" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704022"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704022" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704022" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>28/10/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704023" value="5704023" class="anp"><span id="anp_5704023" <="" span=""></span></td><td id="conteudo_5704023">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704023" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704023"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704023" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704023" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>28/10/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704024" value="5704024" class="anp"><span id="anp_5704024" <="" span=""></span></td><td id="conteudo_5704024">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704024" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704024"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704024" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704024" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>28/10/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704025" value="5704025" class="anp"><span id="anp_5704025" <="" span=""></span></td><td id="conteudo_5704025">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704025" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704025"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704025" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704025" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>29/10/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704026" value="5704026" class="anp"><span id="anp_5704026" <="" span=""></span></td><td id="conteudo_5704026">Serviços de Internet <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704026" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704026"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704026" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704026" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>04/11/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704027" value="5704027" class="anp"><span id="anp_5704027" <="" span=""></span></td><td id="conteudo_5704027">Festival de Arte e Cultura <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704027" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704027"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704027" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704027" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>04/11/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704028" value="5704028" class="anp"><span id="anp_5704028" <="" span=""></span></td><td id="conteudo_5704028">Festival de Arte e Cultura <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704028" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704028"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704028" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704028" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>04/11/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704029" value="5704029" class="anp"><span id="anp_5704029" <="" span=""></span></td><td id="conteudo_5704029">Festival de Arte e Cultura <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704029" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704029"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704029" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704029" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>05/11/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704030" value="5704030" class="anp"><span id="anp_5704030" <="" span=""></span></td><td id="conteudo_5704030">Festival de Arte e Cultura <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704030" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704030"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704030" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704030" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>11/11/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704031" value="5704031" class="anp"><span id="anp_5704031" <="" span=""></span></td><td id="conteudo_5704031">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704031" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704031"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704031" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704031" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>11/11/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704032" value="5704032" class="anp"><span id="anp_5704032" <="" span=""></span></td><td id="conteudo_5704032">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704032" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704032"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704032" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704032" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>11/11/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704033" value="5704033" class="anp"><span id="anp_5704033" <="" span=""></span></td><td id="conteudo_5704033">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704033" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704033"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704033" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704033" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>12/11/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704034" value="5704034" class="anp"><span id="anp_5704034" <="" span=""></span></td><td id="conteudo_5704034">Finalidade, importância e objetivo da segurança da informação <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704034" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704034"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704034" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704034" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>18/11/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704035" value="5704035" class="anp"><span id="anp_5704035" <="" span=""></span></td><td id="conteudo_5704035">Dia da Consciência Negra <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704035" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704035"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704035" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704035" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>18/11/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704036" value="5704036" class="anp"><span id="anp_5704036" <="" span=""></span></td><td id="conteudo_5704036">Dia da Consciência Negra <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704036" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704036"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704036" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704036" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>18/11/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704037" value="5704037" class="anp"><span id="anp_5704037" <="" span=""></span></td><td id="conteudo_5704037">Dia da Consciência Negra <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704037" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704037"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704037" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704037" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>19/11/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704038" value="5704038" class="anp"><span id="anp_5704038" <="" span=""></span></td><td id="conteudo_5704038">Dia da Consciência Negra <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704038" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704038"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704038" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704038" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>25/11/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704039" value="5704039" class="anp"><span id="anp_5704039" <="" span=""></span></td><td id="conteudo_5704039">SEMICT <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704039" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704039"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704039" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704039" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>25/11/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704040" value="5704040" class="anp"><span id="anp_5704040" <="" span=""></span></td><td id="conteudo_5704040">SEMICT <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704040" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704040"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704040" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704040" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>25/11/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704041" value="5704041" class="anp"><span id="anp_5704041" <="" span=""></span></td><td id="conteudo_5704041">SEMICT <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704041" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704041"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704041" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704041" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>26/11/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704042" value="5704042" class="anp"><span id="anp_5704042" <="" span=""></span></td><td id="conteudo_5704042">SEMICT <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704042" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704042"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704042" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704042" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>02/12/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704043" value="5704043" class="anp"><span id="anp_5704043" <="" span=""></span></td><td id="conteudo_5704043">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704043" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704043"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704043" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704043" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>02/12/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704044" value="5704044" class="anp"><span id="anp_5704044" <="" span=""></span></td><td id="conteudo_5704044">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704044" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704044"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704044" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704044" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>02/12/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704045" value="5704045" class="anp"><span id="anp_5704045" <="" span=""></span></td><td id="conteudo_5704045">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704045" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704045"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704045" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704045" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>03/12/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704046" value="5704046" class="anp"><span id="anp_5704046" <="" span=""></span></td><td id="conteudo_5704046">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704046" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704046"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704046" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704046" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>09/12/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704047" value="5704047" class="anp"><span id="anp_5704047" <="" span=""></span></td><td id="conteudo_5704047">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704047" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704047"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704047" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704047" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>09/12/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704048" value="5704048" class="anp"><span id="anp_5704048" <="" span=""></span></td><td id="conteudo_5704048">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704048" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704048"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704048" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704048" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>09/12/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704049" value="5704049" class="anp"><span id="anp_5704049" <="" span=""></span></td><td id="conteudo_5704049">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704049" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704049"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704049" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704049" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>10/12/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704050" value="5704050" class="anp"><span id="anp_5704050" <="" span=""></span></td><td id="conteudo_5704050">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704050" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704050"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704050" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704050" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>16/12/2025</td><td><center>13:00 às 13:45</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704051" value="5704051" class="anp"><span id="anp_5704051" <="" span=""></span></td><td id="conteudo_5704051">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704051" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704051"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704051" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704051" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>16/12/2025</td><td><center>13:45 às 14:30</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704052" value="5704052" class="anp"><span id="anp_5704052" <="" span=""></span></td><td id="conteudo_5704052">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704052" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704052"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704052" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704052" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>16/12/2025</td><td><center>14:30 às 15:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704053" value="5704053" class="anp"><span id="anp_5704053" <="" span=""></span></td><td id="conteudo_5704053">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704053" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704053"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704053" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704053" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr><tr><td></td><td>17/12/2025</td><td><center>08:30 às 09:15</center></td><td><a class="popup" title="Tipo de aulas:&lt;br/&gt;A: Antecipação&lt;br/&gt;R: Reposição&lt;br/&gt;N: Normal">N</a></td><td><input type="checkbox" id="5704054" value="5704054" class="anp"><span id="anp_5704054" <="" span=""></span></td><td id="conteudo_5704054">Políticas de segurança em ambientes computacionais <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_conteudo" id="5704054" title="Editar conteúdo"><i class="icon-edit"></i></a></td><td id="obs_5704054"> <a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="edit_obs" id="5704054" title="Editar observação"><i class="icon-edit"></i></a></td><td><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo" class="ante_repo" id="ante_repo_5704054" title="Clique para adicionar Antecipação/Reposição desta aula">Adicionar Antecipação/Reposição</a></td><td></td></tr>						</tbody>
+					</table>
+                    
+				<div class="form-actions"><div class="controls controls-row"><a href="https://academico.ifms.edu.br/administrativo/Professores/diario" class="btn btn-primary span2"><i class="icon-th-list icon-white"></i> Meus diários</a><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/imprimir_diario_em_branco" title="Imprimir diário em branco" class="btn btn-primary span2" target="_blank"><i class="icon-print icon-white"></i> Diário em Branco</a><a href="https://academico.ifms.edu.br/administrativo/ws_moodle/vincular_classe_moodle/79118" title="Vincular Classe ao Moodle" class="btn btn-info span2"><i class="icon-share-alt icon-white"></i> Vincular classe ao Moodle e atualizar professores</a><a href="https://academico.ifms.edu.br/administrativo/ws_moodle/sincronizar_estudantes_moodle/79118" title="Vincular Classe ao Moodle" class="btn btn-info span2"><i class="icon-refresh icon-white"></i> Atualizar alunos no Moodle</a></div></div>	</div>
+	<div id="modal_adicionar" tabindex="-1" role="dialog" aria-hidden="true" aria-labbeledby="Guia" class="modal fade" style="display:none;">
+    </div>
+</div>
+
+<script type="text/javascript">
+	jQuery(function($){
+
+		// quando o mouse passar por cima, mudar o pointer para mãozinha
+		$('.requerimento').css('cursor', 'pointer');
+		
+		$(".btadicionar").click(function(e){
+			e.preventDefault();             
+			$("#modal_adicionar").html('Carregando...').modal('show').load($(this).attr('href'), function(){
+				$("#modal_adicionar").modal('show');
+			});
+		});
+                
+        $(".foto_estudante").tooltipster({ 
+            contentAsHTML: true,
+            position: 'right',
+			arrow: false
+		}); 
+		
+		$(".foto_estudante").on('mouseout', function(){
+			$(this).tooltipster('hide');
+		});
+                
+                $(".foto_estudante").tooltipster({ 
+                    contentAsHTML: true,
+                    position: 'right',
+                    arrow: false
+                });
+
+		var $leftColumns = 2; // Por padrão travamos duas colunas do diário na frequência
+
+		if ($(window).width() < 600)
+			$leftColumns = 1; // Caso a tela seja pequena, travamos apenas 1 coluna
+
+		function copiarListaEmails()
+		{
+			var emails = [];
+			$("a.foto_estudante[email_aluno]").each(function() {
+				var email = $(this).attr("email_aluno");
+				if (email) {
+					emails.push(email);
+				}
+			});
+			var emailList = emails.join(", ");
+			if (emailList) {
+				// Cria um elemento temporário para copiar
+				var tempInput = document.createElement("textarea");
+				tempInput.value = emailList;
+				document.body.appendChild(tempInput);
+				tempInput.select();
+				document.execCommand("copy");
+				document.body.removeChild(tempInput);
+				alert("Emails copiados para área de transferência.");
+			} else {
+				alert("Nenhum email encontrado para copiar.");
+			}
+		}
+
+		var table = $('#example').DataTable( {		
+			scrollY:        "400px",
+			scrollX:        true,
+			scrollCollapse: true,
+			paging:         false,
+			ordering:       false,  
+	        info:           false,
+			fixedColumns:   {
+			 	leftColumns: $leftColumns
+			},
+        	dom: "<'row-fluid'<'span4 botoes_p_f_todos'l><'span4'B><'span4'f>>" +
+                "<'row-fluid'<'span12'tr>>" +
+                "<'row-fluid'<'span5'i><'span7'p>>",
+			  buttons: [
+					{
+						text: 'Copiar e-mails dos estudantes',
+						action: function ( e, dt, node, config ) {
+							// Função para mostrar lista de e-mails
+							copiarListaEmails();
+						}
+					},
+					{ 
+						extend: 'copyHtml5',
+						text: 'Copiar',
+						exportOptions: {
+							columns: ':visible'
+						}
+					},
+                { 
+                    extend: 'excelHtml5',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                { 
+                    extend: 'csvHtml5',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                { 
+                    extend: 'pdfHtml5',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                { 
+                    extend: 'pdfHtml5',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    text: 'PDF Horizontal',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }
+            ],
+            "oLanguage": {
+                "sSearch": "Busca:",
+                "sFirst": "Primeira página",
+                "sLast": "Última página",
+                "oPaginate": {
+                    "sNext": "Próxima página",
+                    "sPrevious": "Página anterior"
+                },
+                "sLengthMenu": 'Mostrando <select>'+
+                    '<option value="10">10</option>'+
+                    '<option value="20">20</option>'+
+                    '<option value="30">30</option>'+
+                    '<option value="40">40</option>'+
+                    '<option value="50">50</option>'+
+                    '<option value="-1">Todos</option>'+
+                    '</select> registros',
+                "sInfo": "Mostrando os registros de _START_ a _END_ de um total de _TOTAL_.",
+                "sInfoFiltered": "(filtrado de um total de _MAX_ registros)",
+                "sZeroRecords": "Nenhum registro encontrado",
+                "sProcessing": "Processando, por favor aguarde...",
+                "sInfoThousands": "."
+            },
+			"initComplete": function(settings, json) {
+				// Adicionamos os botões de Presença e Falta TODOS
+				$('.botoes_p_f_todos').html('<b>Padrão para múltiplos lançamentos:</b><br/> <label class="radio inline"><input type="radio" value="presenca_todos" name="falsa_presenca_todos" title="Marque para lançar presença em uma aula para todos os estudantes de uma só vez" checked/> Presença para todos</label><label class="radio inline"><input type="radio" value="falta_todos" name="falsa_presenca_todos" title="Marque para lançar falta em uma aula para todos os estudantes de uma só vez" /> Falta para todos</label>');
+			}
+    	} );
+
+		$('input[name="falsa_presenca_todos"]').change(function(){
+			if (this.value == 'falta_todos')
+				$('.link_presenca_falta_todos').attr('title', 'Adicionar FALTA para todos os estudantes que não tem frequência salva nessa aula');
+			else if (this.value == 'presenca_todos')
+				$('.link_presenca_falta_todos').attr('title', 'Adicionar PRESENÇA para todos os estudantes que não tem frequência salva nessa aula');
+		});
+
+		$('.link_presenca_falta_todos').click(function(e){
+			e.preventDefault();
+			// Se estiver setado para lançar falta para todos
+			if ($('input[name="falsa_presenca_todos"]:checked').val() == 'falta_todos')
+			{
+				if (confirm('Tem certeza que deseja lançar FALTA para todos os estudantes que não tem frequência salva nessa aula?'))
+				{
+					var aula_id = $(this).attr('aula_id');
+
+					// Mostrar imagem de carregamento em todas as linhas
+					$('.' + aula_id).attr('title', 'Carregando, aguarde...').html('<img src="data:image/gif;base64,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"/>');
+
+					// Chamar a URL do link - Lançar Falta para todos
+					$.ajax({
+						url: $(this).attr('href') + '/F',
+						type: "GET"
+					}).done(function(html) {
+						$('.' + aula_id).each(function(){
+							var link = $(this);
+							$.ajax({
+								url: '/administrativo/professores/diario/79118/get_frequencia_aula_matricula',
+								type: "POST",
+								data: { 'data': [{
+											'matricula_id': link.attr('matricula_id'), 
+											'aula_id': aula_id 
+										}]
+									}
+							}).done(function(html) {
+								var celula = link.parent().parent();
+								var novo_link = '<center>─</center>';
+								var abonoStatus = {"1":"A","2":"B","3":"C","4":"D","5":"E","6":"G","7":"J"};
+								// Se tem presença registrada para a aula
+								if (html == 'true') 
+								{
+									novo_link = '<center><a class="diario" href="/administrativo/Professores/changeFrequencia/' + link.attr('matricula_id') + '/' + link.attr('classe_id') + '/' + aula_id + '" style="padding: 8px 25px;">•</a></center>';
+								}
+								else if (html == 'false')
+								{
+									novo_link = '<center><a class="diario" href="/administrativo/Professores/changeFrequencia/' + link.attr('matricula_id') + '/' + link.attr('classe_id') + '/' + aula_id + '" style="padding: 8px 25px;">F</a></center>';
+								}
+								else if (abonoStatus[html] !== undefined) 
+								{
+							        novo_link = '<center>' + abonoStatus[html] + '</center>';
+							    }
+
+								celula.html(novo_link).removeClass('alert-warning');
+							});  
+						});
+					});  
+				}
+			}
+			else // Lançamos presença para todos
+			{
+				if (confirm('Tem certeza que deseja lançar PRESENÇA para todos os estudantes que não tem frequência salva nessa aula?'))
+				{
+					var aula_id = $(this).attr('aula_id');
+
+					// Mostrar imagem de carregamento em todas as linhas
+					$('.' + aula_id).attr('title', 'Carregando, aguarde...').html('<img src="data:image/gif;base64,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"/>');
+
+					// Chamar a URL do link - Lançar Presença para todos
+					$.ajax({
+						url: $(this).attr('href') + '/P',
+						type: "GET"
+					}).done(function(html) {
+						$('.' + aula_id).each(function(){
+							var link = $(this);
+							$.ajax({
+								url: '/administrativo/professores/diario/79118/get_frequencia_aula_matricula',
+								type: "POST",
+								data: { 'data': [{
+											'matricula_id': link.attr('matricula_id'), 
+											'aula_id': aula_id 
+										}]
+									}
+							}).done(function(html) {
+								var celula = link.parent().parent();
+								var novo_link = '<center>─</center>';
+
+								var abonoStatus = {"1":"A","2":"B","3":"C","4":"D","5":"E","6":"G","7":"J"};
+								// Se tem presença registrada para a aula
+								if (html == 'true') 
+								{
+									novo_link = '<center><a class="diario" href="/administrativo/Professores/changeFrequencia/' + link.attr('matricula_id') + '/' + link.attr('classe_id') + '/' + aula_id + '" style="padding: 8px 25px;">•</a></center>';
+								}
+								else if (html == 'false')
+								{
+									novo_link = '<center><a class="diario" href="/administrativo/Professores/changeFrequencia/' + link.attr('matricula_id') + '/' + link.attr('classe_id') + '/' + aula_id + '" style="padding: 8px 25px;">F</a></center>';
+								}
+								else if (abonoStatus[html] !== undefined) 
+								{
+							        novo_link = '<center>' + abonoStatus[html] + '</center>';
+							    }
+
+								celula.html(novo_link).removeClass('alert-warning');
+							});  
+						});
+					});  
+				}
+			}
+		});
+
+		$('a.diario').live('click', function(event) {
+			event.preventDefault();
+			$('body').css({cursor : 'wait'});
+			var id = $(this).attr('id');
+			var href = $(this).attr('href');
+			var link = $(this);
+
+			$.ajax({
+				url: href,
+				cache: false
+			}).done(function(html) {
+				link.text(html);
+				$('body').css({cursor : 'default'});
+			});  
+		});  
+
+		$('a.edit_conteudo').live('click', function(event) {
+			event.preventDefault();
+
+			var id = $(this).attr('id');
+			var href = $(this).attr('href');
+			var link = $(this);
+
+			var conteudo = $('#conteudo_' + id).text(); // Pego o conteúdo
+			$('#conteudo_' + id).text('');              // Zero o conteúdo
+			$('#conteudo_' + id).append('<textarea style="width: 400px; height: 60px" maxlength="3000" >' + conteudo + '</textarea>');
+			$('#conteudo_' + id).append('<br/><a href="' + '/administrativo/Professores/salvarConteudo' + '/' + id + '" class="salvar_conteudo btn btn-mini btn-success"><i class="icon-ok icon-white"></i> Salvar conteúdo</a>');
+		});  
+
+		$('.salvar_conteudo').live('click', function(event){
+			event.preventDefault();
+
+			var href = $(this).attr('href');
+			var td = $(this).parent();
+			var id = td.attr('id').slice(9); // Recupero apenas o ID da palavra "conteudo_ID"
+			var conteudo = td.find('textarea').val();
+			$('body').css({cursor : 'wait'});
+			
+			$.ajax({
+				url: href,
+				type: "POST",
+				data: { conteudo: conteudo }
+			}).done(function(html) {
+				td.html(html);
+				$('#conteudo_' + id).append('<a href="" id="' + id + '" class="edit_conteudo" title="Editar conteúdo"> <i class="icon-edit"></i></a>'); 
+				$('body').css({cursor : 'default'});
+			}); 
+		});
+
+		$('a.edit_obs').live('click', function(event) {
+			event.preventDefault();
+			var id = $(this).attr('id');
+			var href = $(this).attr('href');
+			var link = $(this);
+
+			var obs = $('#obs_' + id).text(); // Pego a observacao
+			$('#obs_' + id).text('');              // Zero a obs
+			$('#obs_' + id).append('<textarea style="width: 400px; height: 60px" maxlength="600">' + obs + '</textarea>');
+			$('#obs_' + id).append('<br/><a href="' + '/administrativo/Professores/salvarObs' + '/' + id + '" class="salvar_obs btn btn-mini btn-success"><i class="icon-ok icon-white"></i> Salvar observação</a>');
+		});  
+
+		$('.salvar_obs').live('click', function(event){
+			event.preventDefault();
+
+			var href = $(this).attr('href');
+			var td = $(this).parent();
+			var id = td.attr('id').slice(4); // Recupero apenas o ID da palavra "obs_ID"
+			var obs = td.find('textarea').val();
+			$('body').css({cursor : 'wait'});
+			
+			$.ajax({
+				url: href,
+				type: "POST",
+				data: { obs: obs }
+			}).done(function(html) {
+				td.html(html);
+				$('#obs_' + id).append('<a href="" id="' + id + '" class="edit_obs" title="Editar observação"> <i class="icon-edit"></i></a>'); 
+				$('body').css({cursor : 'default'});
+			}); 
+		});
+
+		$('.anp').on('change', function(event){
+	        event.preventDefault();	 
+	        var id = $(this).attr('id');
+	        var anp = $('#'+id).is(':checked');        
+
+            $.ajax({
+                url: '/administrativo/Professores/salvarANP' + '/' + id,
+                type:"POST",
+                data: {anp: anp},
+                success:function()
+               	{   
+               		$('#anp_' + id).html(' Salvo! ').show().fadeOut(2000);
+                }
+            }) 	        
+    	});
+
+		// NOTAS
+		var notas = [];
+
+
+		/*Codigo criado para adequação ao ROD*/
+		var media_limite_para_aprovacao;
+
+		media_limite_para_aprovacao = 0 ;
+		mascara = '99,00';		
+				
+		placeholder = "__,__"
+
+		if (media_limite_para_aprovacao < 7) {
+
+			mascara = "99,0";		
+			placeholder = "__,_";
+		}
+
+  
+		$('input.resultado_avaliacao').focus(function(){
+			var id = $(this).attr('id');
+			notas[id] = $(this).val();
+		}).blur(function(){
+			var id = $(this).attr('id');
+			
+			//$(this).mask('00,00');
+			if (notas[id] != $(this).val())
+			{
+				$('body').css({cursor : 'wait'});
+
+				$.ajax({
+					url: '/administrativo/Professores/salvarNota',
+					type: "POST",
+					data: { resultado_avaliacao_id: id, nota : $(this).val()}
+				}).done(function(html) {
+					//td.html(html);
+					$('#status_' + id).html(' ' + html + '!').show().delay(1000).fadeOut(2000);
+					//console.log('Salvou');
+					$('body').css({cursor : 'default'});
+					$('.media').each(function(){
+						$(this).html('<del>' + $(this).html() + '</del>');
+						$(this).attr('title', 'Recarregue a página para ver a média correta!')
+					});
+                                        $('#'+id).removeClass('sem_nota');
+                                        $('#'+id).attr('title', '');
+				});
+			  //$('#status_' + id).html(' Salvo!').show().fadeOut(2000);
+		   }
+		}).mask(mascara, {
+				placeholder: placeholder,	
+				translation: {
+     				'0': {pattern: /\d/},
+     				'9': {pattern: /\d/, optional: true}     
+   			}
+   		});
+
+                
+        $('input.resultado_avaliacao').each(function(){
+            if ($(this).val() == '')
+            {
+                $(this).addClass('sem_nota');
+                $(this).attr('title', 'Ainda sem lançamento.');
+            }
+        });
+
+		// Salvar novas notas
+		$('input.resultado_avaliacao_nova').focus(function(){
+			var id = $(this).attr('id');
+			notas[id] = $(this).val();
+		}).blur(function(){
+			var id = $(this).attr('id');
+			
+			//$(this).mask('00,00');
+			if (notas[id] != $(this).val())
+			{
+				$('body').css({cursor : 'wait'});
+
+				if ($(this).val().length != 0)
+				{
+					//console.log($(this).attr('id').split("_"));
+					// Recuperar atributos
+					var atributos = $(this).attr('id').split("_");
+					var avaliacao_id = atributos[0];
+					var matricula_id = atributos[1];
+					
+					$.ajax({
+						url: '/administrativo/Professores/criarNota',
+						type: "POST",
+						data: { 
+							avaliacao_id : avaliacao_id, 
+							matricula_id : matricula_id, 
+							nota : $(this).val()
+						}
+					}).done(function(html) {
+						//td.html(html);
+						$('#status_' + id).html(' ' + html + '!').show().delay(1000).fadeOut(3000);
+						$('body').css({cursor : 'default'});
+						$('.media').each(function(){
+							$(this).html('<del>' + $(this).html() + '</del>');
+							$(this).attr('title', 'Recarregue a página para ver a média correta!')
+						});
+					});
+
+				  //$('#status_' + id).html(' Salvo!').show().fadeOut(2000);
+			   }
+			   //else
+					//console.log('não tem nada no campo');
+			}
+		}).mask(mascara, {
+			placeholder: placeholder, 
+			translation: {
+     			'0': {pattern: /\d/},
+     			'9': {pattern: /\d/, optional: true}     
+   			}
+   		});
+
+
+        $('.metodo_calculo').change(function(){
+            var selecionado = $(this).val();            
+
+            if (selecionado == '0')
+                $('.peso').val('0').attr('readonly', true);
+            else
+                $('.peso').attr('readonly', false);
+
+        });
+
+        if ($('.peso').val() == 0)
+        {
+            $('.peso').attr('readonly', true);
+            $('.metodo_calculo').val('0');
+        }
+        else
+        {
+            $('.peso').attr('readonly', false);
+            $('.metodo_calculo').val('1');
+        }   
+
+        $(".btedit")
+            .click(function(e){
+            	e.preventDefault();            	
+                $("#modal_edit").html('Carregando...').modal('show').load($(this).attr('href'), function(){
+                	$("#modal_edit").modal('show');
+                });
+            });       
+
+        $(".tipo_avaliacao_id").change(function(){
+	    	$(this).find("option:selected").each(function(){
+		    	var optionValue = $(this).attr("value");
+		            if(optionValue == 4){
+		                $(".tipo_avaliacao_observacao").not(".tipo_avaliacao_observacao").hide();
+		                $(".tipo_avaliacao_observacao").show();
+		            } else{
+		                $(".tipo_avaliacao_observacao").hide();
+		            }
+		        });
+		    }).change();        
+         
+        $("#modal_ante_repo").dialog({
+            autoOpen: false,            
+            height: 450,
+            width: 600,
+            modal: true,
+            title: "Adicionar Antecipação/Reposição",
+            open: function(event,ui) {
+        		$(this).parent().focus();
+    		},
+            close: function() {
+              allFields.val( "" ).removeClass( "ui-state-error" );
+            }
+          });
+
+          $(".ante_repo").click(function(event) {
+            event.preventDefault();
+            var atributos = $(this).attr('id').split("ante_repo_");
+            var id = atributos[1];
+            $('#aula_id_ante_repo').val(id);
+            $("#modal_ante_repo").dialog( "open" );
+        });
+        
+        //Máscaras
+        $('#hora_inicio_ante_repo').mask('00:00', {placeholder: "__:__"});
+        $('#hora_fim_ante_repo').mask('00:00', {placeholder: "__:__"});
+        $('#hora_inicio_aula').mask('00:00', {placeholder: "__:__"});
+        $('#hora_fim_aula').mask('00:00', {placeholder: "__:__"});
+        
+	}); //fim jquery
+</script>                </div>
+            </div>
+        
+        
+
+<script>
+    $(document).ready(function(){
+        var onResize = function() {
+            // apply dynamic padding at the top of the body according to the fixed navbar height
+            // Se o comprimento for maior que 979px
+            if ($(".navbar-fixed-top").width() > 979)
+                $("body").css("padding-top", $(".navbar-fixed-top").height() + 20);
+            else
+                $("body").css("padding-top", 0);
+        };
+
+        $(window).resize(onResize);
+
+        // call it also when the page is ready after load or reload
+        $(function() {
+            onResize();
+        });   
+        
+    });
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async="" src="./Sistema Acadêmico - Diario - Conteudo_files/js"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-DQQ3BCR6XZ');
+</script><div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-draggable ui-resizable" tabindex="-1" role="dialog" aria-labelledby="ui-dialog-title-modal_ante_repo" style="display: none; z-index: 1000; outline: 0px; position: absolute;"><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"><span class="ui-dialog-title" id="ui-dialog-title-modal_ante_repo">Adicionar Antecipação/Reposição</span><a href="https://academico.ifms.edu.br/administrativo/Professores/diario/79118/conteudo#" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a></div><div id="modal_ante_repo" class="ui-dialog-content ui-widget-content">
+                        <form class="form" method="post">
+                            <div class="row-fluid">
+                                <div class="span6">
+                                    <label>Data:</label>
+                                    <input type="hidden" name="data[antecipacao_reposicao][aula_id]" id="aula_id_ante_repo" value="">                                    
+                                    <input type="text" name="data[antecipacao_reposicao][data]" id="data_ante_repo" class="data_completa_jqueryui span6">
+                                    <label>Hora de início:</label>
+                                    <input type="text" name="data[antecipacao_reposicao][hora_inicio]" id="hora_inicio_ante_repo" class="span4" maxlength="5" placeholder="__:__" autocomplete="off">
+                                    <label>Hora de término:</label>
+                                    <input type="text" name="data[antecipacao_reposicao][hora_fim]" id="hora_fim_ante_repo" class="span4" maxlength="5" placeholder="__:__" autocomplete="off">
+                                    <label>Conteúdo ministrado:</label>
+                                    <textarea name="data[antecipacao_reposicao][conteudo]" class="span12" cols="5" rows="4" maxlength="3000"></textarea>
+                                </div>
+                                <div class="span6">
+                                    <label>Observações:</label>
+                                    <textarea name="data[antecipacao_reposicao][observacao]" class="span12" cols="5" rows="4" maxlength="600"></textarea>
+                                    <label>Justificativa:</label>
+                                    <textarea name="data[antecipacao_reposicao][justificativa]" class="span12" cols="5" rows="4" maxlength="255"></textarea>
+                                </div>
+                            </div>
+                            <div class="row-fluid">
+                                <div class="span12">
+                                    <div class="form-actions">
+                                        <input type="submit" value="Adicionar" class="btn btn-primary">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div><div class="ui-resizable-handle ui-resizable-n"></div><div class="ui-resizable-handle ui-resizable-e"></div><div class="ui-resizable-handle ui-resizable-s"></div><div class="ui-resizable-handle ui-resizable-w"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se ui-icon-grip-diagonal-se" style="z-index: 1001;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 1002;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 1003;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 1004;"></div></div></body></html>

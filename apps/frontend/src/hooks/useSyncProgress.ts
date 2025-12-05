@@ -16,47 +16,54 @@ export function useSyncProgress() {
   const eventSourceRef = useRef<EventSource | null>(null)
 
   const connect = useCallback(() => {
+    console.log('🔵 useSyncProgress: Iniciando conexão SSE...')
+    
     // Disconnect existing connection
     if (eventSourceRef.current) {
+      console.log('⚠️ useSyncProgress: Fechando conexão existente')
       eventSourceRef.current.close()
     }
 
+    const baseURL = api.defaults.baseURL || 'http://localhost:3001/api'
     const token = localStorage.getItem('token')
+    
     if (!token) {
-      console.error('No auth token available')
+      console.error('❌ useSyncProgress: Token não encontrado no localStorage')
       return
     }
+    
+    // Enviar token via query parameter (EventSource não suporta headers customizados)
+    const url = `${baseURL}/sync/events?token=${encodeURIComponent(token)}`
 
-    const baseURL = api.defaults.baseURL || 'http://localhost:3333'
-    const url = `${baseURL}/sync/events`
+    console.log('🔗 useSyncProgress: Conectando a:', `${baseURL}/sync/events`)
 
-    const eventSource = new EventSource(url, {
-      withCredentials: true,
-    })
-
-    // Note: EventSource doesn't support custom headers directly
-    // We need to append token as query param or use different approach
-    // For now, JWT should be in cookie or we need WebSocket
+    // EventSource envia cookies automaticamente (credenciais same-origin)
+    const eventSource = new EventSource(url)
 
     eventSource.onopen = () => {
-      console.log('✅ SSE Connection established')
+      console.log('✅ useSyncProgress: Conexão SSE estabelecida!')
       setIsConnected(true)
     }
 
     eventSource.onmessage = (event) => {
       try {
         const data: SyncProgress = JSON.parse(event.data)
-        console.log('📊 Sync progress:', data)
+        console.log('📊 useSyncProgress: Evento recebido:', data)
         setProgress(data)
       } catch (error) {
-        console.error('Failed to parse SSE message:', error)
+        console.error('❌ useSyncProgress: Erro ao parsear mensagem SSE:', error)
       }
     }
 
     eventSource.onerror = (error) => {
-      console.error('❌ SSE Connection error:', error)
+      console.error('❌ useSyncProgress: Erro na conexão SSE:', error)
+      console.log('ReadyState:', eventSource.readyState)
       setIsConnected(false)
-      eventSource.close()
+      
+      // Não fechar imediatamente, deixar tentar reconectar
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('🔴 useSyncProgress: Conexão fechada pelo servidor')
+      }
     }
 
     eventSourceRef.current = eventSource

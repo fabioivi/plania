@@ -86,7 +86,7 @@ export class AcademicController {
     if (!ifmsCredential.isVerified) {
       return { 
         success: false, 
-        message: 'IFMS credential not verified. Please test your credentials first.' 
+        message: 'Credencial IFMS não verificada. Por favor, teste suas credenciais primeiro.' 
       };
     }
 
@@ -98,7 +98,7 @@ export class AcademicController {
 
     return { 
       success: true,
-      message: 'Diary sync has been queued. This may take a few moments.' 
+      message: 'Sincronização de diários iniciada. Isso pode levar alguns instantes.' 
     };
   }
 

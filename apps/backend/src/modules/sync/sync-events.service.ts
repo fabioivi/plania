@@ -19,6 +19,7 @@ export class SyncEventsService {
    * Register a new SSE client
    */
   addClient(userId: string, response: Response) {
+    console.log(`🔗 SSE: Cliente conectado - userId: ${userId}`);
     this.clients.set(userId, response);
 
     // Setup SSE headers
@@ -36,6 +37,7 @@ export class SyncEventsService {
 
     // Handle client disconnect
     response.on('close', () => {
+      console.log(`❌ SSE: Cliente desconectado - userId: ${userId}`);
       this.clients.delete(userId);
     });
   }
@@ -47,7 +49,15 @@ export class SyncEventsService {
     const client = this.clients.get(userId);
     if (client) {
       const data = JSON.stringify(progress);
+      console.log(`📤 SSE: Enviando evento para ${userId}:`, progress.stage, progress.message);
       client.write(`data: ${data}\n\n`);
+      
+      // Force flush to ensure data is sent immediately
+      if (typeof (client as any).flush === 'function') {
+        (client as any).flush();
+      }
+    } else {
+      console.log(`⚠️ SSE: Cliente não encontrado - userId: ${userId}`);
     }
   }
 

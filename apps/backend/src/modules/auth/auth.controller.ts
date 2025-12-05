@@ -1,4 +1,5 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './auth.dto';
@@ -58,7 +59,25 @@ export class AuthController {
     status: 401,
     description: 'Credenciais inválidas',
   })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const result = await this.authService.login(loginDto);
+    
+    console.log('🍪 Login: Definindo cookie auth_token para userId:', result.user.id);
+    
+    // Define cookie HTTPOnly para SSE e requisições automáticas
+    response.cookie('auth_token', result.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+    });
+    
+    console.log('✅ Login: Cookie definido com sucesso');
+    
+    return result;
   }
 }

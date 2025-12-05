@@ -136,7 +136,7 @@ export class SyncResponseModel {
 
   @ApiProperty({
     description: 'Mensagem informativa',
-    example: 'Diary sync has been queued. This may take a few moments.',
+    example: 'Sincronização de diários iniciada. Isso pode levar alguns instantes.',
   })
   message: string;
 }

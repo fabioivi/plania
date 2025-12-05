@@ -74,36 +74,45 @@ export default function DisciplinesPage() {
       // Conectar ao SSE para receber atualizações em tempo real
       connect()
       
+      toast.info('Conectando ao servidor...')
+      
+      // Aguardar um pouco para garantir que SSE conectou
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       toast.info('Iniciando sincronização...')
       
       const result = await academicApi.syncDiaries()
       
-      if (result.success) {
-        toast.success(result.message || 'Sincronização concluída com sucesso!')
-        // Wait for sync to complete, then reload
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        await loadDiaries()
-      } else {
+      if (!result.success) {
         toast.error(result.message || 'Erro ao sincronizar diários')
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Erro ao sincronizar diários')
-    } finally {
-      setSyncing(false)
-      // Desconectar SSE após alguns segundos
-      setTimeout(() => {
+        setSyncing(false)
         disconnect()
-      }, 3000)
+      }
+      // Se success, mantém syncing=true até SSE enviar 'completed' ou 'error'
+    } catch (err: any) {
+      console.error('Erro ao sincronizar:', err)
+      toast.error(err.response?.data?.message || 'Erro ao sincronizar diários')
+      setSyncing(false)
+      disconnect()
     }
   }
   
   // Detectar quando sincronização termina pelo progresso
   useEffect(() => {
     if (progress?.stage === 'completed') {
+      toast.success('Sincronização concluída com sucesso!')
+      setSyncing(false)
       // Recarregar diários quando completar
       setTimeout(() => {
         loadDiaries()
-      }, 1000)
+        disconnect()
+      }, 2000)
+    } else if (progress?.stage === 'error') {
+      toast.error(progress.message || 'Erro na sincronização')
+      setSyncing(false)
+      setTimeout(() => {
+        disconnect()
+      }, 2000)
     }
   }, [progress])
 

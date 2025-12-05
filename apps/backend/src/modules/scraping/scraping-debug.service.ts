@@ -27,6 +27,7 @@ export interface CacheScrapingOptions {
   }[];
   startTime: number;
   success: boolean;
+  takeScreenshot?: boolean; // Optional parameter to control screenshot capture
 }
 
 @Injectable()
@@ -72,20 +73,27 @@ export class ScrapingDebugService {
         selectorAttempts,
         startTime,
         success,
+        takeScreenshot = false, // Default to false
       } = options;
 
       // Capture HTML snapshot
       const htmlSnapshot = await page.content();
 
-      // Take screenshot
-      const timestamp = Date.now();
-      const screenshotFilename = `${scrapeType}_${externalId}_${timestamp}.png`;
-      const screenshotPath = path.join(this.screenshotDir, screenshotFilename);
+      // Take screenshot only if requested
+      let screenshotPath: string | null = null;
+      
+      if (takeScreenshot) {
+        const timestamp = Date.now();
+        const screenshotFilename = `${scrapeType}_${externalId}_${timestamp}.png`;
+        screenshotPath = path.join(this.screenshotDir, screenshotFilename);
 
-      await page.screenshot({
-        path: screenshotPath,
-        fullPage: true,
-      });
+        await page.screenshot({
+          path: screenshotPath,
+          fullPage: true,
+        });
+        
+        console.log(`📸 Screenshot saved: ${screenshotPath}`);
+      }
 
       // Get viewport and user agent
       const viewport = page.viewportSize();
@@ -115,7 +123,7 @@ export class ScrapingDebugService {
       await this.debugRepo.save(debug);
 
       console.log(
-        `✅ Cached scraping debug data for ${scrapeType} ${externalId} (${scrapeDurationMs}ms)`,
+        `✅ Cached scraping debug data for ${scrapeType} ${externalId} (${scrapeDurationMs}ms)${takeScreenshot ? ' with screenshot' : ''}`,
       );
     } catch (error) {
       console.error('Failed to cache scraping debug:', error);

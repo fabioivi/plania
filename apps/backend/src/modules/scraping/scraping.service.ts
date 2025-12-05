@@ -791,6 +791,8 @@ export class ScrapingService {
       const totalFields = 27; // Expected total fields
       const missingFields = extractedFields.filter(f => planData[f] === null || planData[f] === undefined || planData[f] === '');
       
+      // Cache scraping result (screenshot disabled by default for performance)
+      // To enable screenshot, add: takeScreenshot: true
       await this.debugService.cacheScraping({
         externalId: planId,
         scrapeType: 'teaching_plan',
@@ -807,6 +809,7 @@ export class ScrapingService {
         },
         startTime,
         success: true,
+        // takeScreenshot: true, // Uncomment to enable screenshot capture
       });
 
       return {
@@ -816,7 +819,7 @@ export class ScrapingService {
     } catch (error) {
       console.error(`❌ Get teaching plan details failed for plan ${planId}:`, error);
       
-      // Cache failed scraping attempt for analysis
+      // Cache failed scraping attempt for analysis (with screenshot for debugging)
       await this.debugService.cacheScraping({
         externalId: planId,
         scrapeType: 'teaching_plan',
@@ -827,6 +830,7 @@ export class ScrapingService {
         errors: [error.message, error.stack],
         startTime,
         success: false,
+        takeScreenshot: true, // Enable screenshot on errors for debugging
       });
       
       return {

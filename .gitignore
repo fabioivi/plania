@@ -10,3 +10,8 @@ build
 .idea
 coverage
 .turbo
+
+# Backend storage and screenshots
+storage/
+apps/backend/storage/
+**/scraping-debug/screenshots/

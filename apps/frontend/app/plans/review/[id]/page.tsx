@@ -8,9 +8,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Checkbox } from "@/components/ui/checkbox"
-import { DataTable } from "@/components/ui/data-table"
-import { ColumnDef } from "@tanstack/react-table"
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -23,25 +20,11 @@ import {
   Wand2,
   Upload,
   CheckCircle2,
-  Eye,
-  Pencil,
-  Trash2
+  Eye
 } from "lucide-react"
 import Link from "next/link"
 import { PlanHeader } from "@/components/layout/plan-header"
-
-// Tipo para o cronograma
-type WeekSchedule = {
-  id: string
-  week: number
-  month: string
-  period: string
-  classes: number
-  observations: string
-  content: string
-  teachingTechniques: string
-  teachingResources: string
-}
+import { WorkProposalTable, type WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
 
 // Dados de exemplo
 const weekScheduleData: WeekSchedule[] = [
@@ -245,133 +228,6 @@ const weekScheduleData: WeekSchedule[] = [
   },
 ]
 
-// Definição das colunas
-const columns: ColumnDef<WeekSchedule>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Selecionar todas"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Selecionar linha"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-    size: 50,
-  },
-  {
-    id: "period",
-    header: "Período",
-    cell: ({ row }) => {
-      const monthFull = row.original.month.split(" - ")[1] || row.original.month
-      return (
-        <div className="text-sm">
-          <div className="font-medium">{monthFull}</div>
-          <div className="text-sm">{row.original.period}</div>
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "classes",
-    header: "Nº Aulas",
-    cell: ({ row }) => (
-      <Badge>{row.getValue("classes")}</Badge>
-    ),
-  },
-  {
-    accessorKey: "observations",
-    header: "Observações",
-    cell: ({ row }) => {
-      const obs = row.getValue("observations") as string
-      return obs ? (
-        <Badge variant="secondary" className="text-xs">{obs}</Badge>
-      ) : (
-        <span className="text-muted-foreground text-xs">-</span>
-      )
-    },
-  },
-  {
-    accessorKey: "content",
-    header: "Conteúdo",
-    cell: ({ row }) => (
-      <div className="w-48 text-sm whitespace-normal">
-        {row.getValue("content")}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "teachingTechniques",
-    header: "Técnicas de Ensino",
-    cell: ({ row }) => {
-      const techniques = (row.getValue("teachingTechniques") as string).split(", ")
-      return (
-        <div className="flex gap-1.5 flex-wrap max-w-xs">
-          {techniques.map((technique, index) => (
-            <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700">
-              {technique}
-            </Badge>
-          ))}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "teachingResources",
-    header: "Recursos de Ensino",
-    cell: ({ row }) => {
-      const resources = (row.getValue("teachingResources") as string).split(", ")
-      return (
-        <div className="flex gap-1.5 flex-wrap max-w-xs">
-          {resources.map((resource, index) => (
-            <Badge key={index} variant="secondary" className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700">
-              {resource}
-            </Badge>
-          ))}
-        </div>
-      )
-    },
-  },
-  {
-    id: "actions",
-    header: "Ações",
-    cell: ({ row }) => {
-      return (
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              // TODO: Abrir modal de edição
-              console.log("Editar semana", row.original)
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              // TODO: Confirmar e excluir semana
-              console.log("Excluir semana", row.original)
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      )
-    },
-  },
-]
-
 export default function PlanReviewPage() {
   const [showAiAssistant, setShowAiAssistant] = useState(true)
   const [aiPrompt, setAiPrompt] = useState("")
@@ -390,6 +246,16 @@ export default function PlanReviewPage() {
     
     // Remover mensagem de sucesso após 5 segundos
     setTimeout(() => setFillSuccess(false), 5000)
+  }
+
+  const handleEditWeek = (week: WeekSchedule) => {
+    // TODO: Abrir modal de edição
+    console.log("Editar semana", week)
+  }
+
+  const handleDeleteWeek = (week: WeekSchedule) => {
+    // TODO: Confirmar e excluir semana
+    console.log("Excluir semana", week)
   }
 
   return (
@@ -598,7 +464,13 @@ export default function PlanReviewPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <DataTable columns={columns} data={weekScheduleData} />
+                  <WorkProposalTable 
+                    data={weekScheduleData}
+                    showCheckbox={true}
+                    showActions={true}
+                    onEdit={handleEditWeek}
+                    onDelete={handleDeleteWeek}
+                  />
 
                   <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                     <div className="flex flex-col gap-1">

@@ -1,0 +1,176 @@
+// Exemplo de uso do WorkProposalTable na página teaching-plans/[id]/page.tsx
+// Este exemplo mostra como integrar o componente em uma página de visualização
+
+import { WorkProposalTable, type WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
+
+// Supondo que você tem os dados do plano de ensino
+const plan = {
+  // ... outros dados do plano
+  propostaTrabalho: [
+    {
+      id: "1",
+      mes: "Agosto",
+      periodo: "12 a 16",
+      numAulas: 2,
+      observacoes: "",
+      conteudo: "Introdução à disciplina",
+      metodologia: "Aula expositiva, Discussão em grupo",
+      recursos: "Projetor, Quadro branco"
+    }
+    // ... mais semanas
+  ]
+}
+
+// Converter dados do backend para o formato do componente
+const convertToWeekSchedule = (propostaTrabalho: any[]): WeekSchedule[] => {
+  return propostaTrabalho.map((item, index) => ({
+    id: item.id || `week-${index + 1}`,
+    week: index + 1,
+    month: item.mes || item.month,
+    period: item.periodo || item.period,
+    classes: item.numAulas || item.classes,
+    observations: item.observacoes || item.observations || "",
+    content: item.conteudo || item.content,
+    teachingTechniques: item.metodologia || item.teachingTechniques,
+    teachingResources: item.recursos || item.teachingResources
+  }))
+}
+
+// Exemplo 1: Página de visualização (sem interações)
+export default function TeachingPlanViewPage() {
+  return (
+    <div>
+      {/* ... header e outros conteúdos */}
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Proposta de Trabalho (Cronograma)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WorkProposalTable 
+            data={convertToWeekSchedule(plan.propostaTrabalho)}
+            showCheckbox={false}
+            showActions={false}
+          />
+          
+          {/* Totalizador de aulas */}
+          <div className="mt-4 p-4 bg-muted rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">Total de Aulas:</span>
+              <Badge variant="secondary" className="text-lg px-4">
+                {plan.propostaTrabalho.reduce((sum, week) => sum + week.numAulas, 0)} aulas
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// Exemplo 2: Página de edição/review (com interações)
+export default function PlanReviewPage() {
+  const [weeks, setWeeks] = useState<WeekSchedule[]>(
+    convertToWeekSchedule(plan.propostaTrabalho)
+  )
+
+  const handleEditWeek = (week: WeekSchedule) => {
+    // Abrir modal de edição
+    console.log("Editando:", week)
+    // setShowEditModal(true)
+    // setSelectedWeek(week)
+  }
+
+  const handleDeleteWeek = (week: WeekSchedule) => {
+    // Confirmar e remover
+    if (confirm(`Deseja realmente excluir a semana ${week.week}?`)) {
+      setWeeks(weeks.filter(w => w.id !== week.id))
+    }
+  }
+
+  return (
+    <div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Cronograma - Edição</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <WorkProposalTable 
+            data={weeks}
+            showCheckbox={true}
+            showActions={true}
+            onEdit={handleEditWeek}
+            onDelete={handleDeleteWeek}
+          />
+          
+          <Button variant="outline" className="w-full gap-2">
+            <Wand2 className="h-4 w-4" />
+            Adicionar Nova Semana
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// Exemplo 3: Integração com API
+export default function TeachingPlanFromAPI() {
+  const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState<any>(null)
+
+  useEffect(() => {
+    loadPlan()
+  }, [])
+
+  const loadPlan = async () => {
+    try {
+      const response = await api.get(`/teaching-plans/${planId}`)
+      setPlan(response.data)
+    } catch (error) {
+      console.error("Erro ao carregar plano:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) return <div>Carregando...</div>
+  if (!plan) return <div>Plano não encontrado</div>
+
+  return (
+    <div>
+      <WorkProposalTable 
+        data={convertToWeekSchedule(plan.propostaTrabalho || [])}
+      />
+    </div>
+  )
+}
+
+// Exemplo 4: Com filtros personalizados
+export default function TeachingPlanWithCustomFilters() {
+  const [filteredData, setFilteredData] = useState<WeekSchedule[]>(allWeeks)
+
+  const filterByMonth = (month: string) => {
+    const filtered = allWeeks.filter(week => week.month.includes(month))
+    setFilteredData(filtered)
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filtros customizados */}
+      <div className="flex gap-2">
+        <Button onClick={() => filterByMonth("Agosto")}>Agosto</Button>
+        <Button onClick={() => filterByMonth("Setembro")}>Setembro</Button>
+        <Button onClick={() => setFilteredData(allWeeks)}>Todos</Button>
+      </div>
+
+      <WorkProposalTable 
+        data={filteredData}
+        showCheckbox={false}
+        showActions={false}
+      />
+    </div>
+  )
+}

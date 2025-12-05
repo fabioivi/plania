@@ -89,6 +89,7 @@ export function WorkProposalTable({
   columns.push({
     id: "period",
     header: "Período",
+    accessorFn: (row) => `${row.month} ${row.period}`,
     cell: ({ row }) => {
       const monthFull = row.original.month.split(" - ")[1] || row.original.month
       return (
@@ -98,6 +99,7 @@ export function WorkProposalTable({
         </div>
       )
     },
+    enableGlobalFilter: true,
   })
 
   // Coluna de número de aulas
@@ -107,6 +109,7 @@ export function WorkProposalTable({
     cell: ({ row }) => (
       <Badge>{row.getValue("classes")}</Badge>
     ),
+    enableGlobalFilter: true,
   })
 
   // Coluna de observações
@@ -121,6 +124,7 @@ export function WorkProposalTable({
         <span className="text-muted-foreground text-xs">-</span>
       )
     },
+    enableGlobalFilter: true,
   })
 
   // Coluna de conteúdo
@@ -132,6 +136,7 @@ export function WorkProposalTable({
         {row.getValue("content")}
       </div>
     ),
+    enableGlobalFilter: true,
   })
 
   // Coluna de técnicas de ensino (badges azuis)
@@ -154,6 +159,7 @@ export function WorkProposalTable({
         </div>
       )
     },
+    enableGlobalFilter: true,
   })
 
   // Coluna de recursos de ensino (badges verdes) - apenas se existir
@@ -179,6 +185,7 @@ export function WorkProposalTable({
         </div>
       )
     },
+    enableGlobalFilter: true,
   })
 
   // Coluna de ações (opcional)

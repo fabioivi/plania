@@ -11,6 +11,7 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
@@ -41,6 +42,7 @@ export function DataTable<TData, TValue>({
     []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = React.useState("")
 
   const table = useReactTable({
     data,
@@ -50,28 +52,43 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      globalFilter,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      const search = filterValue.toLowerCase()
+      
+      // Buscar em todos os valores da linha
+      const rowValues = Object.values(row.original as object)
+      
+      return rowValues.some((value) => {
+        if (value === null || value === undefined) return false
+        
+        // Converter para string e buscar
+        const stringValue = String(value).toLowerCase()
+        return stringValue.includes(search)
+      })
+    },
   })
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Filtrar semanas..."
-          value={(table.getColumn("month")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("month")?.setFilterValue(event.target.value)
-          }
+          placeholder="Buscar em todos os campos..."
+          value={globalFilter ?? ""}
+          onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
         />
       </div>

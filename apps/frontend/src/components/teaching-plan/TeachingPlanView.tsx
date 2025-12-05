@@ -53,6 +53,8 @@ export interface TeachingPlanData {
     observacoes?: string
     conteudo?: string
     metodologia?: string
+    tecnicasEnsino?: string[]
+    recursosEnsino?: string[]
   }>
   
   // Bibliografia
@@ -348,8 +350,10 @@ export function TeachingPlanView({
         classes: typeof item.numAulas === 'string' ? parseInt(item.numAulas) || 0 : (item.numAulas || 0),
         observations: item.observacoes || '',
         content: item.conteudo || '',
-        teachingTechniques: item.metodologia || '',
-        teachingResources: undefined // Planos scrapeados não têm recursos separados
+        // Usar tecnicasEnsino se disponível, senão fallback para metodologia
+        teachingTechniques: item.tecnicasEnsino ? item.tecnicasEnsino.join(', ') : (item.metodologia || ''),
+        // Usar recursosEnsino se disponível
+        teachingResources: item.recursosEnsino ? item.recursosEnsino.join(', ') : undefined
       }))
     }
     

@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bull';
 import { AuthQueueProcessor } from './auth-queue.processor';
 import { AcademicModule } from '../academic/academic.module';
 import { ScrapingModule } from '../scraping/scraping.module';
+import { SyncModule } from '../sync/sync.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ScrapingModule } from '../scraping/scraping.module';
     ),
     AcademicModule,
     ScrapingModule,
+    SyncModule,
   ],
   providers: [AuthQueueProcessor],
   exports: [BullModule],

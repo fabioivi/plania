@@ -2,12 +2,14 @@ import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import { AcademicService } from '../academic/academic.service';
 import { ScrapingService } from '../scraping/scraping.service';
+import { SyncEventsService } from '../sync/sync-events.service';
 
 @Processor('auth-queue')
 export class AuthQueueProcessor {
   constructor(
     private academicService: AcademicService,
     private scrapingService: ScrapingService,
+    private syncEventsService: SyncEventsService,
   ) {}
 
   @Process('verify-credential')
@@ -75,7 +77,14 @@ export class AuthQueueProcessor {
     const { userId, credentialId } = job.data;
 
     try {
-      console.log(`Syncing diaries for user ${userId}`);
+      console.log(`🔄 Iniciando sincronização para usuário ${userId}`);
+      
+      // Enviar evento: iniciando
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'starting',
+        message: 'Iniciando sincronização com o sistema acadêmico...',
+      });
       
       // Get decrypted credential
       const credential = await this.academicService.getDecryptedCredential(
@@ -83,8 +92,15 @@ export class AuthQueueProcessor {
       );
 
       if (credential.system !== 'ifms') {
-        throw new Error('Only IFMS system is supported');
+        throw new Error('Apenas o sistema IFMS é suportado no momento');
       }
+
+      // Enviar evento: buscando diários
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'diaries',
+        message: 'Conectando ao sistema e buscando diários de classe...',
+      });
 
       // Scrape diaries from IFMS
       const result = await this.scrapingService.getAllDiaries(
@@ -93,7 +109,7 @@ export class AuthQueueProcessor {
       );
 
       if (!result.success || !result.data) {
-        throw new Error(result.message || 'Failed to fetch diaries');
+        throw new Error(result.message || 'Falha ao buscar diários do sistema acadêmico');
       }
 
       // Save diaries to database (only non-approved ones)
@@ -102,7 +118,16 @@ export class AuthQueueProcessor {
         result.data,
       );
 
-      console.log(`Diaries synced: ${syncResult.synced}`);
+      console.log(`✅ ${syncResult.synced} diários sincronizados`);
+
+      // Enviar evento: diários sincronizados
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'diaries',
+        message: `${syncResult.synced} ${syncResult.synced === 1 ? 'diário encontrado' : 'diários encontrados'}. Buscando planos de ensino...`,
+        current: syncResult.synced,
+        total: syncResult.synced,
+      });
 
       // Now sync teaching plans for each diary
       let totalPlans = 0;
@@ -123,8 +148,21 @@ export class AuthQueueProcessor {
         await page.waitForTimeout(3000);
 
         // Scrape teaching plans for each diary
-        for (const diary of diaries) {
-          console.log(`Syncing teaching plans for diary ${diary.externalId}`);
+        for (let i = 0; i < diaries.length; i++) {
+          const diary = diaries[i];
+          const diaryName = (diary as any).unidadeCurricular || `Diário ${diary.externalId}`;
+          
+          console.log(`📚 Processando diário ${i + 1}/${diaries.length}: ${diaryName}`);
+          
+          // Enviar evento: processando diário específico
+          this.syncEventsService.sendEvent(userId, {
+            userId,
+            stage: 'plans',
+            message: `Buscando planos de ensino...`,
+            diaryName,
+            current: i + 1,
+            total: diaries.length,
+          });
           
           // Get teaching plans list
           const plansListResult = await this.scrapingService.getAllTeachingPlans(
@@ -133,12 +171,27 @@ export class AuthQueueProcessor {
           );
 
           if (!plansListResult.success || !plansListResult.data) {
-            console.log(`No teaching plans found for diary ${diary.externalId}`);
+            console.log(`⚠️ Nenhum plano de ensino encontrado para ${diaryName}`);
             continue;
           }
 
           // For each plan, get details and save
-          for (const planSummary of plansListResult.data) {
+          const plans = plansListResult.data;
+          for (let j = 0; j < plans.length; j++) {
+            const planSummary = plans[j];
+            const planName = `Plano #${planSummary.externalId}`;
+            
+            // Enviar evento: processando plano específico
+            this.syncEventsService.sendEvent(userId, {
+              userId,
+              stage: 'plans',
+              message: `Extraindo dados do plano de ensino ${j + 1}/${plans.length}...`,
+              diaryName,
+              planName,
+              current: i + 1,
+              total: diaries.length,
+            });
+            
             const planDetailsResult = await this.scrapingService.getTeachingPlanDetails(
               page,
               diary.externalId,
@@ -161,24 +214,41 @@ export class AuthQueueProcessor {
               );
 
               totalPlans++;
-              console.log(`Saved teaching plan #${planSummary.externalId}`);
+              console.log(`✅ Plano de ensino salvo: ${planName}`);
             }
           }
         }
 
-        console.log(`Total teaching plans synced: ${totalPlans}`);
+        console.log(`✅ Total de planos de ensino sincronizados: ${totalPlans}`);
+
+        // Enviar evento: concluído
+        this.syncEventsService.sendEvent(userId, {
+          userId,
+          stage: 'completed',
+          message: `Sincronização concluída com sucesso! ${syncResult.synced} ${syncResult.synced === 1 ? 'diário' : 'diários'} e ${totalPlans} ${totalPlans === 1 ? 'plano de ensino' : 'planos de ensino'} sincronizados.`,
+          current: diaries.length,
+          total: diaries.length,
+        });
 
         return { 
           success: true, 
           synced: syncResult.synced,
           plansSynced: totalPlans,
-          message: `${syncResult.synced} diários e ${totalPlans} planos de ensino sincronizados` 
+          message: `${syncResult.synced} diários e ${totalPlans} planos de ensino sincronizados com sucesso` 
         };
       } finally {
         await context.close();
       }
     } catch (error) {
-      console.error('Diaries sync failed:', error);
+      console.error('❌ Falha na sincronização de diários:', error);
+      
+      // Enviar evento: erro
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'error',
+        message: error.message || 'Erro ao sincronizar diários. Por favor, tente novamente.',
+      });
+      
       return { 
         success: false, 
         error: error.message || 'Erro ao sincronizar diários' 

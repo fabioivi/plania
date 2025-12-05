@@ -11,6 +11,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useState, useEffect } from "react"
 import { academicApi, Diary, TeachingPlan } from "@/services/api"
 import { toast } from "sonner"
+import { useSyncProgress } from "@/hooks/useSyncProgress"
+import { SyncProgressDisplay } from "@/components/sync/SyncProgressDisplay"
 
 export default function DisciplinesPage() {
   const [diaries, setDiaries] = useState<Diary[]>([])
@@ -19,6 +21,9 @@ export default function DisciplinesPage() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
+  
+  // Hook de progresso SSE
+  const { progress, isConnected, connect, disconnect } = useSyncProgress()
 
   useEffect(() => {
     loadDiaries()
@@ -65,24 +70,42 @@ export default function DisciplinesPage() {
   const handleSync = async () => {
     try {
       setSyncing(true)
-      toast.info('Sincronizando diários...')
+      
+      // Conectar ao SSE para receber atualizações em tempo real
+      connect()
+      
+      toast.info('Iniciando sincronização...')
       
       const result = await academicApi.syncDiaries()
       
       if (result.success) {
-        toast.success(result.message)
-        // Wait a bit for the sync to complete, then reload
-        await new Promise(resolve => setTimeout(resolve, 3000))
+        toast.success(result.message || 'Sincronização concluída com sucesso!')
+        // Wait for sync to complete, then reload
+        await new Promise(resolve => setTimeout(resolve, 2000))
         await loadDiaries()
       } else {
-        toast.error(result.message)
+        toast.error(result.message || 'Erro ao sincronizar diários')
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao sincronizar diários')
     } finally {
       setSyncing(false)
+      // Desconectar SSE após alguns segundos
+      setTimeout(() => {
+        disconnect()
+      }, 3000)
     }
   }
+  
+  // Detectar quando sincronização termina pelo progresso
+  useEffect(() => {
+    if (progress?.stage === 'completed') {
+      // Recarregar diários quando completar
+      setTimeout(() => {
+        loadDiaries()
+      }, 1000)
+    }
+  }, [progress])
 
   const formatLastSync = () => {
     if (!lastSync) return 'Nunca'
@@ -155,6 +178,13 @@ export default function DisciplinesPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Sync Progress Display */}
+        {(isConnected || syncing) && (
+          <div className="mb-6">
+            <SyncProgressDisplay progress={progress} isConnected={isConnected} />
+          </div>
+        )}
 
         {/* Actions Bar */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">

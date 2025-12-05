@@ -7,6 +7,7 @@ import { AcademicModule } from './modules/academic/academic.module';
 import { ScrapingModule } from './modules/scraping/scraping.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { QueueModule } from './modules/queue/queue.module';
+import { SyncModule } from './modules/sync/sync.module';
 import { CryptoService } from './common/services/crypto.service';
 
 @Module({
@@ -53,6 +54,7 @@ import { CryptoService } from './common/services/crypto.service';
     ScrapingModule,
     PlansModule,
     QueueModule,
+    SyncModule,
   ],
   providers: [CryptoService],
   exports: [CryptoService],

@@ -408,8 +408,43 @@ export class AuthQueueProcessor {
           throw new Error(fullPlanData.message || 'Falha ao extrair dados do plano');
         }
 
+        // Mapeia os dados extraídos para os campos da entidade
+        const planData = fullPlanData.data;
+        const updateData: any = {
+          status: planData.status,
+          statusCoord: planData.statusCoord,
+          campus: planData.campus,
+          anoSemestre: planData.anoSemestre,
+          curso: planData.curso,
+          unidadeCurricular: planData.unidadeCurricular,
+          professores: planData.professores,
+          cargaHorariaTotal: planData.cargaHorariaTotal,
+          numSemanas: planData.numSemanas,
+          numAulasTeorica: planData.numAulasTeorica,
+          numAulasPraticas: planData.numAulasPraticas,
+          ementa: planData.ementa,
+          objetivoGeral: planData.objetivoGeral,
+          objetivosEspecificos: planData.objetivosEspecificos,
+          avaliacaoAprendizagem: planData.avaliacaoAprendizagem,
+          observacoesAvaliacoes: planData.observacoesAvaliacoes,
+          recuperacaoAprendizagem: planData.recuperacaoAprendizagem,
+          propostaTrabalho: planData.propostaTrabalho,
+        };
+
+        // Combina bibliografias em um único campo de referências
+        if (planData.bibliografiaBasica || planData.bibliografiaComplementar) {
+          const referencias = [];
+          if (planData.bibliografiaBasica?.length > 0) {
+            referencias.push('BIBLIOGRAFIA BÁSICA:', ...planData.bibliografiaBasica, '');
+          }
+          if (planData.bibliografiaComplementar?.length > 0) {
+            referencias.push('BIBLIOGRAFIA COMPLEMENTAR:', ...planData.bibliografiaComplementar);
+          }
+          updateData.referencias = referencias.join('\n');
+        }
+
         // Atualiza no banco
-        await this.academicService.updateTeachingPlan(plan.id, fullPlanData.data);
+        await this.academicService.updateTeachingPlan(plan.id, updateData);
         console.log(`✅ Plano ${plan.unidadeCurricular} sincronizado`);
 
         return { success: true, plan };

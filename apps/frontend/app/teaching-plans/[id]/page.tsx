@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Download, Edit, FileText, Loader2, Printer } from "lucide-react"
+import { ArrowLeft, Download, Edit, FileText, Loader2, Printer, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
@@ -18,6 +18,7 @@ export default function TeachingPlanViewPage() {
   
   const [plan, setPlan] = useState<TeachingPlan | null>(null)
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     loadPlan()
@@ -39,6 +40,24 @@ export default function TeachingPlanViewPage() {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      await api.post(`/academic/teaching-plans/${planId}/sync`)
+      toast.success('Plano de ensino sincronizado com sucesso!')
+      
+      // Recarrega o plano
+      setLoading(true)
+      await loadPlan()
+      setLoading(false)
+    } catch (error: any) {
+      console.error('Erro ao sincronizar plano:', error)
+      toast.error(error.response?.data?.message || 'Erro ao sincronizar plano de ensino')
+    } finally {
+      setSyncing(false)
+    }
   }
 
   if (loading) {
@@ -134,6 +153,15 @@ export default function TeachingPlanViewPage() {
               </div>
               
               <div className="flex gap-2 print:hidden">
+                <Button 
+                  variant="outline" 
+                  className="gap-2" 
+                  onClick={handleSync}
+                  disabled={syncing}
+                >
+                  <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+                  {syncing ? 'Sincronizando...' : 'Sincronizar'}
+                </Button>
                 <Button variant="outline" className="gap-2" onClick={handlePrint}>
                   <Printer className="h-4 w-4" />
                   Imprimir

@@ -47,14 +47,11 @@ function SortableDiaryItem({ item }: { item: DiaryContent }) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
-    return date.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    })
-  }
-
-  const getTypeLabel = (type: 'N' | 'A' | 'R') => {
+    const day = date.getUTCDate().toString().padStart(2, '0')
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
+    const year = date.getUTCFullYear()
+    return `${day}/${month}/${year}`
+  }  const getTypeLabel = (type: 'N' | 'A' | 'R') => {
     switch (type) {
       case 'N': return 'Normal'
       case 'A': return 'Antecipação'

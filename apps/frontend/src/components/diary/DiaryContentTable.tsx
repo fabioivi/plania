@@ -77,7 +77,10 @@ function SortableContentCell({ content, contentId }: { content: string, contentI
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr)
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const day = date.getUTCDate().toString().padStart(2, '0')
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
+  const year = date.getUTCFullYear()
+  return `${day}/${month}/${year}`
 }
 
 const getTypeLabel = (type: 'N' | 'A' | 'R') => {
@@ -196,7 +199,7 @@ export function DiaryContentTable({
                   >
                     {/* ID do Conteúdo */}
                     <td className="p-3">
-                      <div className={`flex items-center gap-1 ${isConnectedToAbove ? 'pl-4' : ''} ${hasAnticipation ? 'line-through decoration-2' : ''}`}>
+                      <div className={`flex items-center gap-1 ${isConnectedToAbove ? 'pl-4' : ''}`}>
                         {isConnectedToAbove && (
                           <span className="text-green-500 mr-1 font-bold">└─</span>
                         )}
@@ -219,7 +222,7 @@ export function DiaryContentTable({
 
                     {/* Data (fixo) */}
                     <td className="p-3">
-                      <div className={`flex items-center gap-2 ${hasAnticipation ? 'line-through' : ''}`}>
+                      <div className="flex items-center gap-2">
                         <Lock className="h-3 w-3 text-muted-foreground" />
                         <div className="flex items-center gap-1 text-sm">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -230,7 +233,7 @@ export function DiaryContentTable({
 
                     {/* Horário (fixo) */}
                     <td className="p-3">
-                      <div className={`flex items-center gap-2 ${hasAnticipation ? 'line-through' : ''}`}>
+                      <div className="flex items-center gap-2">
                         <Lock className="h-3 w-3 text-muted-foreground" />
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="h-4 w-4" />
@@ -241,7 +244,7 @@ export function DiaryContentTable({
 
                     {/* Tipo (fixo) */}
                     <td className="p-3">
-                      <div className={`flex flex-col gap-1 ${hasAnticipation ? 'line-through decoration-2' : ''}`}>
+                      <div className="flex flex-col gap-1">
                         <Badge variant="outline" className={`${getTypeColor(item.type)} text-xs font-medium`}>
                           {getTypeLabel(item.type)}
                         </Badge>
@@ -256,12 +259,10 @@ export function DiaryContentTable({
 
                     {/* Conteúdo (sortable) */}
                     <td className="p-3">
-                      <div className={hasAnticipation ? 'line-through decoration-2 decoration-gray-400' : ''}>
-                        <SortableContentCell 
-                          content={contentTexts[index]?.content || ''} 
-                          contentId={contentTexts[index]?.id || item.id}
-                        />
-                      </div>
+                      <SortableContentCell 
+                        content={contentTexts[index]?.content || ''} 
+                        contentId={contentTexts[index]?.id || item.id}
+                      />
                     </td>
                   </tr>
                   )

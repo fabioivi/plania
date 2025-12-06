@@ -39,15 +39,29 @@ export default function DiaryContentPage() {
       const normalClasses = data.filter(item => !item.isAntecipation)
       const anticipations = data.filter(item => item.isAntecipation)
       
-      // Identificar IDs de aulas que foram antecipadas
+      // Identificar IDs de aulas que foram antecipadas (para não incluir na ordem cronológica)
       const anticipatedClassIds = new Set(anticipations.map(ant => ant.originalContentId))
       
-      // Separar aulas que NÃO foram antecipadas das que foram
+      // Criar mapa de antecipações por originalContentId para fácil lookup
+      const anticipationMap = new Map(
+        anticipations.map(ant => [ant.originalContentId, ant])
+      )
+      
+      // Criar mapa de aulas canceladas (que foram antecipadas)
+      const anticipatedClassMap = new Map(
+        normalClasses
+          .filter(cls => anticipatedClassIds.has(cls.contentId))
+          .map(cls => [cls.contentId, cls])
+      )
+      
+      // Pegar apenas as aulas regulares (que não foram antecipadas)
       const regularClasses = normalClasses.filter(cls => !anticipatedClassIds.has(cls.contentId))
-      const anticipatedClasses = normalClasses.filter(cls => anticipatedClassIds.has(cls.contentId))
       
-      // Ordenar apenas as aulas regulares (que não foram antecipadas) por data e horário
-      const sortedRegular = regularClasses.sort((a, b) => {
+      // Adicionar as antecipações na lista de aulas regulares
+      const allActiveClasses = [...regularClasses, ...anticipations]
+      
+      // Ordenar todas as aulas ativas (regulares + antecipações) por data e horário
+      const sortedClasses = allActiveClasses.sort((a, b) => {
         const dateA = new Date(a.date).getTime()
         const dateB = new Date(b.date).getTime()
         if (dateA !== dateB) {
@@ -56,37 +70,19 @@ export default function DiaryContentPage() {
         return a.timeRange.localeCompare(b.timeRange)
       })
       
-      // Ordenar as antecipações por data (para inseri-las na ordem correta)
-      const sortedAnticipations = anticipations.sort((a, b) => {
-        const dateA = new Date(a.date).getTime()
-        const dateB = new Date(b.date).getTime()
-        if (dateA !== dateB) {
-          return dateA - dateB
-        }
-        return a.timeRange.localeCompare(b.timeRange)
-      })
-      
-      // Criar array final: inserir pares (antecipação + original) na posição correta
+      // Construir resultado final: quando encontrar uma antecipação, inserir a aula cancelada logo abaixo
       const result: DiaryContent[] = []
-      const processedAnticipations = new Set<string>()
-      
-      // Processar todas as antecipações primeiro, inserindo na ordem cronológica delas
-      sortedAnticipations.forEach(anticipation => {
-        // Adicionar a antecipação primeiro
-        result.push(anticipation)
+      sortedClasses.forEach(item => {
+        result.push(item)
         
-        // Adicionar a aula original logo abaixo
-        const originalClass = anticipatedClasses.find(
-          cls => cls.contentId === anticipation.originalContentId
-        )
-        if (originalClass) {
-          result.push(originalClass)
+        // Se for uma antecipação, adicionar a aula original (cancelada) logo abaixo
+        if (item.isAntecipation && item.originalContentId) {
+          const cancelledClass = anticipatedClassMap.get(item.originalContentId)
+          if (cancelledClass) {
+            result.push(cancelledClass)
+          }
         }
-        processedAnticipations.add(anticipation.id)
       })
-      
-      // Adicionar as aulas regulares após os pares de antecipação
-      result.push(...sortedRegular)
       
       setContent(result)
     } catch (err: any) {

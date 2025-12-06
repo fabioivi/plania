@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { AcademicController } from './academic.controller';
@@ -9,6 +9,7 @@ import { DiaryContent } from './diary-content.entity';
 import { TeachingPlan } from './teaching-plan.entity';
 import { TeachingPlanHistory } from './teaching-plan-history.entity';
 import { CryptoService } from '../../common/services/crypto.service';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
   imports: [
@@ -22,9 +23,13 @@ import { CryptoService } from '../../common/services/crypto.service';
     BullModule.registerQueue({
       name: 'auth-queue',
     }),
+    forwardRef(() => QueueModule),
   ],
   controllers: [AcademicController],
-  providers: [AcademicService, CryptoService],
+  providers: [
+    AcademicService, 
+    CryptoService,
+  ],
   exports: [AcademicService],
 })
 export class AcademicModule {}

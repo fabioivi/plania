@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, BookOpen, Loader2, FileText } from "lucide-react"
+import { ArrowLeft, BookOpen, Loader2, FileText, RefreshCw } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { academicApi, DiaryContent } from "@/services/api"
@@ -19,6 +19,7 @@ export default function DiaryContentPage() {
 
   const [content, setContent] = useState<DiaryContent[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
   const [diaryInfo, setDiaryInfo] = useState<any>(null)
   const [stats, setStats] = useState<{ total: number; realClasses: number; anticipations: number } | null>(null)
 
@@ -129,6 +130,29 @@ export default function DiaryContentPage() {
     toast.success('Ordem atualizada!')
   }
 
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const result = await academicApi.syncSpecificDiary(diaryId)
+      toast.success(`Diário sincronizado! ${result.synced} conteúdos atualizados`)
+      
+      // Força o recarregamento dos dados
+      setLoading(true)
+      await Promise.all([
+        loadDiaryContent(),
+        loadStats(),
+        loadDiaryInfo()
+      ])
+      setLoading(false)
+      
+    } catch (error: any) {
+      console.error('Erro ao sincronizar diário:', error)
+      toast.error(error.response?.data?.message || 'Erro ao sincronizar diário')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
@@ -154,6 +178,16 @@ export default function DiaryContentPage() {
                 </p>
               )}
             </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSync}
+              disabled={syncing}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar'}
+            </Button>
           </div>
 
           {/* Diary Info Card */}
@@ -167,6 +201,10 @@ export default function DiaryContentPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">ID do Diário (IFMS)</p>
+                    <p className="text-sm mt-1 font-mono bg-muted px-2 py-1 rounded">{diaryInfo.externalId}</p>
+                  </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Curso</p>
                     <p className="text-sm mt-1">{diaryInfo.curso}</p>

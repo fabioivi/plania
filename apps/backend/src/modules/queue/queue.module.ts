@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { AuthQueueProcessor } from './auth-queue.processor';
 import { AcademicModule } from '../academic/academic.module';
@@ -18,11 +18,11 @@ import { SyncModule } from '../sync/sync.module';
         name: 'plans-queue',
       },
     ),
-    AcademicModule,
+    forwardRef(() => AcademicModule),
     ScrapingModule,
     SyncModule,
   ],
   providers: [AuthQueueProcessor],
-  exports: [BullModule],
+  exports: [BullModule, AuthQueueProcessor],
 })
 export class QueueModule {}

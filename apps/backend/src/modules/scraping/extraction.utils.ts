@@ -83,10 +83,10 @@ export class ExtractionUtils {
       return null;
     }
     
-    // Verify the date components match (JavaScript may auto-correct invalid dates)
-    if (date.getFullYear() !== yearNum || 
-        date.getMonth() + 1 !== monthNum || 
-        date.getDate() !== dayNum) {
+    // Verify the date components match using UTC methods (JavaScript may auto-correct invalid dates)
+    if (date.getUTCFullYear() !== yearNum || 
+        date.getUTCMonth() + 1 !== monthNum || 
+        date.getUTCDate() !== dayNum) {
       return null;
     }
     

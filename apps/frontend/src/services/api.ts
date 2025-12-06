@@ -141,12 +141,22 @@ export const academicApi = {
   },
 
   async getDiaryContent(diaryId: string): Promise<DiaryContent[]> {
-    const response = await api.get<DiaryContent[]>(`/academic/diaries/${diaryId}/content`);
+    const response = await api.get<DiaryContent[]>(`/academic/diaries/${diaryId}/content?t=${Date.now()}`);
     return response.data;
   },
 
   async getDiaryContentStats(diaryId: string): Promise<{ total: number; realClasses: number; anticipations: number }> {
-    const response = await api.get(`/academic/diaries/${diaryId}/content/stats`);
+    const response = await api.get(`/academic/diaries/${diaryId}/content/stats?t=${Date.now()}`);
+    return response.data;
+  },
+
+  async syncSpecificDiary(diaryId: string): Promise<{ success: boolean; diary: any; synced: number; realClasses: number; anticipations: number }> {
+    const response = await api.post(`/academic/diaries/${diaryId}/sync`);
+    return response.data;
+  },
+
+  async syncSpecificTeachingPlan(planId: string): Promise<{ success: boolean; plan: any }> {
+    const response = await api.post(`/academic/teaching-plans/${planId}/sync`);
     return response.data;
   },
 };

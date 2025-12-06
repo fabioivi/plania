@@ -296,4 +296,129 @@ export class AuthQueueProcessor {
       };
     }
   }
+
+  /**
+   * Sincroniza um diário específico
+   */
+  async syncSpecificDiary(userId: string, diaryId: string) {
+    console.log(`🎯 Iniciando sincronização específica do diário ${diaryId}`);
+
+    try {
+      // Busca o diário específico
+      const diary = await this.academicService.findDiaryById(userId, diaryId);
+      if (!diary) {
+        throw new Error(`Diário ${diaryId} não encontrado`);
+      }
+
+      // Get credential
+      const credentials = await this.academicService.getCredentials(userId);
+      const credential = credentials.find(c => c.system === 'ifms');
+      if (!credential) {
+        throw new Error('Credencial IFMS não encontrada');
+      }
+
+      const decryptedCred = await this.academicService.getDecryptedCredential(credential.id);
+
+      // Create browser context and login
+      const context = await this.scrapingService.createContext();
+      const page = await context.newPage();
+
+      try {
+        // Login to IFMS
+        const loginUrl = 'https://academico.ifms.edu.br/administrativo/usuarios/login';
+        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForSelector('#UsuarioLoginForm', { state: 'visible', timeout: 10000 });
+        await page.fill('input[name="data[Usuario][login]"]', decryptedCred.username);
+        await page.fill('input[name="data[Usuario][senha]"]', decryptedCred.password);
+        await page.click('input[type="submit"].btn-primary');
+        await page.waitForTimeout(3000);
+
+        // Extrai conteúdo do diário
+        console.log(`📖 Extraindo conteúdo do diário: ${diary.disciplina}`);
+        const contentsResult = await this.scrapingService.scrapeClassContent(
+          page,
+          diary.externalId,
+        );
+
+        if (!contentsResult.success || !contentsResult.data) {
+          throw new Error(contentsResult.message || 'Falha ao extrair conteúdo do diário');
+        }
+
+        console.log(`📦 Dados extraídos: ${contentsResult.data.length} itens`);
+
+        // Salva no banco
+        const result = await this.academicService.syncDiaryContent(userId, diary.id, contentsResult.data);
+        console.log(`✅ Conteúdo do diário ${diary.disciplina} sincronizado: ${result.synced} salvos, ${result.realClasses} aulas, ${result.anticipations} antecipações, ${result.skipped} ignorados`);
+
+        return { success: true, diary, ...result };
+      } finally {
+        await context.close();
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao sincronizar diário ${diaryId}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Sincroniza um plano de ensino específico
+   */
+  async syncSpecificTeachingPlan(userId: string, planId: string) {
+    console.log(`🎯 Iniciando sincronização específica do plano ${planId}`);
+
+    try {
+      // Busca o plano específico
+      const plan = await this.academicService.findTeachingPlanById(userId, planId);
+      if (!plan) {
+        throw new Error(`Plano de ensino ${planId} não encontrado`);
+      }
+
+      // Get credential
+      const credentials = await this.academicService.getCredentials(userId);
+      const credential = credentials.find(c => c.system === 'ifms');
+      if (!credential) {
+        throw new Error('Credencial IFMS não encontrada');
+      }
+
+      const decryptedCred = await this.academicService.getDecryptedCredential(credential.id);
+
+      // Create browser context and login
+      const context = await this.scrapingService.createContext();
+      const page = await context.newPage();
+
+      try {
+        // Login to IFMS
+        const loginUrl = 'https://academico.ifms.edu.br/administrativo/usuarios/login';
+        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForSelector('#UsuarioLoginForm', { state: 'visible', timeout: 10000 });
+        await page.fill('input[name="data[Usuario][login]"]', decryptedCred.username);
+        await page.fill('input[name="data[Usuario][senha]"]', decryptedCred.password);
+        await page.click('input[type="submit"].btn-primary');
+        await page.waitForTimeout(3000);
+
+        // Extrai dados completos do plano
+        console.log(`📚 Extraindo dados do plano: ${plan.unidadeCurricular}`);
+        const fullPlanData = await this.scrapingService.getTeachingPlanDetails(
+          page,
+          plan.diary.externalId,
+          plan.externalId,
+        );
+
+        if (!fullPlanData.success || !fullPlanData.data) {
+          throw new Error(fullPlanData.message || 'Falha ao extrair dados do plano');
+        }
+
+        // Atualiza no banco
+        await this.academicService.updateTeachingPlan(plan.id, fullPlanData.data);
+        console.log(`✅ Plano ${plan.unidadeCurricular} sincronizado`);
+
+        return { success: true, plan };
+      } finally {
+        await context.close();
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao sincronizar plano ${planId}:`, error.message);
+      throw error;
+    }
+  }
 }

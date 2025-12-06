@@ -10,10 +10,11 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AcademicService } from './academic.service';
 import { SaveCredentialDto } from './academic.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AuthQueueProcessor } from '../queue/auth-queue.processor';
 import {
   ApiSaveCredential,
   ApiGetCredentials,
@@ -39,6 +40,7 @@ export class AcademicController {
   constructor(
     private academicService: AcademicService,
     @InjectQueue('auth-queue') private authQueue: Queue,
+    private authQueueProcessor: AuthQueueProcessor,
   ) {}
 
   @Post('credentials')
@@ -167,5 +169,21 @@ export class AcademicController {
   @ApiGetDiaryContentStatsDecorator()
   async getDiaryContentStats(@Request() req, @Param('diaryId') diaryId: string) {
     return this.academicService.getDiaryContentStats(req.user.id, diaryId);
+  }
+
+  @Post('diaries/:id/sync')
+  @ApiOperation({ summary: 'Sincroniza um diário específico' })
+  @ApiParam({ name: 'id', description: 'ID do diário' })
+  @ApiResponse({ status: 200, description: 'Diário sincronizado com sucesso' })
+  async syncDiary(@Request() req, @Param('id') id: string) {
+    return this.authQueueProcessor.syncSpecificDiary(req.user.id, id);
+  }
+
+  @Post('teaching-plans/:id/sync')
+  @ApiOperation({ summary: 'Sincroniza um plano de ensino específico' })
+  @ApiParam({ name: 'id', description: 'ID do plano de ensino' })
+  @ApiResponse({ status: 200, description: 'Plano sincronizado com sucesso' })
+  async syncTeachingPlan(@Request() req, @Param('id') id: string) {
+    return this.authQueueProcessor.syncSpecificTeachingPlan(req.user.id, id);
   }
 }

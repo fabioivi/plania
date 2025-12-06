@@ -460,6 +460,8 @@ export class AcademicService {
 
   // Sync diary content (class content from diary page)
   async syncDiaryContent(userId: string, diaryId: string, contentData: any[]) {
+    console.log(`🔄 Sincronizando conteúdo do diário ${diaryId}: ${contentData.length} itens recebidos`);
+    
     const contentsToSave: DiaryContent[] = [];
     let skippedCount = 0;
 
@@ -491,6 +493,7 @@ export class AcademicService {
 
       if (existing) {
         // Update existing content
+        console.log(`🔄 Atualizando conteúdo existente: ${item.contentId}`);
         Object.assign(existing, {
           obsId: item.obsId,
           date: parsedDate,
@@ -506,6 +509,7 @@ export class AcademicService {
         contentsToSave.push(existing);
       } else {
         // Create new content
+        console.log(`➕ Criando novo conteúdo: ${item.contentId}`);
         const content = this.diaryContentRepository.create({
           diaryId,
           contentId: item.contentId,
@@ -548,7 +552,9 @@ export class AcademicService {
         throw new Error(`Encontrados ${invalidItems.length} itens com data inválida`);
       }
 
+      console.log(`💾 Salvando ${contentsToSave.length} conteúdos no banco de dados...`);
       await this.diaryContentRepository.save(contentsToSave);
+      console.log(`✅ ${contentsToSave.length} conteúdos salvos com sucesso`);
     }
 
     if (skippedCount > 0) {
@@ -612,5 +618,26 @@ export class AcademicService {
       realClasses,
       anticipations,
     };
+  }
+
+  // Find diary by ID (for partial sync)
+  async findDiaryById(userId: string, diaryId: string): Promise<Diary | null> {
+    return await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+  }
+
+  // Find teaching plan by ID (for partial sync)
+  async findTeachingPlanById(userId: string, planId: string): Promise<TeachingPlan | null> {
+    return await this.teachingPlanRepository.findOne({
+      where: { id: planId },
+      relations: ['diary'],
+    });
+  }
+
+  // Update teaching plan (for partial sync)
+  async updateTeachingPlan(planId: string, data: Partial<TeachingPlan>): Promise<TeachingPlan> {
+    await this.teachingPlanRepository.update(planId, data);
+    return await this.teachingPlanRepository.findOne({ where: { id: planId } });
   }
 }

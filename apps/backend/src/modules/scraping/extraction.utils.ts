@@ -51,6 +51,49 @@ export class ExtractionUtils {
   }
 
   /**
+   * Parse Brazilian date format (simple): "13/08/2025" or "30/09/2025"
+   */
+  static parseBRDateSimple(dateStr: string | null | undefined): Date | null {
+    if (!dateStr) return null;
+    
+    // Remove any HTML tags and trim
+    const cleaned = dateStr.replace(/<[^>]*>/g, '').trim();
+    
+    // Match DD/MM/YYYY format
+    const match = cleaned.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    
+    if (!match) return null;
+    
+    const [_, day, month, year] = match;
+    
+    // Validate day and month ranges
+    const dayNum = parseInt(day);
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+    
+    if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12) {
+      return null;
+    }
+    
+    // Create date at noon UTC to avoid timezone issues
+    const date = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
+    
+    // Check if date is valid (e.g., 31/02/2024 would be invalid)
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    
+    // Verify the date components match (JavaScript may auto-correct invalid dates)
+    if (date.getFullYear() !== yearNum || 
+        date.getMonth() + 1 !== monthNum || 
+        date.getDate() !== dayNum) {
+      return null;
+    }
+    
+    return date;
+  }
+
+  /**
    * Extract multiple values separated by delimiter
    */
   static extractMultipleValues(

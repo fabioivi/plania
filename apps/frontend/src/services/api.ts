@@ -139,6 +139,16 @@ export const academicApi = {
     const response = await api.get<DiaryWithPlans>(`/academic/diaries/${diaryId}/with-plans`);
     return response.data;
   },
+
+  async getDiaryContent(diaryId: string): Promise<DiaryContent[]> {
+    const response = await api.get<DiaryContent[]>(`/academic/diaries/${diaryId}/content`);
+    return response.data;
+  },
+
+  async getDiaryContentStats(diaryId: string): Promise<{ total: number; realClasses: number; anticipations: number }> {
+    const response = await api.get(`/academic/diaries/${diaryId}/content/stats`);
+    return response.data;
+  },
 };
 
 export interface Diary {
@@ -156,6 +166,23 @@ export interface Diary {
   aprovado: boolean;
   anoLetivo: string | null;
   semestre: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DiaryContent {
+  id: string;
+  contentId: string;
+  obsId: string;
+  date: string;
+  timeRange: string;
+  type: 'N' | 'A' | 'R'; // Normal, Antecipação, Reposição
+  isNonPresential: boolean;
+  content: string;
+  observations: string;
+  isAntecipation: boolean;
+  originalContentId: string | null;
+  originalDate: string | null;
   createdAt: string;
   updatedAt: string;
 }

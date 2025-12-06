@@ -9,6 +9,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { AcademicCredential } from './academic-credential.entity';
 import { Diary } from './diary.entity';
+import { DiaryContent } from './diary-content.entity';
 import { TeachingPlan } from './teaching-plan.entity';
 import { TeachingPlanHistory } from './teaching-plan-history.entity';
 import { SaveCredentialDto } from './academic.dto';
@@ -22,6 +23,8 @@ export class AcademicService {
     private credentialRepository: Repository<AcademicCredential>,
     @InjectRepository(Diary)
     private diaryRepository: Repository<Diary>,
+    @InjectRepository(DiaryContent)
+    private diaryContentRepository: Repository<DiaryContent>,
     @InjectRepository(TeachingPlan)
     private teachingPlanRepository: Repository<TeachingPlan>,
     @InjectRepository(TeachingPlanHistory)
@@ -453,5 +456,161 @@ export class AcademicService {
     }
 
     return plan;
+  }
+
+  // Sync diary content (class content from diary page)
+  async syncDiaryContent(userId: string, diaryId: string, contentData: any[]) {
+    const contentsToSave: DiaryContent[] = [];
+    let skippedCount = 0;
+
+    for (const item of contentData) {
+      // Parse and validate date
+      const parsedDate = ExtractionUtils.parseBRDateSimple(item.date);
+      if (!parsedDate) {
+        console.warn(`⚠️ Data inválida ignorada: "${item.date}" (contentId: ${item.contentId})`);
+        skippedCount++;
+        continue; // Skip this item if date is invalid
+      }
+
+      // Parse original date if present
+      let parsedOriginalDate: Date | null = null;
+      if (item.originalDate) {
+        parsedOriginalDate = ExtractionUtils.parseBRDateSimple(item.originalDate);
+        if (!parsedOriginalDate) {
+          console.warn(`⚠️ Data original inválida: "${item.originalDate}" (contentId: ${item.contentId})`);
+        }
+      }
+
+      // Check if content already exists by contentId
+      const existing = await this.diaryContentRepository.findOne({
+        where: {
+          diaryId,
+          contentId: item.contentId,
+        },
+      });
+
+      if (existing) {
+        // Update existing content
+        Object.assign(existing, {
+          obsId: item.obsId,
+          date: parsedDate,
+          timeRange: item.timeRange,
+          type: item.type,
+          isNonPresential: item.isNonPresential,
+          content: item.content,
+          observations: item.observations,
+          isAntecipation: item.isAntecipation,
+          originalContentId: item.originalContentId,
+          originalDate: parsedOriginalDate,
+        });
+        contentsToSave.push(existing);
+      } else {
+        // Create new content
+        const content = this.diaryContentRepository.create({
+          diaryId,
+          contentId: item.contentId,
+          obsId: item.obsId,
+          date: parsedDate,
+          timeRange: item.timeRange,
+          type: item.type,
+          isNonPresential: item.isNonPresential,
+          content: item.content,
+          observations: item.observations,
+          isAntecipation: item.isAntecipation,
+          originalContentId: item.originalContentId,
+          originalDate: parsedOriginalDate,
+        });
+        
+        // Double-check date is valid before adding to save list
+        if (!content.date || isNaN(content.date.getTime())) {
+          console.error(`❌ ERRO: Conteúdo criado com data inválida!`, {
+            contentId: content.contentId,
+            parsedDate,
+            itemDate: item.date,
+            resultingDate: content.date,
+          });
+          skippedCount++;
+          continue;
+        }
+        
+        contentsToSave.push(content);
+      }
+    }
+
+    if (contentsToSave.length > 0) {
+      // Validate all items before saving
+      const invalidItems = contentsToSave.filter(item => !item.date || isNaN(item.date.getTime()));
+      if (invalidItems.length > 0) {
+        console.error('❌ Itens com data inválida detectados antes de salvar:');
+        invalidItems.forEach(item => {
+          console.error(`  - contentId: ${item.contentId}, date: ${item.date}, raw: ${JSON.stringify(item)}`);
+        });
+        throw new Error(`Encontrados ${invalidItems.length} itens com data inválida`);
+      }
+
+      await this.diaryContentRepository.save(contentsToSave);
+    }
+
+    if (skippedCount > 0) {
+      console.log(`⚠️ ${skippedCount} registro(s) ignorado(s) por data inválida`);
+    }
+
+    // Contar apenas aulas não-antecipação (para não duplicar contagem)
+    const realClassesCount = contentsToSave.filter(item => !item.isAntecipation).length;
+    const anticipationsCount = contentsToSave.filter(item => item.isAntecipation).length;
+
+    console.log(`📊 Total: ${realClassesCount} aulas + ${anticipationsCount} antecipações`);
+
+    return {
+      synced: contentsToSave.length,
+      realClasses: realClassesCount,
+      anticipations: anticipationsCount,
+      skipped: skippedCount,
+    };
+  }
+
+  // Get diary content
+  async getDiaryContent(userId: string, diaryId: string) {
+    // Verify diary belongs to user
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diary not found');
+    }
+
+    return this.diaryContentRepository.find({
+      where: { diaryId },
+      order: { date: 'ASC', timeRange: 'ASC' },
+    });
+  }
+
+  /**
+   * Get diary content statistics
+   * Returns count of real classes (excluding anticipations)
+   */
+  async getDiaryContentStats(userId: string, diaryId: string) {
+    // Verify diary belongs to user
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diary not found');
+    }
+
+    const allContent = await this.diaryContentRepository.find({
+      where: { diaryId },
+    });
+
+    const realClasses = allContent.filter(item => !item.isAntecipation).length;
+    const anticipations = allContent.filter(item => item.isAntecipation).length;
+
+    return {
+      total: allContent.length,
+      realClasses,
+      anticipations,
+    };
   }
 }

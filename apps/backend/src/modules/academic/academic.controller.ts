@@ -28,6 +28,8 @@ import {
   ApiGetDiaryTeachingPlansDecorator,
   ApiGetDiaryWithPlansDecorator,
   ApiGetTeachingPlanDecorator,
+  ApiGetDiaryContentDecorator,
+  ApiGetDiaryContentStatsDecorator,
 } from './diary.swagger';
 
 @ApiTags('academic')
@@ -153,5 +155,17 @@ export class AcademicController {
   @ApiGetTeachingPlanDecorator()
   async getTeachingPlan(@Request() req, @Param('planId') planId: string) {
     return this.academicService.getTeachingPlan(req.user.id, planId);
+  }
+
+  @Get('diaries/:diaryId/content')
+  @ApiGetDiaryContentDecorator()
+  async getDiaryContent(@Request() req, @Param('diaryId') diaryId: string) {
+    return this.academicService.getDiaryContent(req.user.id, diaryId);
+  }
+
+  @Get('diaries/:diaryId/content/stats')
+  @ApiGetDiaryContentStatsDecorator()
+  async getDiaryContentStats(@Request() req, @Param('diaryId') diaryId: string) {
+    return this.academicService.getDiaryContentStats(req.user.id, diaryId);
   }
 }

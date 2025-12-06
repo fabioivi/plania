@@ -239,3 +239,120 @@ export class DiaryWithPlansModel {
   })
   updatedAt: Date;
 }
+
+export class DiaryContentModel {
+  @ApiProperty({
+    description: 'ID único do conteúdo',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'ID do diário associado',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  diaryId: string;
+
+  @ApiProperty({
+    description: 'ID do conteúdo no sistema IFMS',
+    example: '5703975',
+  })
+  contentId: string;
+
+  @ApiProperty({
+    description: 'ID da observação no sistema IFMS',
+    example: '5703975',
+  })
+  obsId: string;
+
+  @ApiProperty({
+    description: 'Data da aula',
+    example: '2025-10-04T00:00:00.000Z',
+  })
+  date: Date;
+
+  @ApiProperty({
+    description: 'Horário da aula',
+    example: '08:30 às 09:15',
+  })
+  timeRange: string;
+
+  @ApiProperty({
+    description: 'Tipo de aula: N (Normal), A (Antecipação), R (Reposição)',
+    example: 'N',
+  })
+  type: string;
+
+  @ApiProperty({
+    description: 'Indica se a aula é não presencial',
+    example: false,
+  })
+  isNonPresential: boolean;
+
+  @ApiProperty({
+    description: 'Conteúdo ministrado na aula',
+    example: 'Introdução aos serviços de rede',
+    required: false,
+  })
+  content?: string;
+
+  @ApiProperty({
+    description: 'Observações da aula',
+    example: 'Aula prática no laboratório',
+    required: false,
+  })
+  observations?: string;
+
+  @ApiProperty({
+    description: 'Indica se é uma antecipação ou reposição',
+    example: false,
+  })
+  isAntecipation: boolean;
+
+  @ApiProperty({
+    description: 'ID do conteúdo original (se for antecipação)',
+    example: '5703976',
+    required: false,
+  })
+  originalContentId?: string;
+
+  @ApiProperty({
+    description: 'Data original da aula (se for antecipação)',
+    example: '2025-10-11T00:00:00.000Z',
+    required: false,
+  })
+  originalDate?: Date;
+
+  @ApiProperty({
+    description: 'Data de criação',
+    example: '2025-12-05T10:30:00Z',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Data de atualização',
+    example: '2025-12-05T10:30:00Z',
+  })
+  updatedAt: Date;
+}
+
+export class DiaryContentStatsModel {
+  @ApiProperty({
+    description: 'Total de registros (aulas reais + antecipações)',
+    example: 25,
+  })
+  total: number;
+
+  @ApiProperty({
+    description: 'Número de aulas reais ministradas (Normal + Reposição)',
+    example: 20,
+  })
+  realClasses: number;
+
+  @ApiProperty({
+    description: 'Número de antecipações registradas',
+    example: 5,
+  })
+  anticipations: number;
+}
+

@@ -926,6 +926,241 @@ export class ScrapingService {
     }
   }
 
+  /**
+   * Scrape class content from diary content page
+   */
+  async scrapeClassContent(
+    page: Page,
+    diaryId: string,
+  ): Promise<{
+    success: boolean;
+    data?: any[];
+    message?: string;
+  }> {
+    try {
+      const contentUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.CONTENT(diaryId));
+      console.log(`📚 Acessando conteúdo do diário: ${contentUrl}`);
+
+      await page.goto(contentUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+
+      await page.waitForTimeout(2000);
+
+      // Check if table exists
+      const tableExists = await page.locator('table.diario tbody').count();
+      if (tableExists === 0) {
+        console.log('⚠️ Tabela de conteúdo não encontrada');
+        return {
+          success: true,
+          data: [],
+          message: 'Nenhum conteúdo encontrado para este diário',
+        };
+      }
+
+      // Extract all content rows
+      const contents = await page.evaluate(() => {
+        const rows = Array.from(
+          document.querySelectorAll('table.diario tbody tr'),
+        );
+        const results: any[] = [];
+        let skipNext = false;
+
+        for (let i = 0; i < rows.length; i++) {
+          if (skipNext) {
+            skipNext = false;
+            continue;
+          }
+
+          const row = rows[i];
+          const cells = row.querySelectorAll('td');
+
+          // Check if this is a row with antecipation/reposição (has rowspan)
+          const hasRowspan =
+            cells[0]?.hasAttribute('rowspan') &&
+            cells[0]?.getAttribute('rowspan') === '2';
+
+          if (hasRowspan) {
+            // This is an original class with antecipation
+            // First row: original class (in italic)
+            const originalDate = cells[1]?.textContent?.trim() || '';
+            const originalTimeRange =
+              cells[2]?.querySelector('center')?.textContent?.trim() || '';
+            const originalType =
+              cells[3]?.querySelector('a.popup')?.textContent?.trim() || 'N';
+
+            const originalContentCell = cells[5];
+            const originalContentId =
+              originalContentCell?.getAttribute('id')?.replace('conteudo_', '') ||
+              '';
+            const originalContent =
+              originalContentCell?.textContent
+                ?.replace(/\s+/g, ' ')
+                .replace(/<[^>]*>/g, '')
+                .trim() || '';
+
+            const originalObsCell = cells[6];
+            const originalObsId =
+              originalObsCell?.getAttribute('id')?.replace('obs_', '') || '';
+            const originalObs =
+              originalObsCell?.textContent
+                ?.replace(/\s+/g, ' ')
+                .replace(/<[^>]*>/g, '')
+                .trim() || '';
+
+            // Add original class
+            results.push({
+              contentId: originalContentId,
+              obsId: originalObsId,
+              date: originalDate,
+              timeRange: originalTimeRange,
+              type: originalType,
+              isNonPresential: false,
+              content: originalContent,
+              observations: originalObs,
+              isAntecipation: false,
+              originalContentId: null,
+              originalDate: null,
+            });
+
+            // Second row: antecipation class
+            const nextRow = rows[i + 1];
+            if (nextRow) {
+              const nextCells = nextRow.querySelectorAll('td');
+
+              const anteDate = nextCells[0]?.textContent?.trim() || '';
+              const anteTimeRange =
+                nextCells[1]?.querySelector('center')?.textContent?.trim() || '';
+              const anteType =
+                nextCells[2]?.querySelector('a.popup')?.textContent?.trim() ||
+                'A';
+
+              const anteCheckbox = nextCells[3]?.querySelector(
+                'input[type="checkbox"]',
+              );
+              const anteIsNonPresential =
+                (anteCheckbox as HTMLInputElement)?.checked || false;
+
+              const anteContentCell = nextCells[4];
+              const anteContentId =
+                anteContentCell?.getAttribute('id')?.replace('conteudo_', '') ||
+                '';
+              const anteContent =
+                anteContentCell?.textContent
+                  ?.replace(/\s+/g, ' ')
+                  .replace(/<[^>]*>/g, '')
+                  .trim() || '';
+
+              const anteObsCell = nextCells[5];
+              const anteObsId =
+                anteObsCell?.getAttribute('id')?.replace('obs_', '') || '';
+              const anteObs =
+                anteObsCell?.textContent
+                  ?.replace(/\s+/g, ' ')
+                  .replace(/<[^>]*>/g, '')
+                  .trim() || '';
+
+              results.push({
+                contentId: anteContentId,
+                obsId: anteObsId,
+                date: anteDate,
+                timeRange: anteTimeRange,
+                type: anteType,
+                isNonPresential: anteIsNonPresential,
+                content: anteContent,
+                observations: anteObs,
+                isAntecipation: true,
+                originalContentId: originalContentId,
+                originalDate: originalDate,
+              });
+
+              skipNext = true; // Skip the next row since we already processed it
+            }
+          } else {
+            // Normal class (single row)
+            const date = cells[1]?.textContent?.trim() || '';
+            const timeRange =
+              cells[2]?.querySelector('center')?.textContent?.trim() || '';
+            const type =
+              cells[3]?.querySelector('a.popup')?.textContent?.trim() || 'N';
+
+            const checkbox = cells[4]?.querySelector('input[type="checkbox"]');
+            const isNonPresential =
+              (checkbox as HTMLInputElement)?.checked || false;
+
+            const contentCell = cells[5];
+            const contentId =
+              contentCell?.getAttribute('id')?.replace('conteudo_', '') || '';
+            const content =
+              contentCell?.textContent
+                ?.replace(/\s+/g, ' ')
+                .replace(/<[^>]*>/g, '')
+                .trim() || '';
+
+            const obsCell = cells[6];
+            const obsId = obsCell?.getAttribute('id')?.replace('obs_', '') || '';
+            const observations =
+              obsCell?.textContent
+                ?.replace(/\s+/g, ' ')
+                .replace(/<[^>]*>/g, '')
+                .trim() || '';
+
+            results.push({
+              contentId,
+              obsId,
+              date,
+              timeRange,
+              type,
+              isNonPresential,
+              content,
+              observations,
+              isAntecipation: false,
+              originalContentId: null,
+              originalDate: null,
+            });
+          }
+        }
+
+        return results;
+      });
+
+      console.log(`✅ Extraídos ${contents.length} conteúdos do diário`);
+      
+      // Filter out items without dates
+      const validContents = contents.filter(item => {
+        if (!item.date || item.date.trim() === '') {
+          console.warn(`⚠️ Item sem data ignorado: contentId=${item.contentId}`);
+          return false;
+        }
+        return true;
+      });
+      
+      // Log de debug: mostrar primeiras datas para verificar formato
+      if (validContents.length > 0) {
+        console.log('📅 Amostra de datas extraídas:');
+        validContents.slice(0, 3).forEach((item, idx) => {
+          console.log(`  [${idx + 1}] date="${item.date}" | timeRange="${item.timeRange}" | type="${item.type}"`);
+        });
+      }
+
+      if (validContents.length < contents.length) {
+        console.log(`⚠️ ${contents.length - validContents.length} item(s) ignorado(s) por falta de data`);
+      }
+
+      return {
+        success: true,
+        data: validContents,
+      };
+    } catch (error) {
+      console.error('❌ Erro ao extrair conteúdo do diário:', error);
+      return {
+        success: false,
+        message: `Erro ao extrair conteúdo: ${error.message}`,
+      };
+    }
+  }
+
   async onModuleDestroy() {
     if (this.browser) {
       await this.browser.close();

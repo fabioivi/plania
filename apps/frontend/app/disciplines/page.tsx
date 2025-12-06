@@ -325,9 +325,12 @@ export default function DisciplinesPage() {
                             Gerar Plano com IA
                           </Button>
                         </Link>
-                        <Button variant="outline" size="sm">
-                          Ver Detalhes
-                        </Button>
+                        <Link href={`/diaries/${diary.id}`}>
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <FileText className="h-4 w-4" />
+                            Ver Conteúdo
+                          </Button>
+                        </Link>
                       </div>
                     </CardContent>
                   </Card>

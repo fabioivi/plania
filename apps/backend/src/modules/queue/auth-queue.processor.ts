@@ -183,6 +183,25 @@ export class AuthQueueProcessor {
             total: totalItems,
           });
           
+          // Scrape diary content (conteúdo das aulas)
+          console.log(`📖 Extraindo conteúdo das aulas de: ${diaryName}`);
+          const contentResult = await this.scrapingService.scrapeClassContent(
+            page,
+            diary.externalId,
+          );
+          
+          if (contentResult.success && contentResult.data && contentResult.data.length > 0) {
+            // Save content to database
+            await this.academicService.syncDiaryContent(
+              userId,
+              diary.id,
+              contentResult.data,
+            );
+            console.log(`✅ ${contentResult.data.length} conteúdos de aula salvos para ${diaryName}`);
+          } else {
+            console.log(`⚠️ Nenhum conteúdo de aula encontrado para ${diaryName}`);
+          }
+          
           // Get teaching plans list
           const plansListResult = await this.scrapingService.getAllTeachingPlans(
             page,

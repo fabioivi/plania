@@ -6,7 +6,12 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { DiaryModel, SyncResponseModel } from './academic.models';
-import { DiaryWithPlansModel, TeachingPlanModel } from './diary.models';
+import {
+  DiaryWithPlansModel,
+  TeachingPlanModel,
+  DiaryContentModel,
+  DiaryContentStatsModel,
+} from './diary.models';
 
 export function ApiSyncDiariesDecorator(): MethodDecorator {
   return applyDecorators(
@@ -167,3 +172,62 @@ export function ApiGetTeachingPlanDecorator(): MethodDecorator {
     }),
   );
 }
+
+export function ApiGetDiaryContentDecorator(): MethodDecorator {
+  return applyDecorators(
+    ApiBearerAuth('JWT-auth'),
+    ApiOperation({
+      summary: 'Listar conteúdos do diário',
+      description:
+        'Retorna a lista de conteúdos (aulas) registrados em um diário de classe, incluindo aulas normais, antecipações e reposições. Os conteúdos incluem data, horário, tipo de aula, conteúdo ministrado e observações.',
+    }),
+    ApiParam({
+      name: 'diaryId',
+      description: 'ID do diário',
+      example: '123e4567-e89b-12d3-a456-426614174000',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de conteúdos retornada com sucesso',
+      type: [DiaryContentModel],
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'Não autenticado',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Diário não encontrado',
+    }),
+  );
+}
+
+export function ApiGetDiaryContentStatsDecorator(): MethodDecorator {
+  return applyDecorators(
+    ApiBearerAuth('JWT-auth'),
+    ApiOperation({
+      summary: 'Obter estatísticas de conteúdo do diário',
+      description:
+        'Retorna estatísticas sobre os conteúdos do diário, incluindo o total de registros, o número de aulas reais ministradas (normal + reposição) e o número de antecipações. Útil para visualização de progresso e contagem de aulas.',
+    }),
+    ApiParam({
+      name: 'diaryId',
+      description: 'ID do diário',
+      example: '123e4567-e89b-12d3-a456-426614174000',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Estatísticas retornadas com sucesso',
+      type: DiaryContentStatsModel,
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'Não autenticado',
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Diário não encontrado',
+    }),
+  );
+}
+

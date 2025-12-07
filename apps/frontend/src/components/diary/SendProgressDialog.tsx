@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,11 +12,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
-import { Upload, AlertTriangle, CheckCircle2, XCircle, Loader2, Clock } from "lucide-react"
-import { academicApi, DiaryContent } from "@/services/api"
+import { Upload, AlertTriangle, Clock, Loader2 } from "lucide-react"
+import { DiaryContent } from "@/services/api"
 import { toast } from "sonner"
+import { SyncProgressDisplay } from "@/components/sync"
+import { useSyncState } from "@/hooks/useSyncState"
 
 interface SendProgressDialogProps {
   diaryId: string
@@ -33,11 +34,7 @@ export function SendProgressDialog({
 }: SendProgressDialogProps) {
   const [open, setOpen] = useState(false)
   const [sending, setSending] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [currentItem, setCurrentItem] = useState('')
-  const [succeeded, setSucceeded] = useState(0)
-  const [failed, setFailed] = useState(0)
-  const [errors, setErrors] = useState<Array<{ contentId: string; message: string }>>([])
+  const { state: syncState, startSync, updateProgress, addItem, complete, error, reset } = useSyncState('upload')
 
   // Filtrar apenas conteúdos não-cancelados (que não têm antecipação)
   const getContentsToSend = () => {
@@ -55,49 +52,135 @@ export function SendProgressDialog({
       return
     }
 
+    console.log('🚀 Iniciando envio de', contentIds.length, 'conteúdos')
     setSending(true)
-    setProgress(0)
-    setSucceeded(0)
-    setFailed(0)
-    setErrors([])
+    startSync(contentIds.length, 'Conectando ao servidor...')
 
     try {
-      // Enviar em lote via backend
-      const result = await academicApi.sendDiaryContentBulkToSystem(diaryId, contentIds)
-
-      setProgress(100)
-      setSucceeded(result.succeeded)
-      setFailed(result.failed)
-
-      // Coletar erros
-      const errorList = result.results
-        .filter(r => !r.success)
-        .map(r => ({ contentId: r.contentId, message: r.message || 'Erro desconhecido' }))
-      setErrors(errorList)
-
-      if (result.succeeded > 0) {
-        toast.success(`${result.succeeded} conteúdo(s) enviado(s) com sucesso!`)
-      }
+      // Conectar ao SSE endpoint
+      const token = localStorage.getItem('token')
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
+      console.log('📡 Conectando ao SSE:', url)
       
-      if (result.failed > 0) {
-        toast.error(`${result.failed} conteúdo(s) falharam`)
+      const eventSource = new EventSource(url)
+
+      eventSource.onmessage = (event) => {
+        console.log('📨 SSE Message:', event.data)
+        const data = JSON.parse(event.data)
+
+        if (data.type === 'progress') {
+          console.log('📊 Progresso:', data.current, '/', data.total, '-', data.contentId)
+          // Atualizar progresso em tempo real
+          const content = contentsToSend.find(c => c.contentId === data.contentId)
+          const contentName = content?.date || data.contentId
+          
+          // Atualizar progresso e adicionar item
+          updateProgress(data.current, `Enviando ${data.current}/${data.total}: ${contentName}`)
+          
+          // Adicionar item à lista se tiver sucesso/falha
+          if (data.success !== undefined) {
+            addItem({
+              id: data.contentId,
+              name: contentName,
+              success: data.success,
+              message: data.message || (data.success ? 'Enviado com sucesso' : 'Erro ao enviar'),
+            })
+          }
+        } else if (data.type === 'complete') {
+          console.log('✅ Envio completo:', data)
+          eventSource.close()
+          
+          const items = data.results.map((r: any) => ({
+            id: r.contentId,
+            name: contentsToSend.find(c => c.contentId === r.contentId)?.date || r.contentId,
+            success: r.success,
+            message: r.message,
+          }))
+
+          complete(
+            data.failed === 0
+              ? 'Todos os conteúdos foram enviados com sucesso!'
+              : `Concluído: ${data.succeeded} enviados, ${data.failed} falhas`,
+            items
+          )
+
+          if (data.succeeded > 0) {
+            toast.success(`${data.succeeded} conteúdo(s) enviado(s) com sucesso!`)
+          }
+
+          if (data.failed > 0) {
+            toast.error(`${data.failed} conteúdo(s) falharam`)
+          }
+
+          setSending(false)
+
+          // Aguardar um pouco antes de fechar (sem chamar onComplete)
+          if (data.failed === 0) {
+            setTimeout(() => {
+              setOpen(false)
+              // Nota: removido onComplete() para não disparar download automaticamente
+            }, 2000)
+          }
+        } else if (data.type === 'error') {
+          console.error('❌ Erro SSE:', data)
+          eventSource.close()
+          setSending(false)
+          
+          error(
+            'Erro ao enviar conteúdos',
+            [{
+              id: 'ERROR',
+              name: 'Erro geral',
+              success: false,
+              message: data.message || 'Erro desconhecido',
+            }]
+          )
+          
+          toast.error(data.message || 'Erro ao enviar conteúdos')
+        }
       }
 
-      // Aguardar um pouco antes de fechar
-      if (result.failed === 0) {
-        setTimeout(() => {
-          setOpen(false)
-          onComplete?.()
-        }, 2000)
+      eventSource.onerror = (err) => {
+        console.error('❌ Erro no SSE:', err)
+        eventSource.close()
+        setSending(false)
+        
+        error(
+          'Erro ao enviar conteúdos',
+          [{
+            id: 'ERROR',
+            name: 'Erro de conexão',
+            success: false,
+            message: 'Erro ao conectar com o servidor',
+          }]
+        )
+        
+        toast.error('Erro ao conectar com o servidor')
       }
-    } catch (error: any) {
-      console.error('Erro ao enviar conteúdos:', error)
-      toast.error(error.response?.data?.message || 'Erro ao enviar conteúdos')
-      setErrors([{ contentId: 'GERAL', message: error.message || 'Erro desconhecido' }])
-    } finally {
+    } catch (err: any) {
+      console.error('❌ Erro ao enviar conteúdos:', err)
+      toast.error(err.response?.data?.message || 'Erro ao enviar conteúdos')
       setSending(false)
+      
+      error(
+        'Erro ao enviar conteúdos',
+        [{
+          id: 'ERROR',
+          name: 'Erro geral',
+          success: false,
+          message: err.response?.data?.message || err.message || 'Erro desconhecido',
+        }]
+      )
     }
   }
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      reset()
+      setSending(false)
+    }
+  }, [open, reset])
 
   const contentsToSend = getContentsToSend()
   const totalToSend = contentsToSend.length
@@ -108,41 +191,40 @@ export function SendProgressDialog({
         <Button
           variant="default"
           size="sm"
-          disabled={disabled || contents.length === 0}
+          disabled={disabled || contents.length === 0 || sending}
           className="gap-2"
         >
-          <Upload className="h-4 w-4" />
-          Enviar para o Sistema
+          {sending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              Enviar para o Sistema
+            </>
+          )}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            {!sending && succeeded === 0 && failed === 0 && (
+            {!sending && !syncState && (
               <>
                 <AlertTriangle className="h-5 w-5 text-orange-500" />
                 Confirmar Envio ao Sistema Acadêmico
               </>
             )}
             {sending && (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                Enviando Conteúdos...
-              </>
+              <>Enviando Conteúdos...</>
             )}
-            {!sending && (succeeded > 0 || failed > 0) && (
-              <>
-                {failed === 0 ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-500" />
-                )}
-                Envio Concluído
-              </>
+            {!sending && syncState && (
+              <>Envio Concluído</>
             )}
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-4">
-            {!sending && succeeded === 0 && failed === 0 && (
+            {!sending && !syncState && (
               <>
                 <p>
                   Você está prestes a enviar <strong>{totalToSend} conteúdo(s)</strong> para o sistema acadêmico do IFMS.
@@ -153,9 +235,9 @@ export function SendProgressDialog({
                     <div className="text-sm text-blue-800">
                       <p className="font-semibold mb-1">⏱️ Sobre o processo de envio:</p>
                       <ul className="list-disc list-inside space-y-1 ml-2">
-                        <li>Tempo estimado: <strong>~{Math.ceil(totalToSend * 3)} segundos</strong> (~3s por item)</li>
-                        <li>Haverá delays aleatórios entre os envios (1-3 segundos)</li>
-                        <li>Isso simula preenchimento humano e evita sobrecarga no sistema IFMS</li>
+                        <li>O sistema fará <strong>login uma única vez</strong> e reutilizará a sessão</li>
+                        <li>Haverá delays aleatórios entre os envios para simular preenchimento humano</li>
+                        <li>Tempo estimado: <strong>~{Math.ceil(totalToSend * 1)} segundos</strong></li>
                         <li>Você pode acompanhar o progresso em tempo real</li>
                       </ul>
                     </div>
@@ -167,67 +249,17 @@ export function SendProgressDialog({
               </>
             )}
 
-            {sending && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">Progresso</span>
-                  <span className="text-muted-foreground">
-                    {succeeded + failed} / {totalToSend}
-                  </span>
-                </div>
-                <Progress value={(succeeded + failed) / totalToSend * 100} className="h-2" />
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span>Enviados: <strong>{succeeded}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-red-500" />
-                    <span>Falharam: <strong>{failed}</strong></span>
-                  </div>
-                </div>
-
-                {currentItem && (
-                  <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                    Enviando: {currentItem}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!sending && (succeeded > 0 || failed > 0) && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span>Enviados: <strong>{succeeded}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-red-500" />
-                    <span>Falharam: <strong>{failed}</strong></span>
-                  </div>
-                </div>
-
-                {errors.length > 0 && (
-                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg max-h-48 overflow-y-auto">
-                    <p className="text-sm font-semibold text-red-800 mb-2">Erros encontrados:</p>
-                    <ul className="space-y-2 text-xs text-red-700">
-                      {errors.map((err, idx) => (
-                        <li key={idx} className="flex gap-2">
-                          <span className="font-mono">{err.contentId}:</span>
-                          <span>{err.message}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+            {(sending || syncState) && (
+              <SyncProgressDisplay 
+                state={syncState} 
+                isConnected={true}
+                className="mt-4"
+              />
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          {!sending && succeeded === 0 && failed === 0 && (
+          {!sending && !syncState && (
             <>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={handleSend} className="bg-primary">
@@ -235,7 +267,7 @@ export function SendProgressDialog({
               </AlertDialogAction>
             </>
           )}
-          {!sending && (succeeded > 0 || failed > 0) && (
+          {!sending && syncState && (
             <Button onClick={() => setOpen(false)} className="w-full">
               Fechar
             </Button>

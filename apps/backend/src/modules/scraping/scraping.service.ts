@@ -1384,6 +1384,7 @@ export class ScrapingService {
     username: string,
     password: string,
     contents: Array<{ contentId: string; content: string }>,
+    onProgress?: (current: number, total: number, contentId: string, success: boolean, message: string) => void,
   ): Promise<Array<{ contentId: string; success: boolean; message?: string }>> {
     const context = await this.createContext();
     const page = await context.newPage();
@@ -1396,7 +1397,9 @@ export class ScrapingService {
       await this.loginToIFMS(page, username, password);
 
       // Send each content using the same authenticated session
+      let current = 0;
       for (const { contentId, content } of contents) {
+        current++;
         try {
           const result = await this.sendContentWithAuthenticatedPage(page, contentId, content);
           results.push({
@@ -1404,13 +1407,24 @@ export class ScrapingService {
             success: result.success,
             message: result.message,
           });
+          
+          // Notify progress
+          if (onProgress) {
+            onProgress(current, contents.length, contentId, result.success, result.message || '');
+          }
         } catch (error) {
           console.error(`❌ Erro ao enviar conteúdo ${contentId}:`, error);
+          const errorMessage = `Erro ao enviar conteúdo: ${error.message}`;
           results.push({
             contentId,
             success: false,
-            message: `Erro ao enviar conteúdo: ${error.message}`,
+            message: errorMessage,
           });
+          
+          // Notify progress with error
+          if (onProgress) {
+            onProgress(current, contents.length, contentId, false, errorMessage);
+          }
         }
       }
 

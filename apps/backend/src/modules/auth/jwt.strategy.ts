@@ -19,12 +19,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           const token = request?.cookies?.auth_token;
           if (token) {
             console.log('🍪 JWT Strategy: Token encontrado no cookie');
-          } else if (request?.headers?.authorization) {
+            return token;
+          }
+          
+          // Extrai token do query parameter (para SSE)
+          const queryToken = request?.query?.token as string;
+          if (queryToken) {
+            console.log('🔗 JWT Strategy: Token encontrado no query parameter');
+            return queryToken;
+          }
+          
+          if (request?.headers?.authorization) {
             console.log('🔑 JWT Strategy: Token encontrado no header Authorization');
           } else {
             console.log('⚠️ JWT Strategy: Nenhum token encontrado');
           }
-          return token;
+          return null;
         },
       ]),
       ignoreExpiration: false,

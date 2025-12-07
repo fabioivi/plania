@@ -12,17 +12,20 @@ import { useState, useEffect } from "react"
 import { academicApi, Diary, TeachingPlan } from "@/services/api"
 import { toast } from "sonner"
 import { useSyncProgress } from "@/hooks/useSyncProgress"
-import { SyncProgressDisplay } from "@/components/sync/SyncProgressDisplay"
+import { SyncProgressDisplay } from "@/components/sync"
+import { useSyncState } from "@/hooks/useSyncState"
 
 export default function DisciplinesPage() {
   const [diaries, setDiaries] = useState<Diary[]>([])
   const [diaryPlans, setDiaryPlans] = useState<Record<string, TeachingPlan[]>>({})
   const [loadingPlans, setLoadingPlans] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
   const [lastSync, setLastSync] = useState<Date | null>(null)
   
-  // Hook de progresso SSE
+  // Sistema de sincronização genérico
+  const { state: syncState, startSync, complete, error: syncError, reset } = useSyncState('download')
+  
+  // Hook de progresso SSE (mantido para compatibilidade)
   const { progress, isConnected, connect, disconnect } = useSyncProgress()
 
   useEffect(() => {
@@ -69,52 +72,54 @@ export default function DisciplinesPage() {
 
   const handleSync = async () => {
     try {
-      setSyncing(true)
+      startSync(1, 'Conectando ao servidor...')
       
       // Conectar ao SSE para receber atualizações em tempo real
       connect()
       
-      toast.info('Conectando ao servidor...')
-      
       // Aguardar um pouco para garantir que SSE conectou
       await new Promise(resolve => setTimeout(resolve, 500))
-      
-      toast.info('Iniciando sincronização...')
       
       const result = await academicApi.syncDiaries()
       
       if (!result.success) {
         toast.error(result.message || 'Erro ao sincronizar diários')
-        setSyncing(false)
+        syncError(result.message || 'Erro ao sincronizar diários')
         disconnect()
       }
-      // Se success, mantém syncing=true até SSE enviar 'completed' ou 'error'
+      // Se success, mantém em syncing até SSE enviar 'completed' ou 'error'
     } catch (err: any) {
       console.error('Erro ao sincronizar:', err)
       toast.error(err.response?.data?.message || 'Erro ao sincronizar diários')
-      setSyncing(false)
+      syncError(err.response?.data?.message || 'Erro ao sincronizar diários', [{
+        id: 'ERROR',
+        name: 'Erro de sincronização',
+        success: false,
+        message: err.response?.data?.message || err.message
+      }])
       disconnect()
     }
   }
   
-  // Detectar quando sincronização termina pelo progresso
+  // Detectar quando sincronização termina pelo progresso SSE
   useEffect(() => {
     if (progress?.stage === 'completed') {
       toast.success('Sincronização concluída com sucesso!')
-      setSyncing(false)
+      complete('Sincronização concluída com sucesso!')
       // Recarregar diários quando completar
       setTimeout(() => {
         loadDiaries()
         disconnect()
+        reset()
       }, 2000)
     } else if (progress?.stage === 'error') {
       toast.error(progress.message || 'Erro na sincronização')
-      setSyncing(false)
+      syncError(progress.message || 'Erro na sincronização')
       setTimeout(() => {
         disconnect()
       }, 2000)
     }
-  }, [progress])
+  }, [progress, complete, syncError, disconnect, reset])
 
   const formatLastSync = () => {
     if (!lastSync) return 'Nunca'
@@ -158,7 +163,7 @@ export default function DisciplinesPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <RefreshCw className={`h-5 w-5 text-blue-600 ${syncing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-5 w-5 text-blue-600 ${syncState?.status === 'syncing' ? 'animate-spin' : ''}`} />
                 <div>
                   <h3 className="font-semibold text-blue-900">Sincronização Automática</h3>
                   <p className="text-sm text-blue-700">
@@ -170,9 +175,9 @@ export default function DisciplinesPage() {
                 variant="outline" 
                 className="gap-2 border-blue-300 hover:bg-blue-100"
                 onClick={handleSync}
-                disabled={syncing}
+                disabled={syncState?.status === 'syncing'}
               >
-                {syncing ? (
+                {syncState?.status === 'syncing' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Sincronizando...
@@ -188,10 +193,25 @@ export default function DisciplinesPage() {
           </CardContent>
         </Card>
 
-        {/* Sync Progress Display */}
-        {(isConnected || syncing) && (
+        {/* Sync Progress Display - Novo Sistema */}
+        {syncState && (
           <div className="mb-6">
-            <SyncProgressDisplay progress={progress} isConnected={isConnected} />
+            <SyncProgressDisplay 
+              state={syncState}
+              progress={progress}
+              isConnected={isConnected}
+            />
+          </div>
+        )}
+
+        {/* Sync Progress Display - Sistema SSE (quando não há syncState) */}
+        {progress && !syncState && (
+          <div className="mb-6">
+            <SyncProgressDisplay 
+              state={null}
+              progress={progress}
+              isConnected={isConnected}
+            />
           </div>
         )}
 
@@ -363,8 +383,8 @@ export default function DisciplinesPage() {
                     Sincronize com o sistema acadêmico IFMS para importar seus diários automaticamente
                   </p>
                   <div className="flex gap-3">
-                    <Button className="gap-2" onClick={handleSync} disabled={syncing}>
-                      {syncing ? (
+                    <Button className="gap-2" onClick={handleSync} disabled={syncState?.status === 'syncing'}>
+                      {syncState?.status === 'syncing' ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Sincronizando...

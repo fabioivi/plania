@@ -253,4 +253,58 @@ export class AcademicController {
       body.contentIds,
     );
   }
+
+  @Get('diaries/:diaryId/content/send-bulk-sse')
+  @ApiOperation({ summary: 'Envia múltiplos conteúdos com progresso SSE' })
+  @ApiParam({ name: 'diaryId', description: 'ID do diário' })
+  async sendDiaryContentBulkSSE(
+    @Request() req,
+    @Param('diaryId') diaryId: string,
+  ) {
+    const contentIds = req.query.contentIds?.split(',') || [];
+    
+    req.res.setHeader('Content-Type', 'text/event-stream');
+    req.res.setHeader('Cache-Control', 'no-cache');
+    req.res.setHeader('Connection', 'keep-alive');
+
+    const sendSSE = (data: any) => {
+      req.res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    try {
+      await this.academicService.sendDiaryContentBulkToSystem(
+        req.user.id,
+        diaryId,
+        contentIds,
+        (current: number, total: number, contentId: string, success: boolean, message: string) => {
+          sendSSE({
+            type: 'progress',
+            current,
+            total,
+            contentId,
+            success,
+            message,
+          });
+        },
+      ).then((result) => {
+        sendSSE({
+          type: 'complete',
+          ...result,
+        });
+        req.res.end();
+      }).catch((error) => {
+        sendSSE({
+          type: 'error',
+          message: error.message,
+        });
+        req.res.end();
+      });
+    } catch (error) {
+      sendSSE({
+        type: 'error',
+        message: error.message,
+      });
+      req.res.end();
+    }
+  }
 }

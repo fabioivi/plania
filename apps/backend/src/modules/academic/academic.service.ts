@@ -908,12 +908,62 @@ export class AcademicService {
   }
 
   /**
+   * Send multiple diary contents to IFMS academic system with SSE progress
+   */
+  async sendDiaryContentBulkToSystemSSE(
+    userId: string,
+    diaryId: string,
+    contentIds: string[],
+  ): Promise<{
+    stream: any;
+  }> {
+    const { PassThrough } = require('stream');
+    const stream = new PassThrough();
+
+    // Execute async and stream progress
+    setImmediate(async () => {
+      try {
+        const result = await this.sendDiaryContentBulkToSystem(
+          userId,
+          diaryId,
+          contentIds,
+          (current: number, total: number, contentId: string, success: boolean, message: string) => {
+            stream.write(`data: ${JSON.stringify({
+              type: 'progress',
+              current,
+              total,
+              contentId,
+              success,
+              message,
+            })}\n\n`);
+          },
+        );
+
+        stream.write(`data: ${JSON.stringify({
+          type: 'complete',
+          ...result,
+        })}\n\n`);
+        stream.end();
+      } catch (error) {
+        stream.write(`data: ${JSON.stringify({
+          type: 'error',
+          message: error.message,
+        })}\n\n`);
+        stream.end();
+      }
+    });
+
+    return { stream };
+  }
+
+  /**
    * Send multiple diary contents to IFMS academic system (batch operation)
    */
   async sendDiaryContentBulkToSystem(
     userId: string,
     diaryId: string,
     contentIds: string[],
+    onProgress?: (current: number, total: number, contentId: string, success: boolean, message: string) => void,
   ): Promise<{
     success: boolean;
     total: number;
@@ -1012,15 +1062,25 @@ export class AcademicService {
       credential.username,
       password,
       contentsToSend,
+      onProgress ? (current: number, total: number, contentId: string, success: boolean, message: string) => {
+        onProgress(current, total, contentId, success, message);
+      } : undefined,
     );
 
     // Process results
+    let processedCount = 0;
     for (const result of sendResults) {
       results.push(result);
       if (result.success) {
         succeeded++;
       } else {
         failed++;
+      }
+      
+      // Send final progress for this item
+      processedCount++;
+      if (onProgress) {
+        onProgress(processedCount, sendResults.length, result.contentId, result.success, result.message || '');
       }
     }
 

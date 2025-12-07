@@ -5,13 +5,15 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, BookOpen, Loader2, FileText, Download } from "lucide-react"
+import { ArrowLeft, BookOpen, Loader2, FileText, Download, ExternalLink } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { academicApi, DiaryContent } from "@/services/api"
 import { toast } from "sonner"
 import { DiaryContentTable } from "@/components/diary/DiaryContentTable"
 import { SendProgressDialog } from "@/components/diary/SendProgressDialog"
+import { SyncProgressDisplay } from "@/components/sync"
+import { useSyncState } from "@/hooks/useSyncState"
 
 export default function DiaryContentPage() {
   const params = useParams()
@@ -20,9 +22,11 @@ export default function DiaryContentPage() {
 
   const [content, setContent] = useState<DiaryContent[]>([])
   const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
   const [diaryInfo, setDiaryInfo] = useState<any>(null)
   const [stats, setStats] = useState<{ total: number; realClasses: number; anticipations: number } | null>(null)
+  
+  // Sistema de sincronização para download
+  const { state: downloadState, startSync: startDownload, complete: completeDownload, error: errorDownload, reset: resetDownload } = useSyncState('download')
 
   useEffect(() => {
     if (diaryId) {
@@ -127,9 +131,12 @@ export default function DiaryContentPage() {
   }
 
   const handleSync = async () => {
-    setSyncing(true)
+    startDownload(1, 'Baixando conteúdos do sistema IFMS...')
+    
     try {
       const result = await academicApi.syncSpecificDiary(diaryId)
+      
+      completeDownload(`${result.synced} conteúdos atualizados com sucesso!`)
       toast.success(`Diário sincronizado! ${result.synced} conteúdos atualizados`)
       
       // Força o recarregamento dos dados
@@ -141,11 +148,20 @@ export default function DiaryContentPage() {
       ])
       setLoading(false)
       
+      // Reset após 2 segundos
+      setTimeout(() => {
+        resetDownload()
+      }, 2000)
+      
     } catch (error: any) {
       console.error('Erro ao sincronizar diário:', error)
       toast.error(error.response?.data?.message || 'Erro ao sincronizar diário')
-    } finally {
-      setSyncing(false)
+      errorDownload(error.response?.data?.message || 'Erro ao sincronizar diário', [{
+        id: 'ERROR',
+        name: 'Erro de sincronização',
+        success: false,
+        message: error.response?.data?.message || error.message
+      }])
     }
   }
 
@@ -179,24 +195,55 @@ export default function DiaryContentPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleSync}
-                disabled={syncing}
+                disabled={downloadState?.status === 'syncing'}
                 className="gap-2"
               >
-                <Download className={`h-4 w-4 ${syncing ? 'animate-pulse' : ''}`} />
-                {syncing ? 'Baixando...' : 'Baixar do Sistema'}
+                {downloadState?.status === 'syncing' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Baixando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Baixar do Sistema
+                  </>
+                )}
               </Button>
               
               <SendProgressDialog
                 diaryId={diaryId}
                 contents={content}
-                disabled={syncing || loading}
+                disabled={downloadState?.status === 'syncing' || loading}
                 onComplete={() => {
                   // Recarregar dados após envio bem-sucedido
                   handleSync()
                 }}
               />
+              
+              {diaryInfo?.externalId && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => window.open(`https://academico.ifms.edu.br/administrativo/professores/diario/${diaryInfo.externalId}/conteudo`, '_blank')}
+                  className="gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir no Sistema IFMS
+                </Button>
+              )}
             </div>
           </div>
+
+          {/* Sync Progress Display - Download */}
+          {downloadState && (
+            <div className="mb-6">
+              <SyncProgressDisplay 
+                state={downloadState}
+                isConnected={true}
+              />
+            </div>
+          )}
 
           {/* Diary Info Card */}
           {diaryInfo && (

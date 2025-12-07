@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Download, Edit, FileText, Loader2, Printer, RefreshCw } from "lucide-react"
+import { ArrowLeft, Download, Edit, FileText, Loader2, Printer, RefreshCw, Sparkles } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useState, useEffect } from "react"
@@ -14,6 +15,7 @@ import { TeachingPlanView } from "@/components/teaching-plan/TeachingPlanView"
 
 export default function TeachingPlanViewPage() {
   const params = useParams()
+  const router = useRouter()
   const planId = params.id as string
   
   const [plan, setPlan] = useState<TeachingPlan | null>(null)
@@ -57,6 +59,15 @@ export default function TeachingPlanViewPage() {
       toast.error(error.response?.data?.message || 'Erro ao sincronizar plano de ensino')
     } finally {
       setSyncing(false)
+    }
+  }
+
+  const handleGenerateDiaryContent = () => {
+    // Se o plano tem diário vinculado
+    if (plan?.diaryId) {
+      router.push(`/diaries/${plan.diaryId}/generate?planId=${planId}`)
+    } else {
+      toast.error('Este plano de ensino não possui diário vinculado')
     }
   }
 
@@ -161,6 +172,16 @@ export default function TeachingPlanViewPage() {
                 >
                   <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
                   {syncing ? 'Sincronizando...' : 'Sincronizar'}
+                </Button>
+                <Button 
+                  variant="default" 
+                  className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" 
+                  onClick={handleGenerateDiaryContent}
+                  disabled={!plan.diaryId}
+                  title={!plan.diaryId ? 'Nenhum diário vinculado' : 'Gerar conteúdo do diário a partir deste plano'}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Gerar Conteúdo do Diário
                 </Button>
                 <Button variant="outline" className="gap-2" onClick={handlePrint}>
                   <Printer className="h-4 w-4" />

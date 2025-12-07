@@ -640,4 +640,193 @@ export class AcademicService {
     await this.teachingPlanRepository.update(planId, data);
     return await this.teachingPlanRepository.findOne({ where: { id: planId } });
   }
+
+  /**
+   * Gera conteúdo do diário baseado no plano de ensino
+   */
+  async generateDiaryContentFromPlan(userId: string, diaryId: string, teachingPlanId: string) {
+    // Buscar o diário e o plano de ensino
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diário não encontrado');
+    }
+
+    const teachingPlan = await this.teachingPlanRepository.findOne({
+      where: { id: teachingPlanId, diaryId },
+    });
+
+    if (!teachingPlan) {
+      throw new NotFoundException('Plano de ensino não encontrado para este diário');
+    }
+
+    // Buscar conteúdos já existentes do diário (para pegar IDs e datas)
+    const existingContents = await this.diaryContentRepository.find({
+      where: { diaryId },
+      order: { date: 'ASC', timeRange: 'ASC' },
+    });
+
+    // Filtrar conteúdos: remover aulas canceladas que têm antecipação
+    // (porque antecipação + aula cancelada = 1 aula só no plano)
+    const contentsForMapping = existingContents.filter(content => {
+      // Se for antecipação, incluir
+      if (content.isAntecipation) {
+        return true;
+      }
+      
+      // Se for aula normal, verificar se NÃO tem antecipação correspondente
+      const hasAnticipation = existingContents.some(
+        c => c.isAntecipation && c.originalContentId === content.contentId
+      );
+      
+      // Incluir apenas se NÃO tem antecipação (senão é uma aula cancelada)
+      return !hasAnticipation;
+    });
+
+    // Gerar conteúdo baseado na proposta de trabalho do plano
+    const generatedContents = [];
+    
+    if (teachingPlan.propostaTrabalho && Array.isArray(teachingPlan.propostaTrabalho)) {
+      let contentIndex = 0;
+      
+      for (const proposta of teachingPlan.propostaTrabalho) {
+        const numAulas = parseInt(proposta.numAulas) || 0;
+        
+        for (let i = 0; i < numAulas && contentIndex < contentsForMapping.length; i++) {
+          const existingContent = contentsForMapping[contentIndex];
+          
+          // Criar conteúdo gerado mantendo data/horário/tipo do conteúdo existente
+          const generatedContent = {
+            id: existingContent.id,
+            contentId: existingContent.contentId,
+            obsId: existingContent.obsId,
+            date: existingContent.date,
+            timeRange: existingContent.timeRange,
+            type: existingContent.type,
+            isNonPresential: existingContent.isNonPresential,
+            isAntecipation: existingContent.isAntecipation,
+            originalContentId: existingContent.originalContentId,
+            originalDate: existingContent.originalDate,
+            // Conteúdo gerado a partir do plano
+            content: proposta.conteudo || '',
+            observations: proposta.observacoes || '',
+          };
+          
+          generatedContents.push(generatedContent);
+          
+          // Se esta é uma antecipação, também gerar para a aula cancelada original
+          if (existingContent.isAntecipation && existingContent.originalContentId) {
+            const originalContent = existingContents.find(
+              c => c.contentId === existingContent.originalContentId
+            );
+            
+            if (originalContent) {
+              generatedContents.push({
+                id: originalContent.id,
+                contentId: originalContent.contentId,
+                obsId: originalContent.obsId,
+                date: originalContent.date,
+                timeRange: originalContent.timeRange,
+                type: originalContent.type,
+                isNonPresential: originalContent.isNonPresential,
+                isAntecipation: originalContent.isAntecipation,
+                originalContentId: originalContent.originalContentId,
+                originalDate: originalContent.originalDate,
+                // Mesmo conteúdo da antecipação
+                content: proposta.conteudo || '',
+                observations: proposta.observacoes || '',
+              });
+            }
+          }
+          
+          contentIndex++;
+        }
+      }
+    }
+
+    return {
+      success: true,
+      generatedCount: generatedContents.length,
+      contents: generatedContents,
+      diary: {
+        id: diary.id,
+        disciplina: diary.disciplina,
+        turma: diary.turma,
+      },
+      teachingPlan: {
+        id: teachingPlan.id,
+        unidadeCurricular: teachingPlan.unidadeCurricular,
+      },
+    };
+  }
+
+  /**
+   * Salva múltiplos conteúdos do diário de uma vez
+   */
+  async saveDiaryContentBulk(userId: string, diaryId: string, contents: any[]) {
+    // Verificar se o diário pertence ao usuário
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diário não encontrado');
+    }
+
+    const savedContents = [];
+    
+    // Criar um mapa de conteúdos por contentId para facilitar lookup
+    const contentsByContentId = new Map<string, any>();
+    for (const contentData of contents) {
+      if (contentData.contentId) {
+        contentsByContentId.set(contentData.contentId, contentData);
+      }
+    }
+
+    for (const contentData of contents) {
+      // Buscar conteúdo existente pelo ID
+      const existing = await this.diaryContentRepository.findOne({
+        where: { id: contentData.id, diaryId },
+      });
+
+      if (existing) {
+        // Atualizar conteúdo existente
+        Object.assign(existing, {
+          content: contentData.content,
+          observations: contentData.observations,
+        });
+        const saved = await this.diaryContentRepository.save(existing);
+        savedContents.push(saved);
+
+        // Se este é um conteúdo de antecipação, copiar para a aula cancelada original
+        if (existing.isAntecipation && existing.originalContentId) {
+          // Buscar a aula cancelada original
+          const originalContent = await this.diaryContentRepository.findOne({
+            where: { 
+              diaryId,
+              contentId: existing.originalContentId 
+            },
+          });
+
+          if (originalContent) {
+            // Copiar o conteúdo e observações para a aula original
+            Object.assign(originalContent, {
+              content: contentData.content,
+              observations: contentData.observations,
+            });
+            await this.diaryContentRepository.save(originalContent);
+            console.log(`Conteúdo da antecipação ${existing.contentId} copiado para aula original ${originalContent.contentId}`);
+          }
+        }
+      }
+    }
+
+    return {
+      success: true,
+      savedCount: savedContents.length,
+      contents: savedContents,
+    };
+  }
 }

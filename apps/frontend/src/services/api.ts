@@ -159,6 +159,26 @@ export const academicApi = {
     const response = await api.post(`/academic/teaching-plans/${planId}/sync`);
     return response.data;
   },
+
+  async generateDiaryContentFromPlan(diaryId: string, teachingPlanId: string): Promise<{
+    success: boolean;
+    generatedCount: number;
+    contents: DiaryContent[];
+    diary: any;
+    teachingPlan: any;
+  }> {
+    const response = await api.post(`/academic/diaries/${diaryId}/generate-from-plan`, { teachingPlanId });
+    return response.data;
+  },
+
+  async saveDiaryContentBulk(diaryId: string, contents: Partial<DiaryContent>[]): Promise<{
+    success: boolean;
+    savedCount: number;
+    contents: DiaryContent[];
+  }> {
+    const response = await api.post(`/academic/diaries/${diaryId}/content/bulk`, { contents });
+    return response.data;
+  },
 };
 
 export interface Diary {
@@ -200,6 +220,7 @@ export interface DiaryContent {
 export interface TeachingPlan {
   id: string;
   externalId: string;
+  diaryId: string;
   status: string;
   statusCoord?: string;
   excluido: boolean;

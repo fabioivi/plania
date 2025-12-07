@@ -186,4 +186,36 @@ export class AcademicController {
   async syncTeachingPlan(@Request() req, @Param('id') id: string) {
     return this.authQueueProcessor.syncSpecificTeachingPlan(req.user.id, id);
   }
+
+  @Post('diaries/:id/generate-from-plan')
+  @ApiOperation({ summary: 'Gera conteúdo do diário baseado no plano de ensino' })
+  @ApiParam({ name: 'id', description: 'ID do diário' })
+  @ApiResponse({ status: 200, description: 'Conteúdo gerado com sucesso' })
+  async generateDiaryContentFromPlan(
+    @Request() req,
+    @Param('id') diaryId: string,
+    @Body() body: { teachingPlanId: string }
+  ) {
+    return this.academicService.generateDiaryContentFromPlan(
+      req.user.id,
+      diaryId,
+      body.teachingPlanId
+    );
+  }
+
+  @Post('diaries/:id/content/bulk')
+  @ApiOperation({ summary: 'Salva múltiplos conteúdos do diário de uma vez' })
+  @ApiParam({ name: 'id', description: 'ID do diário' })
+  @ApiResponse({ status: 200, description: 'Conteúdos salvos com sucesso' })
+  async saveDiaryContentBulk(
+    @Request() req,
+    @Param('id') diaryId: string,
+    @Body() body: { contents: any[] }
+  ) {
+    return this.academicService.saveDiaryContentBulk(
+      req.user.id,
+      diaryId,
+      body.contents
+    );
+  }
 }

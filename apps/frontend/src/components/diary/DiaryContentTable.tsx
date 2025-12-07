@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Calendar, Clock, GripVertical, Lock } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar, Clock, GripVertical, Lock, Edit2 } from "lucide-react"
 import { DiaryContent } from "@/services/api"
 import {
   DndContext,
@@ -33,6 +34,12 @@ export interface DiaryContentTableProps {
   /** Callback quando o conteúdo é reordenado (apenas conteúdo muda, data/horário/tipo ficam fixos) */
   onReorder?: (reorderedContents: DiaryContent[]) => void
   
+  /** Modo de edição inline */
+  editable?: boolean
+  
+  /** Callback quando o conteúdo é editado */
+  onContentChange?: (contentId: string, field: 'content' | 'observations', value: string) => void
+  
   /** Classe CSS adicional */
   className?: string
 }
@@ -40,7 +47,17 @@ export interface DiaryContentTableProps {
 /**
  * Conteúdo sortable (apenas o texto do conteúdo)
  */
-function SortableContentCell({ content, contentId }: { content: string, contentId: string }) {
+function SortableContentCell({ 
+  content, 
+  contentId, 
+  editable, 
+  onEdit 
+}: { 
+  content: string
+  contentId: string
+  editable?: boolean
+  onEdit?: (value: string) => void
+}) {
   const {
     attributes,
     listeners,
@@ -68,9 +85,21 @@ function SortableContentCell({ content, contentId }: { content: string, contentI
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </button>
-      <div className="max-w-md text-sm flex-1">
-        {content || <span className="text-muted-foreground italic">Sem conteúdo</span>}
-      </div>
+      
+      {editable ? (
+        <div className="flex-1 max-w-md">
+          <Textarea
+            value={content}
+            onChange={(e) => onEdit?.(e.target.value)}
+            className="min-h-[60px] text-sm resize-y"
+            placeholder="Digite o conteúdo da aula..."
+          />
+        </div>
+      ) : (
+        <div className="max-w-md text-sm flex-1">
+          {content || <span className="text-muted-foreground italic">Sem conteúdo</span>}
+        </div>
+      )}
     </div>
   )
 }
@@ -108,6 +137,8 @@ const getTypeColor = (type: 'N' | 'A' | 'R') => {
 export function DiaryContentTable({
   contents,
   onReorder,
+  editable = false,
+  onContentChange,
   className = ""
 }: DiaryContentTableProps) {
   // Mantém array de conteúdos separado para drag-and-drop
@@ -148,6 +179,18 @@ export function DiaryContentTable({
     }
   }
 
+  const handleContentEdit = (contentId: string, newValue: string) => {
+    // Atualizar estado local
+    setContentTexts(prev => 
+      prev.map(item => 
+        item.id === contentId ? { ...item, content: newValue } : item
+      )
+    )
+    
+    // Chamar callback se fornecido
+    onContentChange?.(contentId, 'content', newValue)
+  }
+
   return (
     <Card className={`overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
@@ -159,6 +202,9 @@ export function DiaryContentTable({
               <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Horário</th>
               <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tipo</th>
               <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Conteúdo</th>
+              {editable && (
+                <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Observações</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -188,6 +234,10 @@ export function DiaryContentTable({
                     index < contents.length - 1 &&
                     contents[index + 1].contentId === item.originalContentId
                   
+                  // Verificar se a data é diferente da linha anterior (para agrupar por dia)
+                  const isDifferentDay = index === 0 || contents[index - 1].date !== item.date
+                  const isSameDay = index > 0 && contents[index - 1].date === item.date
+                  
                   return (
                   <tr 
                     key={item.id} 
@@ -195,7 +245,9 @@ export function DiaryContentTable({
                       item.isAntecipation ? 'bg-green-50/70' : hasAnticipation ? 'bg-gray-50' : ''
                     } ${isConnectedToAbove ? 'border-l-4 border-l-green-400 border-t-0' : ''} ${
                       isConnectedToBelow ? 'border-l-4 border-l-green-400 border-b-0' : ''
-                    } ${hasAnticipation ? 'opacity-60' : ''} hover:brightness-95`}
+                    } ${hasAnticipation ? 'opacity-60' : ''} ${
+                      isDifferentDay ? 'border-t-2 border-t-primary/20' : ''
+                    } ${isSameDay ? 'bg-blue-50/30' : ''} hover:brightness-95`}
                   >
                     {/* ID do Conteúdo */}
                     <td className="p-3">
@@ -262,8 +314,25 @@ export function DiaryContentTable({
                       <SortableContentCell 
                         content={contentTexts[index]?.content || ''} 
                         contentId={contentTexts[index]?.id || item.id}
+                        editable={editable}
+                        onEdit={(newValue) => handleContentEdit(item.id, newValue)}
                       />
                     </td>
+
+                    {/* Observações (editável apenas em modo edição) */}
+                    {editable && (
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <Edit2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <Textarea
+                            value={item.observations || ''}
+                            onChange={(e) => onContentChange?.(item.id, 'observations', e.target.value)}
+                            className="min-h-[60px] text-sm resize-y"
+                            placeholder="Observações adicionais..."
+                          />
+                        </div>
+                      </td>
+                    )}
                   </tr>
                   )
                 })}

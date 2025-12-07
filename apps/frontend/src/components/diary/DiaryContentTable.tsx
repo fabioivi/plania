@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, GripVertical, Lock, Edit2 } from "lucide-react"
 import { DiaryContent } from "@/services/api"
+import { format, parseISO, isSameDay as dateFnsIsSameDay } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   DndContext,
   closestCenter,
@@ -104,12 +106,45 @@ function SortableContentCell({
   )
 }
 
+/**
+ * Formata data no formato DD/MM/YYYY usando date-fns
+ */
 const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  const day = date.getUTCDate().toString().padStart(2, '0')
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
-  const year = date.getUTCFullYear()
-  return `${day}/${month}/${year}`
+  try {
+    const date = parseISO(dateStr)
+    return format(date, 'dd/MM/yyyy')
+  } catch (error) {
+    console.error('Erro ao formatar data:', dateStr, error)
+    return dateStr
+  }
+}
+
+/**
+ * Formata data com dia da semana usando date-fns
+ * Exemplo: "segunda-feira, 15/01/2025"
+ */
+const formatDateWithWeekday = (dateStr: string) => {
+  try {
+    const date = parseISO(dateStr)
+    return format(date, "EEEE, dd/MM/yyyy", { locale: ptBR })
+  } catch (error) {
+    console.error('Erro ao formatar data com dia da semana:', dateStr, error)
+    return dateStr
+  }
+}
+
+/**
+ * Compara se duas datas são do mesmo dia usando date-fns
+ */
+const isSameDay = (date1Str: string, date2Str: string) => {
+  try {
+    const d1 = parseISO(date1Str)
+    const d2 = parseISO(date2Str)
+    return dateFnsIsSameDay(d1, d2)
+  } catch (error) {
+    console.error('Erro ao comparar datas:', date1Str, date2Str, error)
+    return false
+  }
 }
 
 const getTypeLabel = (type: 'N' | 'A' | 'R') => {
@@ -235,20 +270,44 @@ export function DiaryContentTable({
                     contents[index + 1].contentId === item.originalContentId
                   
                   // Verificar se a data é diferente da linha anterior (para agrupar por dia)
-                  const isDifferentDay = index === 0 || contents[index - 1].date !== item.date
-                  const isSameDay = index > 0 && contents[index - 1].date === item.date
+                  const isDifferentDay = index === 0 || !isSameDay(contents[index - 1].date, item.date)
+                  const isLastOfDay = index === contents.length - 1 || !isSameDay(contents[index + 1].date, item.date)
+                  
+                  // Contar quantas aulas tem no mesmo dia (excluindo aulas canceladas)
+                  const sameDayContents = contents.filter(c => isSameDay(c.date, item.date))
+                  const sameDayCount = sameDayContents.filter(c => !sameDayContents.some(
+                    anticipation => anticipation.isAntecipation && anticipation.originalContentId === c.contentId
+                  )).length
+                  
+                  // Só mostrar badge se houver pelo menos uma aula não-cancelada
+                  const shouldShowDayBadge = isDifferentDay && sameDayCount > 0
                   
                   return (
-                  <tr 
-                    key={item.id} 
-                    className={`border-b transition-colors ${
-                      item.isAntecipation ? 'bg-green-50/70' : hasAnticipation ? 'bg-gray-50' : ''
-                    } ${isConnectedToAbove ? 'border-l-4 border-l-green-400 border-t-0' : ''} ${
-                      isConnectedToBelow ? 'border-l-4 border-l-green-400 border-b-0' : ''
-                    } ${hasAnticipation ? 'opacity-60' : ''} ${
-                      isDifferentDay ? 'border-t-2 border-t-primary/20' : ''
-                    } ${isSameDay ? 'bg-blue-50/30' : ''} hover:brightness-95`}
-                  >
+                  <Fragment key={item.id}>
+                    {/* Badge da data (só mostrar se houver aulas não-canceladas) */}
+                    {shouldShowDayBadge && (
+                      <tr className="border-0">
+                        <td colSpan={editable ? 6 : 5} className="p-0 pb-1">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-transparent border-l-4 border-blue-500 rounded-tl rounded-bl">
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs font-semibold">
+                              📅 {formatDateWithWeekday(item.date)} • {sameDayCount} {sameDayCount === 1 ? 'aula' : 'aulas'}
+                            </Badge>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    
+                    <tr 
+                      className={`border-b transition-colors ${
+                        item.isAntecipation ? 'bg-green-50/70' : hasAnticipation ? 'bg-gray-50' : ''
+                      } ${isConnectedToAbove ? 'border-l-4 border-l-green-400 border-t-0' : ''} ${
+                        isConnectedToBelow ? 'border-l-4 border-l-green-400 border-b-0' : ''
+                      } ${hasAnticipation ? 'opacity-60' : ''} ${
+                        shouldShowDayBadge ? 'border-l-[3px] border-l-blue-400/40' : ''
+                      } ${
+                        shouldShowDayBadge && isLastOfDay ? 'mb-2' : ''
+                      } hover:brightness-95 group`}
+                    >
                     {/* ID do Conteúdo */}
                     <td className="p-3">
                       <div className={`flex items-center gap-1 ${isConnectedToAbove ? 'pl-4' : ''}`}>
@@ -334,6 +393,7 @@ export function DiaryContentTable({
                       </td>
                     )}
                   </tr>
+                  </Fragment>
                   )
                 })}
               </SortableContext>

@@ -10,6 +10,7 @@ import { TeachingPlan } from './teaching-plan.entity';
 import { TeachingPlanHistory } from './teaching-plan-history.entity';
 import { CryptoService } from '../../common/services/crypto.service';
 import { QueueModule } from '../queue/queue.module';
+import { ScrapingModule } from '../scraping/scraping.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { QueueModule } from '../queue/queue.module';
       name: 'auth-queue',
     }),
     forwardRef(() => QueueModule),
+    ScrapingModule,
   ],
   controllers: [AcademicController],
   providers: [

@@ -179,6 +179,29 @@ export const academicApi = {
     const response = await api.post(`/academic/diaries/${diaryId}/content/bulk`, { contents });
     return response.data;
   },
+
+  async sendDiaryContentToSystem(diaryId: string, contentId: string): Promise<{
+    success: boolean;
+    message?: string;
+  }> {
+    const response = await api.post(`/academic/diaries/${diaryId}/content/${contentId}/send`);
+    return response.data;
+  },
+
+  async sendDiaryContentBulkToSystem(diaryId: string, contentIds: string[]): Promise<{
+    success: boolean;
+    total: number;
+    succeeded: number;
+    failed: number;
+    results: Array<{
+      contentId: string;
+      success: boolean;
+      message?: string;
+    }>;
+  }> {
+    const response = await api.post(`/academic/diaries/${diaryId}/content/send-bulk`, { contentIds });
+    return response.data;
+  },
 };
 
 export interface Diary {

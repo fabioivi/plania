@@ -1,3 +1,5 @@
+import { parse, isValid, parseISO } from 'date-fns';
+
 /**
  * Utilities for robust data extraction and parsing
  */
@@ -36,6 +38,7 @@ export class ExtractionUtils {
 
   /**
    * Parse Brazilian date format: "30/09/2025 às 14:19:12"
+   * Uses date-fns for safe parsing
    */
   static parseBRDate(dateStr: string | null | undefined): Date | null {
     if (!dateStr) return null;
@@ -47,11 +50,17 @@ export class ExtractionUtils {
     if (!match) return null;
     
     const [_, day, month, year, hour, minute, second] = match;
-    return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+    
+    // Use date-fns parse with explicit format
+    const dateString = `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+    const parsedDate = parse(dateString, 'dd/MM/yyyy HH:mm:ss', new Date());
+    
+    return isValid(parsedDate) ? parsedDate : null;
   }
 
   /**
    * Parse Brazilian date format (simple): "13/08/2025" or "30/09/2025"
+   * Uses date-fns for safe parsing without timezone issues
    */
   static parseBRDateSimple(dateStr: string | null | undefined): Date | null {
     if (!dateStr) return null;
@@ -66,31 +75,16 @@ export class ExtractionUtils {
     
     const [_, day, month, year] = match;
     
-    // Validate day and month ranges
-    const dayNum = parseInt(day);
-    const monthNum = parseInt(month);
-    const yearNum = parseInt(year);
+    // Use date-fns parse with explicit format
+    // This avoids timezone issues by parsing in local time
+    const parsedDate = parse(`${day}/${month}/${year}`, 'dd/MM/yyyy', new Date());
     
-    if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12) {
+    // Validate the parsed date
+    if (!isValid(parsedDate)) {
       return null;
     }
     
-    // Create date at noon UTC to avoid timezone issues
-    const date = new Date(`${year}-${month}-${day}T00:00:00.000Z`);
-    
-    // Check if date is valid (e.g., 31/02/2024 would be invalid)
-    if (isNaN(date.getTime())) {
-      return null;
-    }
-    
-    // Verify the date components match using UTC methods (JavaScript may auto-correct invalid dates)
-    if (date.getUTCFullYear() !== yearNum || 
-        date.getUTCMonth() + 1 !== monthNum || 
-        date.getUTCDate() !== dayNum) {
-      return null;
-    }
-    
-    return date;
+    return parsedDate;
   }
 
   /**

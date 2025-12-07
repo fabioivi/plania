@@ -19,10 +19,83 @@ import { ScrapingDebugService } from './scraping-debug.service';
 export class ScrapingService {
   private browser: Browser | null = null;
 
+  // Configuration constants for delays (in milliseconds)
+  private readonly ENABLE_HUMAN_DELAYS = true; // Set to false to disable all delays
+  
+  // Typing delays
+  private readonly TYPING_DELAY_MIN = 30;
+  private readonly TYPING_DELAY_MAX = 80;
+  
+  // Navigation delays
+  private readonly PAGE_LOAD_DELAY_MIN = 200;
+  private readonly PAGE_LOAD_DELAY_MAX = 500;
+  
+  // Interaction delays
+  private readonly BEFORE_INTERACT_DELAY_MIN = 100;
+  private readonly BEFORE_INTERACT_DELAY_MAX = 300;
+  
+  private readonly BETWEEN_FIELDS_DELAY_MIN = 150;
+  private readonly BETWEEN_FIELDS_DELAY_MAX = 400;
+  
+  private readonly BEFORE_SUBMIT_DELAY_MIN = 200;
+  private readonly BEFORE_SUBMIT_DELAY_MAX = 500;
+  
+  private readonly AFTER_SUBMIT_DELAY_MIN = 1000;
+  private readonly AFTER_SUBMIT_DELAY_MAX = 2000;
+  
+  private readonly BEFORE_CONTENT_SEND_DELAY_MIN = 300;
+  private readonly BEFORE_CONTENT_SEND_DELAY_MAX = 800;
+
   constructor(
     private configService: ConfigService,
     private debugService: ScrapingDebugService,
   ) {}
+
+  /**
+   * Generate random delay to simulate human behavior
+   * @param min - Minimum delay in milliseconds
+   * @param max - Maximum delay in milliseconds
+   */
+  private randomDelay(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  /**
+   * Wait for a random amount of time (human-like behavior)
+   * @param page - Playwright page instance
+   * @param min - Minimum delay in milliseconds (default: 100ms)
+   * @param max - Maximum delay in milliseconds (default: 400ms)
+   */
+  private async humanDelay(page: Page, min: number = 100, max: number = 400): Promise<void> {
+    if (!this.ENABLE_HUMAN_DELAYS) {
+      return; // Skip delay if disabled
+    }
+    const delay = this.randomDelay(min, max);
+    console.log(`⏳ Aguardando ${delay}ms...`);
+    await page.waitForTimeout(delay);
+  }
+
+  /**
+   * Type text with random delays between keystrokes (simulates human typing)
+   * @param page - Playwright page instance
+   * @param selector - CSS selector
+   * @param text - Text to type
+   */
+  private async humanType(page: Page, selector: string, text: string): Promise<void> {
+    await page.focus(selector);
+    
+    if (!this.ENABLE_HUMAN_DELAYS) {
+      // Type instantly without delays
+      await page.fill(selector, text);
+      return;
+    }
+    
+    // Type character by character with delays
+    for (const char of text) {
+      await page.keyboard.type(char);
+      await page.waitForTimeout(this.randomDelay(this.TYPING_DELAY_MIN, this.TYPING_DELAY_MAX));
+    }
+  }
 
   async getBrowser(): Promise<Browser> {
     if (!this.browser || !this.browser.isConnected()) {
@@ -1158,6 +1231,201 @@ export class ScrapingService {
         success: false,
         message: `Erro ao extrair conteúdo: ${error.message}`,
       };
+    }
+  }
+
+  /**
+   * Send diary content to IFMS academic system
+   * @param username - IFMS username
+   * @param password - IFMS password
+   * @param contentId - Content ID from the diary (e.g., "1234567")
+   * @param content - Content text to save (use empty string to erase)
+   * @returns Success status and message
+   */
+  /**
+   * Login to IFMS system and return authenticated page (for reuse in bulk operations)
+   */
+  private async loginToIFMS(
+    page: any,
+    username: string,
+    password: string,
+  ): Promise<void> {
+    console.log(`🔐 Realizando login no sistema IFMS...`);
+
+    // Navigate to login page with human-like delay
+    const loginUrl = buildIFMSUrl(IFMS_ROUTES.AUTH.LOGIN);
+    await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    
+    // Wait for page to load completely (random delay)
+    await this.humanDelay(page, this.PAGE_LOAD_DELAY_MIN, this.PAGE_LOAD_DELAY_MAX);
+    
+    await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, { state: 'visible', timeout: 10000 });
+    
+    // Simulate human behavior: small delay before interacting
+    await this.humanDelay(page, this.BEFORE_INTERACT_DELAY_MIN, this.BEFORE_INTERACT_DELAY_MAX);
+    
+    // Type username with human-like speed
+    console.log(`⌨️ Digitando usuário...`);
+    await this.humanType(page, IFMS_SELECTORS.LOGIN.USERNAME, username);
+    
+    // Small delay between fields (like a human would do)
+    await this.humanDelay(page, this.BETWEEN_FIELDS_DELAY_MIN, this.BETWEEN_FIELDS_DELAY_MAX);
+    
+    // Type password with human-like speed
+    console.log(`⌨️ Digitando senha...`);
+    await this.humanType(page, IFMS_SELECTORS.LOGIN.PASSWORD, password);
+    
+    // Small delay before clicking submit (human hesitation)
+    await this.humanDelay(page, this.BEFORE_SUBMIT_DELAY_MIN, this.BEFORE_SUBMIT_DELAY_MAX);
+    
+    // Click submit button
+    console.log(`🖱️ Enviando formulário...`);
+    await page.click(IFMS_SELECTORS.LOGIN.SUBMIT);
+    
+    // Wait for response with random delay
+    await this.humanDelay(page, this.AFTER_SUBMIT_DELAY_MIN, this.AFTER_SUBMIT_DELAY_MAX);
+
+    // Check for login errors
+    const errorElement = await page.$(IFMS_SELECTORS.LOGIN.ERROR_MESSAGE);
+    if (errorElement) {
+      const errorText = await errorElement.textContent();
+      throw new Error(`Erro de autenticação: ${errorText}`);
+    }
+
+    // Verify successful login
+    const currentUrl = page.url();
+    if (!isLoggedIn(currentUrl)) {
+      throw new Error('Falha na autenticação com o sistema acadêmico');
+    }
+
+    console.log(`✅ Login realizado com sucesso`);
+  }
+
+  /**
+   * Send diary content using an already authenticated page
+   */
+  private async sendContentWithAuthenticatedPage(
+    page: any,
+    contentId: string,
+    content: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    console.log(`📤 Enviando conteúdo ${contentId}...`);
+
+    // Wait before sending content (avoid rate limiting)
+    await this.humanDelay(page, this.BEFORE_CONTENT_SEND_DELAY_MIN, this.BEFORE_CONTENT_SEND_DELAY_MAX);
+
+    // Send POST request to save content
+    const saveUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.SAVE_CONTENT(contentId));
+
+    // Encode content and prepare form data
+    const formData = new URLSearchParams();
+    formData.append('conteudo', content);
+
+    // Execute POST request
+    const response = await page.request.post(saveUrl, {
+      data: formData.toString(),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      },
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Erro HTTP: ${response.status()} - ${response.statusText()}`);
+    }
+
+    console.log(`✅ Conteúdo ${contentId} enviado com sucesso!`);
+
+    return {
+      success: true,
+      message: 'Conteúdo salvo no sistema acadêmico com sucesso',
+    };
+  }
+
+  /**
+   * Send single diary content to IFMS system (creates new session)
+   */
+  async sendDiaryContentToSystem(
+    username: string,
+    password: string,
+    contentId: string,
+    content: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    const context = await this.createContext();
+    const page = await context.newPage();
+
+    try {
+      console.log(`🚀 Enviando conteúdo único para o sistema acadêmico...`);
+      console.log(`   ContentId: ${contentId}`);
+      console.log(`   Content length: ${content.length} caracteres`);
+
+      // Login to IFMS
+      await this.loginToIFMS(page, username, password);
+
+      // Send content using authenticated page
+      return await this.sendContentWithAuthenticatedPage(page, contentId, content);
+    } catch (error) {
+      console.error('❌ Erro ao enviar conteúdo para o sistema:', error);
+      return {
+        success: false,
+        message: `Erro ao enviar conteúdo: ${error.message}`,
+      };
+    } finally {
+      await page.close();
+      await context.close();
+    }
+  }
+
+  /**
+   * Send multiple diary contents to IFMS system using single login session
+   */
+  async sendDiaryContentBulkToSystem(
+    username: string,
+    password: string,
+    contents: Array<{ contentId: string; content: string }>,
+  ): Promise<Array<{ contentId: string; success: boolean; message?: string }>> {
+    const context = await this.createContext();
+    const page = await context.newPage();
+    const results = [];
+
+    try {
+      console.log(`🚀 Enviando ${contents.length} conteúdos em lote (sessão única)...`);
+
+      // Login once
+      await this.loginToIFMS(page, username, password);
+
+      // Send each content using the same authenticated session
+      for (const { contentId, content } of contents) {
+        try {
+          const result = await this.sendContentWithAuthenticatedPage(page, contentId, content);
+          results.push({
+            contentId,
+            success: result.success,
+            message: result.message,
+          });
+        } catch (error) {
+          console.error(`❌ Erro ao enviar conteúdo ${contentId}:`, error);
+          results.push({
+            contentId,
+            success: false,
+            message: `Erro ao enviar conteúdo: ${error.message}`,
+          });
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('❌ Erro no envio em lote:', error);
+      // If login fails, mark all as failed
+      return contents.map(({ contentId }) => ({
+        contentId,
+        success: false,
+        message: `Erro de login: ${error.message}`,
+      }));
+    } finally {
+      await page.close();
+      await context.close();
     }
   }
 

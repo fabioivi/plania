@@ -15,9 +15,14 @@ import { TeachingPlanHistory } from './teaching-plan-history.entity';
 import { SaveCredentialDto } from './academic.dto';
 import { CryptoService } from '../../common/services/crypto.service';
 import { ExtractionUtils } from '../scraping/extraction.utils';
+import { ScrapingService } from '../scraping/scraping.service';
 
 @Injectable()
 export class AcademicService {
+  // Track last request time per user to implement rate limiting
+  private lastRequestTime: Map<string, number> = new Map();
+  private readonly MIN_REQUEST_INTERVAL = 0; // Minimum time between requests (0 = disabled)
+
   constructor(
     @InjectRepository(AcademicCredential)
     private credentialRepository: Repository<AcademicCredential>,
@@ -30,6 +35,7 @@ export class AcademicService {
     @InjectRepository(TeachingPlanHistory)
     private teachingPlanHistoryRepository: Repository<TeachingPlanHistory>,
     private cryptoService: CryptoService,
+    private scrapingService: ScrapingService,
     @InjectQueue('auth-queue') private authQueue: Queue,
   ) {}
 
@@ -827,6 +833,203 @@ export class AcademicService {
       success: true,
       savedCount: savedContents.length,
       contents: savedContents,
+    };
+  }
+
+  /**
+   * Send diary content to IFMS academic system
+   */
+  async sendDiaryContentToSystem(
+    userId: string,
+    diaryId: string,
+    contentId: string,
+  ): Promise<{ success: boolean; message?: string }> {
+    // Rate limiting: Check if user is making requests too frequently
+    const now = Date.now();
+    const lastRequest = this.lastRequestTime.get(userId);
+    
+    if (lastRequest) {
+      const timeSinceLastRequest = now - lastRequest;
+      if (timeSinceLastRequest < this.MIN_REQUEST_INTERVAL) {
+        const waitTime = this.MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+        console.log(`⏳ Rate limiting: aguardando ${waitTime}ms antes de enviar...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
+
+    // Update last request time
+    this.lastRequestTime.set(userId, Date.now());
+
+    // Get diary to verify ownership
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diário não encontrado');
+    }
+
+    // Get diary content
+    const diaryContent = await this.diaryContentRepository.findOne({
+      where: { diaryId, contentId },
+    });
+
+    if (!diaryContent) {
+      throw new NotFoundException('Conteúdo do diário não encontrado');
+    }
+
+    // Get user credentials
+    const credential = await this.credentialRepository.findOne({
+      where: { userId, system: 'IFMS' },
+    });
+
+    if (!credential) {
+      throw new NotFoundException('Credenciais IFMS não encontradas');
+    }
+
+    // Decrypt password
+    const password = this.cryptoService.decrypt({
+      encrypted: credential.passwordEncrypted,
+      iv: credential.passwordIv,
+      authTag: credential.passwordAuthTag,
+    });
+
+    console.log(`📤 Enviando conteúdo ${contentId} para o sistema IFMS...`);
+
+    // Send content to system
+    const result = await this.scrapingService.sendDiaryContentToSystem(
+      credential.username,
+      password,
+      contentId,
+      diaryContent.content || '',
+    );
+
+    return result;
+  }
+
+  /**
+   * Send multiple diary contents to IFMS academic system (batch operation)
+   */
+  async sendDiaryContentBulkToSystem(
+    userId: string,
+    diaryId: string,
+    contentIds: string[],
+  ): Promise<{
+    success: boolean;
+    total: number;
+    succeeded: number;
+    failed: number;
+    results: Array<{
+      contentId: string;
+      success: boolean;
+      message?: string;
+    }>;
+  }> {
+    const results = [];
+    let succeeded = 0;
+    let failed = 0;
+
+    console.log(`📦 Enviando ${contentIds.length} conteúdos em lote...`);
+    console.log(`🔍 Buscando credenciais para userId: ${userId}`);
+
+    // Get diary to verify ownership (once)
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diário não encontrado');
+    }
+
+    // Get user credentials (once) - try both uppercase and lowercase
+    let credential = await this.credentialRepository.findOne({
+      where: { userId, system: 'IFMS' },
+    });
+
+    // If not found, try lowercase
+    if (!credential) {
+      console.log(`⚠️ Credenciais não encontradas com 'IFMS', tentando 'ifms'...`);
+      credential = await this.credentialRepository.findOne({
+        where: { userId, system: 'ifms' },
+      });
+    }
+
+    // If still not found, list all credentials for debugging
+    if (!credential) {
+      const allCredentials = await this.credentialRepository.find({
+        where: { userId },
+      });
+      console.error(`❌ Nenhuma credencial IFMS encontrada para o usuário ${userId}`);
+      console.error(`📋 Credenciais disponíveis:`, allCredentials.map(c => ({ system: c.system, username: c.username })));
+      throw new NotFoundException('Credenciais IFMS não encontradas');
+    }
+
+    // Decrypt password (once)
+    const password = this.cryptoService.decrypt({
+      encrypted: credential.passwordEncrypted,
+      iv: credential.passwordIv,
+      authTag: credential.passwordAuthTag,
+    });
+
+    console.log(`🔐 Credenciais carregadas para o usuário`);
+
+    // Prepare contents array
+    const contentsToSend = [];
+    for (const contentId of contentIds) {
+      const diaryContent = await this.diaryContentRepository.findOne({
+        where: { diaryId, contentId },
+      });
+
+      if (diaryContent) {
+        contentsToSend.push({
+          contentId,
+          content: diaryContent.content || '',
+        });
+      } else {
+        results.push({
+          contentId,
+          success: false,
+          message: 'Conteúdo do diário não encontrado',
+        });
+        failed++;
+      }
+    }
+
+    if (contentsToSend.length === 0) {
+      return {
+        success: false,
+        total: contentIds.length,
+        succeeded: 0,
+        failed: contentIds.length,
+        results,
+      };
+    }
+
+    console.log(`📦 Enviando ${contentsToSend.length} conteúdos usando sessão única...`);
+
+    // Send all contents using single login session
+    const sendResults = await this.scrapingService.sendDiaryContentBulkToSystem(
+      credential.username,
+      password,
+      contentsToSend,
+    );
+
+    // Process results
+    for (const result of sendResults) {
+      results.push(result);
+      if (result.success) {
+        succeeded++;
+      } else {
+        failed++;
+      }
+    }
+
+    return {
+      success: succeeded > 0,
+      total: contentIds.length,
+      succeeded,
+      failed,
+      results,
     };
   }
 }

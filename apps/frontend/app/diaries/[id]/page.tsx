@@ -5,23 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, BookOpen, Loader2, FileText, Download, Upload, AlertTriangle } from "lucide-react"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { ArrowLeft, BookOpen, Loader2, FileText, Download } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { academicApi, DiaryContent } from "@/services/api"
 import { toast } from "sonner"
 import { DiaryContentTable } from "@/components/diary/DiaryContentTable"
+import { SendProgressDialog } from "@/components/diary/SendProgressDialog"
 
 export default function DiaryContentPage() {
   const params = useParams()
@@ -31,7 +21,6 @@ export default function DiaryContentPage() {
   const [content, setContent] = useState<DiaryContent[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
-  const [sending, setSending] = useState(false)
   const [diaryInfo, setDiaryInfo] = useState<any>(null)
   const [stats, setStats] = useState<{ total: number; realClasses: number; anticipations: number } | null>(null)
 
@@ -160,27 +149,6 @@ export default function DiaryContentPage() {
     }
   }
 
-  const handleSendToAcademic = async () => {
-    setSending(true)
-    try {
-      // TODO: Implementar endpoint de envio no backend
-      // await academicApi.sendDiaryToAcademic(diaryId)
-      
-      toast.success('Conteúdo enviado para o sistema acadêmico com sucesso!')
-      
-      // Aguardar um pouco e sincronizar novamente para confirmar
-      setTimeout(async () => {
-        await handleSync()
-      }, 2000)
-      
-    } catch (error: any) {
-      console.error('Erro ao enviar para sistema acadêmico:', error)
-      toast.error(error.response?.data?.message || 'Erro ao enviar para sistema acadêmico')
-    } finally {
-      setSending(false)
-    }
-  }
-
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
@@ -211,51 +179,22 @@ export default function DiaryContentPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleSync}
-                disabled={syncing || sending}
+                disabled={syncing}
                 className="gap-2"
               >
                 <Download className={`h-4 w-4 ${syncing ? 'animate-pulse' : ''}`} />
                 {syncing ? 'Baixando...' : 'Baixar do Sistema'}
               </Button>
               
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    disabled={syncing || sending || content.length === 0}
-                    className="gap-2"
-                  >
-                    <Upload className={`h-4 w-4 ${sending ? 'animate-pulse' : ''}`} />
-                    {sending ? 'Enviando...' : 'Enviar para o Sistema'}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-orange-500" />
-                      Confirmar Envio ao Sistema Acadêmico
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-2">
-                      <p>
-                        Você está prestes a enviar <strong>todo o conteúdo deste diário</strong> para o sistema acadêmico do IFMS.
-                      </p>
-                      <p className="text-orange-600 font-medium">
-                        ⚠️ ATENÇÃO: Esta ação irá <strong>substituir completamente</strong> o conteúdo existente no sistema acadêmico pelos dados locais.
-                      </p>
-                      <p>
-                        Certifique-se de que o conteúdo está correto antes de prosseguir.
-                      </p>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSendToAcademic} className="bg-primary">
-                      Sim, Enviar para o Sistema
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <SendProgressDialog
+                diaryId={diaryId}
+                contents={content}
+                disabled={syncing || loading}
+                onComplete={() => {
+                  // Recarregar dados após envio bem-sucedido
+                  handleSync()
+                }}
+              />
             </div>
           </div>
 

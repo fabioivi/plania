@@ -218,4 +218,39 @@ export class AcademicController {
       body.contents
     );
   }
+
+  @Post('diaries/:diaryId/content/:contentId/send')
+  @ApiOperation({ summary: 'Envia conteúdo do diário para o sistema acadêmico IFMS' })
+  @ApiParam({ name: 'diaryId', description: 'ID do diário' })
+  @ApiParam({ name: 'contentId', description: 'ID do conteúdo a ser enviado' })
+  @ApiResponse({ status: 200, description: 'Conteúdo enviado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Diário, conteúdo ou credenciais não encontrados' })
+  async sendDiaryContentToSystem(
+    @Request() req,
+    @Param('diaryId') diaryId: string,
+    @Param('contentId') contentId: string,
+  ) {
+    return this.academicService.sendDiaryContentToSystem(
+      req.user.id,
+      diaryId,
+      contentId,
+    );
+  }
+
+  @Post('diaries/:diaryId/content/send-bulk')
+  @ApiOperation({ summary: 'Envia múltiplos conteúdos do diário para o sistema acadêmico IFMS' })
+  @ApiParam({ name: 'diaryId', description: 'ID do diário' })
+  @ApiResponse({ status: 200, description: 'Conteúdos enviados com sucesso' })
+  @ApiResponse({ status: 404, description: 'Diário ou credenciais não encontrados' })
+  async sendDiaryContentBulkToSystem(
+    @Request() req,
+    @Param('diaryId') diaryId: string,
+    @Body() body: { contentIds: string[] },
+  ) {
+    return this.academicService.sendDiaryContentBulkToSystem(
+      req.user.id,
+      diaryId,
+      body.contentIds,
+    );
+  }
 }

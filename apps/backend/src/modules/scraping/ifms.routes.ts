@@ -22,6 +22,7 @@ export const IFMS_ROUTES = {
     VIEW: (id: string) => `/administrativo/professores/diario/${id}`,
     CONTENT: (id: string) => `/administrativo/professores/diario/${id}/conteudo`,
     AVALIACOES: (id: string) => `/administrativo/professores/diario/${id}/avaliacoes`,
+    SAVE_CONTENT: (contentId: string) => `/administrativo/professores/salvarConteudo/${contentId}`,
   },
 
   // Teaching Plan (Plano de Ensino)

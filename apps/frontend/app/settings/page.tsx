@@ -8,6 +8,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Settings as SettingsIcon, ArrowLeft, Lock, User, Database, Eye, EyeOff, CheckCircle2, XCircle, Loader2, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useState, useEffect } from "react"
 import { academicApi, AcademicCredential } from "@/services/api"
@@ -153,13 +155,13 @@ export default function SettingsPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Nunca'
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    try {
+      const date = parseISO(dateString)
+      return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+    } catch (error) {
+      console.error('Erro ao formatar data:', dateString, error)
+      return 'Data inválida'
+    }
   }
 
   const getLastTestDate = () => {

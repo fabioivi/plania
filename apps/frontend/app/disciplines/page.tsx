@@ -340,7 +340,7 @@ export default function DisciplinesPage() {
                       )}
                       
                       <div className="flex gap-2">
-                        <Link href="/generate" className="flex-1">
+                        <Link href={`/generate?diaryId=${diary.id}`} className="flex-1">
                           <Button variant="default" size="sm" className="w-full">
                             Gerar Plano com IA
                           </Button>

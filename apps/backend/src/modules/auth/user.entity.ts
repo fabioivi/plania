@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { AcademicCredential } from '../academic/academic-credential.entity';
 import { Plan } from '../plans/plan.entity';
+import { LLMConfig } from './llm-config.entity';
 
 @Entity('users')
 export class User {
@@ -38,4 +39,7 @@ export class User {
 
   @OneToMany(() => Plan, (plan) => plan.user)
   plans: Plan[];
+
+  @OneToMany(() => LLMConfig, (config) => config.user)
+  llmConfigs: LLMConfig[];
 }

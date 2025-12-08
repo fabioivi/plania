@@ -14,6 +14,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useState, useEffect } from "react"
 import { academicApi, AcademicCredential } from "@/services/api"
 import { toast } from "sonner"
+import { LLMConfigSection } from "@/components/settings/LLMConfigSection"
 
 export default function SettingsPage() {
   const [username, setUsername] = useState('')
@@ -345,22 +346,15 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <SettingsIcon className="h-6 w-6 text-purple-600" />
                 <div>
-                  <CardTitle>Preferências de IA</CardTitle>
+                  <CardTitle>Configurações de IA</CardTitle>
                   <CardDescription>
-                    Em breve: personalize como a IA gera seus planos de estudo
+                    Configure suas chaves de API para geração de planos de ensino com IA
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center mb-3">
-                  <SettingsIcon className="h-6 w-6 text-purple-600" />
-                </div>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Configurações avançadas de IA estarão disponíveis em breve
-                </p>
-              </div>
+              <LLMConfigSection />
             </CardContent>
           </Card>
         </div>

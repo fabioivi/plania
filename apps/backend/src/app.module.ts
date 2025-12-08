@@ -8,6 +8,7 @@ import { ScrapingModule } from './modules/scraping/scraping.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { AIModule } from './modules/ai/ai.module';
 import { CryptoService } from './common/services/crypto.service';
 
 @Module({
@@ -55,6 +56,7 @@ import { CryptoService } from './common/services/crypto.service';
     PlansModule,
     QueueModule,
     SyncModule,
+    AIModule,
   ],
   providers: [CryptoService],
   exports: [CryptoService],

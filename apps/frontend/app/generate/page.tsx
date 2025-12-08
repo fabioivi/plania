@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,24 +12,121 @@ import { Sparkles, ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-r
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { academicApi, Diary, TeachingPlan, aiApi, GeneratedTeachingPlan } from "@/services/api"
+import { toast } from "sonner"
 
 export default function GeneratePage() {
+  const searchParams = useSearchParams()
+  const diaryId = searchParams.get('diaryId')
+  
   const [step, setStep] = useState<"config" | "generating" | "success">("config")
+  const [loading, setLoading] = useState(true)
+  const [diaries, setDiaries] = useState<Diary[]>([])
+  const [selectedDiary, setSelectedDiary] = useState<Diary | null>(null)
+  const [existingPlans, setExistingPlans] = useState<TeachingPlan[]>([])
+  const [generatedPlan, setGeneratedPlan] = useState<GeneratedTeachingPlan | null>(null)
+  const [generationProgress, setGenerationProgress] = useState(0)
+  const [generationMessage, setGenerationMessage] = useState('')
+  
   const [formData, setFormData] = useState({
-    discipline: "",
-    semester: "2024.2",
-    workload: "",
+    diaryId: "",
     objectives: "",
     methodology: "",
     additionalNotes: ""
   })
 
-  const handleGenerate = () => {
+  useEffect(() => {
+    loadDiaries()
+  }, [])
+
+  useEffect(() => {
+    if (diaryId && diaries.length > 0) {
+      const diary = diaries.find(d => d.id === diaryId)
+      if (diary) {
+        selectDiary(diary)
+      }
+    }
+  }, [diaryId, diaries])
+
+  const loadDiaries = async () => {
+    try {
+      setLoading(true)
+      const data = await academicApi.getDiaries()
+      setDiaries(data)
+    } catch (err: any) {
+      console.error('Erro ao carregar diários:', err)
+      toast.error('Erro ao carregar disciplinas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const selectDiary = async (diary: Diary) => {
+    setSelectedDiary(diary)
+    setFormData(prev => ({ ...prev, diaryId: diary.id }))
+    
+    // Load existing teaching plans for reference
+    try {
+      const plans = await academicApi.getDiaryTeachingPlans(diary.id)
+      setExistingPlans(plans)
+    } catch (err) {
+      console.error('Erro ao carregar planos existentes:', err)
+    }
+  }
+
+  const handleGenerate = async () => {
+    if (!formData.diaryId) {
+      toast.error('Selecione uma disciplina')
+      return
+    }
+
     setStep("generating")
-    // Simulate AI generation
-    setTimeout(() => {
-      setStep("success")
-    }, 5000)
+    setGenerationProgress(0)
+    setGenerationMessage('Iniciando geração...')
+
+    try {
+      // Connect to SSE for real-time progress
+      const token = localStorage.getItem('token')
+      const eventSource = new EventSource(
+        `${process.env.NEXT_PUBLIC_API_URL}/ai/teaching-plans/generate/${formData.diaryId}?token=${token}`
+      )
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          console.log('SSE message:', data)
+
+          if (data.type === 'progress') {
+            setGenerationProgress(data.progress)
+            setGenerationMessage(data.message)
+          } else if (data.type === 'complete') {
+            setGenerationProgress(100)
+            setGenerationMessage(data.message)
+            setGeneratedPlan(data.plan)
+            setStep("success")
+            eventSource.close()
+            toast.success('Plano gerado com sucesso!')
+          } else if (data.type === 'error') {
+            toast.error(data.message)
+            setStep("config")
+            eventSource.close()
+          }
+        } catch (err) {
+          console.error('Error parsing SSE message:', err)
+        }
+      }
+
+      eventSource.onerror = (error) => {
+        console.error('SSE error:', error)
+        toast.error('Erro na conexão com servidor')
+        setStep("config")
+        eventSource.close()
+      }
+    } catch (err: any) {
+      console.error('Erro ao gerar plano:', err)
+      toast.error(err.response?.data?.message || 'Erro ao gerar plano')
+      setStep("config")
+    }
   }
 
   return (
@@ -62,63 +160,91 @@ export default function GeneratePage() {
               <CardHeader>
                 <CardTitle>Configuração do Plano</CardTitle>
                 <CardDescription>
-                  Preencha as informações básicas. A IA usará esses dados para gerar um plano personalizado.
+                  {selectedDiary 
+                    ? `Gerando plano para ${selectedDiary.disciplina}`
+                    : 'Selecione uma disciplina e configure os parâmetros para gerar um plano personalizado'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Discipline Selection */}
                 <div className="space-y-2">
                   <Label htmlFor="discipline">Disciplina *</Label>
-                  <Select 
-                    value={formData.discipline}
-                    onValueChange={(value) => setFormData({...formData, discipline: value})}
-                  >
-                    <SelectTrigger id="discipline">
-                      <SelectValue placeholder="Selecione uma disciplina" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="calculo1">Cálculo Diferencial e Integral I</SelectItem>
-                      <SelectItem value="algebra">Álgebra Linear</SelectItem>
-                      <SelectItem value="fisica1">Física Experimental I</SelectItem>
-                      <SelectItem value="programacao">Programação Orientada a Objetos</SelectItem>
-                      <SelectItem value="estruturas">Estruturas de Dados</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {loading ? (
+                    <div className="flex items-center gap-2 p-3 border rounded-md">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Carregando disciplinas...</span>
+                    </div>
+                  ) : (
+                    <Select 
+                      value={formData.diaryId}
+                      onValueChange={(value) => {
+                        const diary = diaries.find(d => d.id === value)
+                        if (diary) selectDiary(diary)
+                      }}
+                    >
+                      <SelectTrigger id="discipline">
+                        <SelectValue placeholder="Selecione uma disciplina" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {diaries.map((diary) => (
+                          <SelectItem key={diary.id} value={diary.id}>
+                            {diary.disciplina} - {diary.turma}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <p className="text-xs text-muted-foreground">
-                    Disciplinas importadas do sistema acadêmico
+                    Disciplinas sincronizadas do sistema acadêmico
                   </p>
                 </div>
 
-                {/* Semester */}
-                <div className="space-y-2">
-                  <Label htmlFor="semester">Período Letivo *</Label>
-                  <Select 
-                    value={formData.semester}
-                    onValueChange={(value) => setFormData({...formData, semester: value})}
-                  >
-                    <SelectTrigger id="semester">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2024.1">2024.1</SelectItem>
-                      <SelectItem value="2024.2">2024.2</SelectItem>
-                      <SelectItem value="2025.1">2025.1</SelectItem>
-                      <SelectItem value="2025.2">2025.2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Workload */}
-                <div className="space-y-2">
-                  <Label htmlFor="workload">Carga Horária (horas) *</Label>
-                  <Input 
-                    id="workload"
-                    type="number"
-                    placeholder="Ex: 60"
-                    value={formData.workload}
-                    onChange={(e) => setFormData({...formData, workload: e.target.value})}
-                  />
-                </div>
+                {/* Show diary info when selected */}
+                {selectedDiary && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Curso:</span>
+                        <p className="font-medium">{selectedDiary.curso}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Turma:</span>
+                        <p className="font-medium">{selectedDiary.turma}</p>
+                      </div>
+                      {selectedDiary.periodo && (
+                        <div>
+                          <span className="text-muted-foreground">Período:</span>
+                          <p className="font-medium">{selectedDiary.periodo}</p>
+                        </div>
+                      )}
+                      {selectedDiary.cargaHoraria && (
+                        <div>
+                          <span className="text-muted-foreground">Carga Horária:</span>
+                          <p className="font-medium">{selectedDiary.cargaHoraria}</p>
+                        </div>
+                      )}
+                      {selectedDiary.anoLetivo && (
+                        <div>
+                          <span className="text-muted-foreground">Ano Letivo:</span>
+                          <p className="font-medium">{selectedDiary.anoLetivo}{selectedDiary.semestre ? `.${selectedDiary.semestre}` : ''}</p>
+                        </div>
+                      )}
+                      {selectedDiary.modalidade && (
+                        <div>
+                          <span className="text-muted-foreground">Modalidade:</span>
+                          <p className="font-medium">{selectedDiary.modalidade}</p>
+                        </div>
+                      )}
+                    </div>
+                    {existingPlans.length > 0 && (
+                      <div className="pt-2 mt-2 border-t border-blue-200 dark:border-blue-800">
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                          ℹ️ {existingPlans.length} plano(s) de ensino existente(s) será(ão) usado(s) como referência
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Objectives */}
                 <div className="space-y-2">
@@ -176,7 +302,7 @@ export default function GeneratePage() {
                   </Link>
                   <Button 
                     onClick={handleGenerate}
-                    disabled={!formData.discipline || !formData.semester || !formData.workload}
+                    disabled={!formData.diaryId}
                     className="gap-2"
                   >
                     <Sparkles className="h-4 w-4" />
@@ -205,46 +331,30 @@ export default function GeneratePage() {
                   <div>
                     <h2 className="text-2xl font-bold mb-2">Gerando seu plano de ensino...</h2>
                     <p className="text-muted-foreground">
-                      Nossa IA está analisando suas informações e criando um plano personalizado
+                      {generationMessage}
                     </p>
                   </div>
 
-                  {/* Progress Steps */}
-                  <div className="w-full max-w-md space-y-4 pt-4">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      <div className="flex-1 text-left">
-                        <p className="font-medium">Analisando disciplina</p>
-                        <p className="text-sm text-muted-foreground">Contexto acadêmico identificado</p>
-                      </div>
+                  {/* Progress Bar */}
+                  <div className="w-full max-w-md">
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${generationProgress}%` }}
+                      />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      <div className="flex-1 text-left">
-                        <p className="font-medium">Estruturando conteúdo</p>
-                        <p className="text-sm text-muted-foreground">Organizando unidades temáticas</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                      <div className="flex-1 text-left">
-                        <p className="font-medium">Gerando objetivos e metodologia</p>
-                        <p className="text-sm text-muted-foreground">Personalizando abordagem pedagógica</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="h-5 w-5 rounded-full border-2 border-muted"></div>
-                      <div className="flex-1 text-left">
-                        <p className="font-medium text-muted-foreground">Definindo avaliações</p>
-                        <p className="text-sm text-muted-foreground">Aguardando...</p>
-                      </div>
-                    </div>
+                    <p className="text-sm text-muted-foreground text-center mt-2">
+                      {generationProgress}% concluído
+                    </p>
                   </div>
 
-                  {/* Estimated Time */}
-                  <p className="text-sm text-muted-foreground pt-4">
-                    Tempo estimado: 5-10 minutos ⚡
-                  </p>
+                  {/* Current Step */}
+                  <div className="w-full max-w-md pt-4">
+                    <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0" />
+                      <p className="text-sm text-left">{generationMessage}</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -252,65 +362,163 @@ export default function GeneratePage() {
         )}
 
         {/* Success Step */}
-        {step === "success" && (
-          <div className="flex flex-col items-center justify-center min-h-[600px]">
-            <Card className="w-full max-w-2xl border-green-200 bg-green-50/50">
-              <CardContent className="pt-12 pb-12">
-                <div className="flex flex-col items-center text-center space-y-6">
-                  {/* Success Icon */}
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl"></div>
-                    <CheckCircle2 className="relative h-20 w-20 text-green-500" />
-                  </div>
+        {step === "success" && generatedPlan && (
+          <div>
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+                <h1 className="text-3xl font-bold">Plano Gerado com Sucesso!</h1>
+              </div>
+              <p className="text-muted-foreground">
+                Revise o conteúdo gerado pela IA antes de salvar
+              </p>
+            </div>
 
-                  {/* Title */}
+            <div className="space-y-6">
+              {/* Info Card */}
+              <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold mb-1">Plano de Ensino Gerado</h3>
+                      <p className="text-sm text-muted-foreground">
+                        A IA gerou o conteúdo pedagógico baseado na ementa e referências do sistema IFMS. 
+                        Dados preservados: <strong>ementa, carga horária, datas e referências bibliográficas</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Discipline Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações da Disciplina</CardTitle>
+                  <CardDescription>Dados do Sistema IFMS (preservados)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-muted-foreground">Disciplina</Label>
+                      <p className="font-medium">{selectedDiary?.disciplina}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Período</Label>
+                      <p className="font-medium">{selectedDiary?.anoLetivo}.{selectedDiary?.semestre}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Curso</Label>
+                      <p className="font-medium">{selectedDiary?.curso}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Carga Horária</Label>
+                      <p className="font-medium">{selectedDiary?.cargaHoraria} horas</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Generated Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    Conteúdo Gerado pela IA
+                  </CardTitle>
+                  <CardDescription>Objetivos, metodologia e proposta de trabalho</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Objetivo Geral */}
                   <div>
-                    <h2 className="text-2xl font-bold mb-2">Plano gerado com sucesso! 🎉</h2>
-                    <p className="text-muted-foreground">
-                      Seu plano de ensino está pronto para revisão e edição
-                    </p>
-                  </div>
-
-                  {/* Summary */}
-                  <div className="w-full bg-background rounded-lg p-6 text-left space-y-2">
-                    <h3 className="font-semibold mb-3">Resumo do Plano</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Disciplina:</span>
-                        <p className="font-medium">Cálculo Diferencial e Integral I</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Período:</span>
-                        <p className="font-medium">2024.2</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Carga Horária:</span>
-                        <p className="font-medium">60 horas</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Unidades:</span>
-                        <p className="font-medium">4 unidades temáticas</p>
-                      </div>
+                    <Label className="text-base font-semibold mb-2 block">Objetivo Geral</Label>
+                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
+                      <p className="text-sm">{generatedPlan.objetivoGeral}</p>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4">
-                    <Link href="/dashboard">
-                      <Button variant="outline">
-                        Voltar ao Dashboard
-                      </Button>
-                    </Link>
-                    <Link href="/plans/review/1">
-                      <Button className="gap-2">
-                        Revisar e Editar Plano
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                  {/* Objetivos Específicos */}
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Objetivos Específicos</Label>
+                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
+                      <p className="text-sm whitespace-pre-line">{generatedPlan.objetivosEspecificos}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+
+                  {/* Metodologia */}
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Metodologia</Label>
+                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
+                      <p className="text-sm whitespace-pre-line">{generatedPlan.metodologia}</p>
+                    </div>
+                  </div>
+
+                  {/* Avaliação */}
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Avaliação de Aprendizagem</Label>
+                    <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                      {generatedPlan.avaliacaoAprendizagem?.map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="font-medium text-sm">{item.tipo}:</span>
+                          <span className="text-sm text-muted-foreground">{item.descricao} ({item.peso}%)</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recuperação */}
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">Recuperação de Aprendizagem</Label>
+                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
+                      <p className="text-sm whitespace-pre-line">{generatedPlan.recuperacaoAprendizagem}</p>
+                    </div>
+                  </div>
+
+                  {/* Proposta de Trabalho */}
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">
+                      Proposta de Trabalho ({generatedPlan.propostaTrabalho?.length || 0} semanas)
+                    </Label>
+                    <div className="space-y-3">
+                      {generatedPlan.propostaTrabalho?.map((semana: any, idx: number) => (
+                        <div key={idx} className="border rounded-lg p-4 bg-muted/30">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-sm">Semana {semana.semana}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({semana.datas}) • {semana.horasAula}h
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            <strong>Tema:</strong> {semana.tema}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Atividades:</strong> {semana.atividades}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setStep("config")
+                    setGeneratedPlan(null)
+                    setGenerationProgress(0)
+                  }}
+                >
+                  Gerar Novo Plano
+                </Button>
+                <Button className="gap-2">
+                  Salvar e Editar
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </main>

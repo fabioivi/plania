@@ -284,3 +284,88 @@ export interface TeachingPlan {
 export interface DiaryWithPlans extends Diary {
   teachingPlans: TeachingPlan[];
 }
+
+// LLM Config API
+export interface LLMConfig {
+  id: string;
+  provider: 'gemini' | 'openai' | 'claude' | 'grok';
+  modelName: string | null;
+  isActive: boolean;
+  additionalConfig: Record<string, any> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaveLLMConfigRequest {
+  provider: 'gemini' | 'openai' | 'claude' | 'grok';
+  apiKey: string;
+  modelName?: string;
+  isActive?: boolean;
+  additionalConfig?: Record<string, any>;
+}
+
+export interface UpdateLLMConfigRequest {
+  apiKey?: string;
+  modelName?: string;
+  isActive?: boolean;
+  additionalConfig?: Record<string, any>;
+}
+
+export const llmConfigApi = {
+  async getConfigs(): Promise<LLMConfig[]> {
+    const response = await api.get<LLMConfig[]>('/llm-config');
+    return response.data;
+  },
+
+  async getConfig(id: string): Promise<LLMConfig> {
+    const response = await api.get<LLMConfig>(`/llm-config/${id}`);
+    return response.data;
+  },
+
+  async saveConfig(data: SaveLLMConfigRequest): Promise<LLMConfig> {
+    const response = await api.post<LLMConfig>('/llm-config', data);
+    return response.data;
+  },
+
+  async updateConfig(id: string, data: UpdateLLMConfigRequest): Promise<LLMConfig> {
+    const response = await api.put<LLMConfig>(`/llm-config/${id}`, data);
+    return response.data;
+  },
+
+  async deleteConfig(id: string): Promise<void> {
+    await api.delete(`/llm-config/${id}`);
+  },
+
+  async testApiKey(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await api.post<{ success: boolean; message: string }>(`/llm-config/${id}/test`);
+    return response.data;
+  },
+};
+
+// AI Teaching Plan Generation API
+export interface GenerateTeachingPlanRequest {
+  diaryId: string;
+  objectives?: string;
+  methodology?: string;
+  additionalNotes?: string;
+}
+
+export interface GeneratedTeachingPlan {
+  objetivoGeral: string;
+  objetivosEspecificos: string;
+  metodologia: string;
+  avaliacaoAprendizagem: any[];
+  recuperacaoAprendizagem: string;
+  propostaTrabalho: any[];
+  // Campos do sistema (não gerados):
+  // - ementa (do plano existente)
+  // - referencias (do plano existente)
+  // - cargaHoraria (do diário)
+}
+
+export const aiApi = {
+  async generateTeachingPlan(data: GenerateTeachingPlanRequest): Promise<{ success: boolean; plan: GeneratedTeachingPlan }> {
+    const response = await api.post<{ success: boolean; plan: GeneratedTeachingPlan }>('/ai/teaching-plans/generate', data);
+    return response.data;
+  },
+};

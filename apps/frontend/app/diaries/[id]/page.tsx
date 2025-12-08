@@ -5,13 +5,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, BookOpen, Loader2, FileText, Download, ExternalLink } from "lucide-react"
+import { ArrowLeft, BookOpen, Loader2, FileText, Download, ExternalLink, Upload } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { academicApi, DiaryContent } from "@/services/api"
 import { toast } from "sonner"
 import { DiaryContentTable } from "@/components/diary/DiaryContentTable"
-import { SendProgressDialog } from "@/components/diary/SendProgressDialog"
 import { SyncProgressDisplay } from "@/components/sync"
 import { useSyncState } from "@/hooks/useSyncState"
 
@@ -27,6 +26,9 @@ export default function DiaryContentPage() {
   
   // Sistema de sincronização para download
   const { state: downloadState, startSync: startDownload, complete: completeDownload, error: errorDownload, reset: resetDownload } = useSyncState('download')
+  
+  // Sistema de sincronização para upload
+  const { state: uploadState, startSync: startUpload, complete: completeUpload, error: errorUpload, reset: resetUpload } = useSyncState('upload')
 
   useEffect(() => {
     if (diaryId) {
@@ -165,6 +167,118 @@ export default function DiaryContentPage() {
     }
   }
 
+  const handleSendToSystem = async () => {
+    // Filtrar conteúdos a enviar (sem antecipações)
+    const anticipations = content.filter(c => c.isAntecipation)
+    const anticipatedIds = new Set(anticipations.map(a => a.originalContentId))
+    const contentsToSend = content.filter(c => !anticipatedIds.has(c.contentId))
+    const contentIds = contentsToSend.map(c => c.contentId)
+
+    if (contentIds.length === 0) {
+      toast.error('Nenhum conteúdo para enviar')
+      return
+    }
+
+    console.log('🚀 Iniciando envio de', contentIds.length, 'conteúdos')
+    startUpload(contentIds.length, 'Conectando ao servidor...')
+
+    try {
+      // Conectar ao SSE endpoint
+      const token = localStorage.getItem('token')
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
+      console.log('📡 Conectando ao SSE:', url)
+      
+      const eventSource = new EventSource(url)
+
+      eventSource.onmessage = (event) => {
+        console.log('📨 SSE Message:', event.data)
+        const data = JSON.parse(event.data)
+
+        if (data.type === 'progress') {
+          console.log('📊 Progresso:', data.current, '/', data.total, '-', data.contentId)
+          const content = contentsToSend.find(c => c.contentId === data.contentId)
+          const contentName = content?.date || data.contentId
+          startUpload(contentIds.length, `Enviando ${data.current}/${data.total}: ${contentName}`)
+        } else if (data.type === 'complete') {
+          console.log('✅ Envio completo:', data)
+          eventSource.close()
+          
+          const items = data.results.map((r: any) => ({
+            id: r.contentId,
+            name: contentsToSend.find(c => c.contentId === r.contentId)?.date || r.contentId,
+            success: r.success,
+            message: r.message,
+          }))
+
+          completeUpload(
+            data.failed === 0
+              ? 'Todos os conteúdos foram enviados com sucesso!'
+              : `Concluído: ${data.succeeded} enviados, ${data.failed} falhas`,
+            items
+          )
+
+          if (data.succeeded > 0) {
+            toast.success(`${data.succeeded} conteúdo(s) enviado(s) com sucesso!`)
+          }
+
+          if (data.failed > 0) {
+            toast.error(`${data.failed} conteúdo(s) falharam`)
+          }
+
+          // Reset após 3 segundos
+          setTimeout(() => {
+            resetUpload()
+          }, 3000)
+        } else if (data.type === 'error') {
+          console.error('❌ Erro SSE:', data)
+          eventSource.close()
+          
+          errorUpload(
+            'Erro ao enviar conteúdos',
+            [{
+              id: 'ERROR',
+              name: 'Erro geral',
+              success: false,
+              message: data.message || 'Erro desconhecido',
+            }]
+          )
+          
+          toast.error(data.message || 'Erro ao enviar conteúdos')
+        }
+      }
+
+      eventSource.onerror = (err) => {
+        console.error('❌ Erro no SSE:', err)
+        eventSource.close()
+        
+        errorUpload(
+          'Erro ao enviar conteúdos',
+          [{
+            id: 'ERROR',
+            name: 'Erro de conexão',
+            success: false,
+            message: 'Erro ao conectar com o servidor',
+          }]
+        )
+        
+        toast.error('Erro ao conectar com o servidor')
+      }
+    } catch (err: any) {
+      console.error('❌ Erro ao enviar conteúdos:', err)
+      toast.error(err.response?.data?.message || 'Erro ao enviar conteúdos')
+      
+      errorUpload(
+        'Erro ao enviar conteúdos',
+        [{
+          id: 'ERROR',
+          name: 'Erro geral',
+          success: false,
+          message: err.response?.data?.message || err.message || 'Erro desconhecido',
+        }]
+      )
+    }
+  }
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
@@ -195,7 +309,7 @@ export default function DiaryContentPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleSync}
-                disabled={downloadState?.status === 'syncing'}
+                disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing'}
                 className="gap-2"
               >
                 {downloadState?.status === 'syncing' ? (
@@ -211,15 +325,25 @@ export default function DiaryContentPage() {
                 )}
               </Button>
               
-              <SendProgressDialog
-                diaryId={diaryId}
-                contents={content}
-                disabled={downloadState?.status === 'syncing' || loading}
-                onComplete={() => {
-                  // Recarregar dados após envio bem-sucedido
-                  handleSync()
-                }}
-              />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSendToSystem}
+                disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
+                className="gap-2"
+              >
+                {uploadState?.status === 'syncing' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    Enviar para o Sistema
+                  </>
+                )}
+              </Button>
               
               {diaryInfo?.externalId && (
                 <Button
@@ -240,6 +364,16 @@ export default function DiaryContentPage() {
             <div className="mb-6">
               <SyncProgressDisplay 
                 state={downloadState}
+                isConnected={true}
+              />
+            </div>
+          )}
+
+          {/* Sync Progress Display - Upload */}
+          {uploadState && (
+            <div className="mb-6">
+              <SyncProgressDisplay 
+                state={uploadState}
                 isConnected={true}
               />
             </div>

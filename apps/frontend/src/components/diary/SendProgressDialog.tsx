@@ -259,15 +259,28 @@ export function SendProgressDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          {!sending && !syncState && (
+          {(!syncState || syncState.status === 'syncing') && (
             <>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSend} className="bg-primary">
-                Sim, Enviar Agora
+              <AlertDialogCancel disabled={sending}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleSend} 
+                disabled={sending}
+                className="bg-primary"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Enviando...
+                  </>
+                ) : (
+                  'Sim, Enviar Agora'
+                )}
               </AlertDialogAction>
             </>
           )}
-          {!sending && syncState && (
+          {syncState?.status === 'completed' && (
             <Button onClick={() => setOpen(false)} className="w-full">
               Fechar
             </Button>

@@ -20,7 +20,7 @@ export class ScrapingService {
   private browser: Browser | null = null;
 
   // Configuration constants for delays (in milliseconds)
-  private readonly ENABLE_HUMAN_DELAYS = true; // Set to false to disable all delays
+  private readonly ENABLE_HUMAN_DELAYS = false; // Set to false to disable all delays
   
   // Typing delays
   private readonly TYPING_DELAY_MIN = 30;

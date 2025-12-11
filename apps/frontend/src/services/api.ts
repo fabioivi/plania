@@ -288,7 +288,7 @@ export interface DiaryWithPlans extends Diary {
 // LLM Config API
 export interface LLMConfig {
   id: string;
-  provider: 'gemini' | 'openai' | 'claude' | 'grok';
+  provider: 'gemini' | 'openai' | 'claude' | 'grok' | 'openrouter';
   modelName: string | null;
   isActive: boolean;
   additionalConfig: Record<string, any> | null;
@@ -297,7 +297,7 @@ export interface LLMConfig {
 }
 
 export interface SaveLLMConfigRequest {
-  provider: 'gemini' | 'openai' | 'claude' | 'grok';
+  provider: 'gemini' | 'openai' | 'claude' | 'grok' | 'openrouter';
   apiKey: string;
   modelName?: string;
   isActive?: boolean;
@@ -338,6 +338,10 @@ export const llmConfigApi = {
 
   async testApiKey(id: string): Promise<{ success: boolean; message: string }> {
     const response = await api.post<{ success: boolean; message: string }>(`/llm-config/${id}/test`);
+    return response.data;
+  },
+  async activateConfig(id: string): Promise<LLMConfig> {
+    const response = await api.put<LLMConfig>(`/llm-config/${id}/activate`);
     return response.data;
   },
 };

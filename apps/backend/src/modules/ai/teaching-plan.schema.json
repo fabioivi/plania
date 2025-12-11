@@ -1,0 +1,59 @@
+{
+  "type": "object",
+  "title": "Esquema do Plano de Ensino",
+  "description": "Estrutura JSON esperada para um plano de ensino gerado pela IA. Preencha com conteúdo detalhado e pedagógico em português brasileiro.",
+  "properties": {
+    "objetivoGeral": {
+      "type": "string",
+      "description": "Enuncie o objetivo geral da disciplina alinhado à ementa e às competências formativas esperadas. Deve ser sucinto e mensurável quando possível."
+    },
+    "objetivosEspecificos": {
+      "type": "array",
+      "description": "Lista de objetivos específicos que descrevem resultados de aprendizagem observáveis. Cada item deve iniciar com verbo no infinitivo (ex.: 'Desenvolver', 'Aplicar').",
+      "items": { "type": "string" }
+    },
+    "metodologia": {
+      "type": "string",
+      "description": "Descrição detalhada das estratégias pedagógicas (ex.: aulas expositivas, estudos de caso, projetos, laboratórios), como serão aplicadas e por que são apropriadas para os conteúdos."
+    },
+    "avaliacaoAprendizagem": {
+      "type": "array",
+      "description": "Conjunto de avaliações ao longo do período. Para cada avaliação indique etapa, tipo, instrumentos, data prevista e peso/valor máximo.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "etapa": { "type": "string", "description": "Identificador da etapa (ex.: 'NP1', 'Avaliação Formativa 1')." },
+          "avaliacao": { "type": "string", "description": "Nome ou tipo da avaliação (ex.: 'Prova escrita', 'Trabalho prático')." },
+          "instrumentos": { "type": "string", "description": "Instrumentos utilizados (ex.: prova, relatório, apresentação)." },
+          "dataPrevista": { "type": "string", "description": "Data prevista para realização da avaliação no formato dd/MM/yyyy, se aplicável." },
+          "valorMaximo": { "type": "number", "description": "Valor máximo ou peso da avaliação (ex.: 10, 30)." }
+        },
+        "required": ["etapa", "avaliacao", "instrumentos"]
+      }
+    },
+    "recuperacaoAprrendizagem": {
+      "type": "string",
+      "description": "Descreva o processo de recuperação da aprendizagem: quando ocorrerá, critérios, atividades e instrumentos utilizados para recuperação."
+    },
+    "propostaTrabalho": {
+      "type": "array",
+      "description": "Plano semana a semana com distribuição equilibrada dos conteúdos da ementa. Cada entrada deve indicar tema, conteúdo, atividades, técnicas e recursos.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "semana": { "type": "integer", "description": "Número ordinal da semana no período letivo (1, 2, ...)." },
+          "dataInicial": { "type": "string", "description": "Data do inicio da semana (ex.: '02/03/2025')." },
+          "dataFinal": { "type": "string", "description": "Data do fim da semana (ex.: '08/03/2025')." },
+          "tema": { "type": "string", "description": "Tema resumido da semana que agrupa os conteúdos abordados." },
+          "conteudo": { "type": "string", "description": "Descrição detalhada do conteúdo programático a ser trabalhado na semana." },
+          "tecnicasEnsino": { "type": "array", "minItems": 1, "description": "Lista de Técnicas de Ensino. Exemplo: ['aula expositiva', 'seminário']. Não use strings únicas; sempre array.", "items": { "type": "string" } },
+          "recursosEnsino": { "type": "array", "minItems": 1, "description": "Lista de Recursos didáticos necessários (ex.: projetor, software, laboratório, textos).", "items": { "type": "string" } },
+          "numAulas": { "type": "number", "description": "Número de aulas planejadas para a semana (use o valor calculado do diário quando aplicável)." }
+        },
+        "required": ["semana", "dataInicial", "dataFinal", "tema", "conteudo", "tecnicasEnsino", "recursosEnsino", "numAulas" ]
+      }
+    }
+  },
+  "required": ["objetivoGeral", "objetivosEspecificos", "metodologia", "avaliacaoAprendizagem", "recuperacaoAprrendizagem", "propostaTrabalho"],
+  "additionalProperties": false
+}

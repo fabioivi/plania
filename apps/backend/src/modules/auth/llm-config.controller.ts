@@ -54,6 +54,14 @@ export class LLMConfigController {
   }
 
   /**
+   * Activate (set as default) a specific LLM configuration for the authenticated user
+   */
+  @Put(':id/activate')
+  async activateConfig(@Request() req, @Param('id') id: string) {
+    return this.llmConfigService.activateConfig(req.user.id, id);
+  }
+
+  /**
    * Delete LLM configuration
    */
   @Delete(':id')

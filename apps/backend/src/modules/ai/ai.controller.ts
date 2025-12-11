@@ -7,6 +7,7 @@ import {
   Sse,
   MessageEvent,
   Param,
+  Get,
 } from '@nestjs/common';
 import { Observable, interval, map, takeWhile, concat, of } from 'rxjs';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,12 +15,15 @@ import {
   TeachingPlanGeneratorService,
   GenerateTeachingPlanDto,
 } from './teaching-plan-generator.service';
+import { LLMService } from './llm.service';
+import { LLMProvider as LLMProviderEnum } from '../auth/llm-config.entity';
 
 @Controller('ai')
 @UseGuards(JwtAuthGuard)
 export class AIController {
   constructor(
     private readonly teachingPlanGeneratorService: TeachingPlanGeneratorService,
+    private readonly llmService: LLMService,
   ) {}
 
   /**
@@ -116,5 +120,29 @@ export class AIController {
       success: true,
       plan,
     };
+  }
+
+  /**
+   * List OpenRouter models for the authenticated user (uses user's OpenRouter config)
+   */
+  @Get('openrouter/models')
+  async listOpenRouterModels(@Request() req) {
+    const userId = req.user.id;
+
+    // Get provider instance for OpenRouter specifically
+    const provider = await this.llmService.getProvider(userId, LLMProviderEnum.OPENROUTER as any);
+
+    // Only OpenRouterProvider exposes listModels
+    // Use a duck-typed call
+    if (typeof (provider as any).listModels !== 'function') {
+      return { success: false, message: 'OpenRouter provider not available' };
+    }
+
+    try {
+      const models = await (provider as any).listModels();
+      return { success: true, models };
+    } catch (e: any) {
+      return { success: false, message: e.message || String(e) };
+    }
   }
 }

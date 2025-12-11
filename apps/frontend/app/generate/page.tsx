@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sparkles, ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-react"
+import { WorkProposalTable, WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
@@ -474,28 +475,35 @@ export default function GeneratePage() {
                     </div>
                   </div>
 
-                  {/* Proposta de Trabalho */}
+                  {/* Proposta de Trabalho (usa componente reutilizável) */}
                   <div>
                     <Label className="text-base font-semibold mb-2 block">
                       Proposta de Trabalho ({generatedPlan.propostaTrabalho?.length || 0} semanas)
                     </Label>
-                    <div className="space-y-3">
-                      {generatedPlan.propostaTrabalho?.map((semana: any, idx: number) => (
-                        <div key={idx} className="border rounded-lg p-4 bg-muted/30">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-sm">Semana {semana.semana}</span>
-                            <span className="text-xs text-muted-foreground">
-                              ({semana.datas}) • {semana.horasAula}h
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            <strong>Tema:</strong> {semana.tema}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            <strong>Atividades:</strong> {semana.atividades}
-                          </p>
-                        </div>
-                      ))}
+                    <div>
+                      {generatedPlan.propostaTrabalho && (
+                        <WorkProposalTable
+                          data={generatedPlan.propostaTrabalho.map((semana: any, idx: number) => {
+                            // Normaliza campos do plano gerado para o formato WeekSchedule
+                            const ws: WeekSchedule = {
+                              id: semana.id || `${idx}`,
+                              week: semana.semana ?? idx + 1,
+                              month: semana.mes || (semana.datas || '').split('-')[0] || '',
+                              period: semana.datas || '',
+                              classes: semana.horasAula ?? semana.numAulas ?? 1,
+                              observations: semana.observacoes || semana.observacao || '',
+                              content: semana.tema || semana.conteudo || semana.assunto || '',
+                              teachingTechniques: Array.isArray(semana.tecnicasEnsino)
+                                ? semana.tecnicasEnsino.join(', ')
+                                : (semana.tecnicasEnsino || semana.tecnicas || semana.tecnica || '').toString(),
+                              teachingResources: Array.isArray(semana.recursosEnsino)
+                                ? semana.recursosEnsino.join(', ')
+                                : (semana.recursosEnsino || semana.recursos || '').toString(),
+                            }
+                            return ws
+                          })}
+                        />
+                      )}
                     </div>
                   </div>
                 </CardContent>

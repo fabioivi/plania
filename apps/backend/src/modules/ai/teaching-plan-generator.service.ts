@@ -7,6 +7,9 @@ import { Diary } from '../academic/diary.entity';
 import { DiaryContent } from '../academic/diary-content.entity';
 import { format, parseISO, startOfWeek, endOfWeek, differenceInWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import teachingPlanSchema from './teaching-plan.schema.json';
+import Ajv from 'ajv';
+import { buildTeachingPlanPrompt } from './teaching-plan-prompt';
 
 export interface WeekSchedule {
   weekNumber: number;
@@ -123,123 +126,47 @@ export class TeachingPlanGeneratorService {
     existingPlans: TeachingPlan[],
     userInput?: Partial<GenerateTeachingPlanDto>,
   ): string {
-    const totalWeeks = weekSchedule.length;
-    const totalHours = weekSchedule.reduce((sum, week) => sum + week.totalHours, 0);
+    const anoSemestre = `${diary.anoLetivo}.${diary.semestre}`;
+    const curso = diary.curso;
+    const unidadeCurricular = diary.disciplina;
+    const professores = diary.user?.name || 'Não informado';
+    const cargaHorariaTotal = diary.cargaHoraria || weekSchedule.reduce((sum, week) => sum + week.totalHours, 0) + ' horas';
+    const aulasTeoricas = 'Não especificado'; // TODO: extract from diary if available
+    const aulasPraticas = 'Não especificado'; // TODO: extract from diary if available
+    const ementa = existingPlans.length > 0 ? existingPlans[0].ementa : 'Não disponível';
+    const objetivoGeral = existingPlans.length > 0 ? existingPlans[0].objetivoGeral : 'Não disponível';
+    const objetivosEspecificos = existingPlans.length > 0 && existingPlans[0].objetivosEspecificos ? existingPlans[0].objetivosEspecificos.split('\n').filter(obj => obj.trim()) : ['Não disponíveis'];
 
-    let prompt = `Você é um assistente especializado em criar planos de ensino acadêmicos brasileiros seguindo as normas do MEC.
+    // Format weekSchedule for the prompt
+    const semanas = weekSchedule.map(week => ({
+      weekNumber: week.weekNumber,
+      startDate: format(week.startDate, 'dd/MM/yyyy', { locale: ptBR }),
+      endDate: format(week.endDate, 'dd/MM/yyyy', { locale: ptBR }),
+      totalHours: week.totalHours,
+      classes: week.classes.map(cls => ({
+        date: format(cls.date, 'dd/MM (EEEE)', { locale: ptBR }),
+        timeRange: cls.timeRange,
+        type: cls.type,
+        hours: cls.hours,
+      })),
+    }));
 
-# INFORMAÇÕES DA DISCIPLINA
-- Disciplina: ${diary.disciplina}
-- Curso: ${diary.curso}
-- Turma: ${diary.turma}
-- Carga Horária Total: ${diary.cargaHoraria || totalHours + ' horas (calculado)'}\n`;
-
-    if (diary.periodo) {
-      prompt += `- Período: ${diary.periodo}\n`;
-    }
-    if (diary.anoLetivo && diary.semestre) {
-      prompt += `- Ano/Semestre: ${diary.anoLetivo}.${diary.semestre}\n`;
-    }
-
-    prompt += `\n# CALENDÁRIO DE AULAS
-Total de ${totalWeeks} semanas de aula, com ${totalHours} horas totais:\n\n`;
-
-    weekSchedule.forEach((week) => {
-      prompt += `Semana ${week.weekNumber} (${format(week.startDate, 'dd/MM/yyyy', { locale: ptBR })} - ${format(week.endDate, 'dd/MM/yyyy', { locale: ptBR })}): ${week.totalHours}h\n`;
-      week.classes.forEach((cls) => {
-        prompt += `  - ${format(cls.date, 'dd/MM (EEEE)', { locale: ptBR })}: ${cls.timeRange}\n`;
-      });
+    return buildTeachingPlanPrompt({
+      anoSemestre,
+      curso,
+      unidadeCurricular,
+      professores,
+      cargaHorariaTotal,
+      aulasTeoricas,
+      aulasPraticas,
+      ementa,
+      objetivoGeral,
+      objetivosEspecificos,
+      semanas,
+      userObjectives: userInput?.objectives,
+      userMethodology: userInput?.methodology,
+      userNotes: userInput?.additionalNotes,
     });
-
-    // Add existing teaching plan as reference (ementa)
-    if (existingPlans.length > 0 && existingPlans[0].ementa) {
-      prompt += `\n# EMENTA OFICIAL (NÃO ALTERAR - já está no sistema):\n${existingPlans[0].ementa}\n`;
-    }
-
-    // Add existing objectives as reference
-    if (existingPlans.length > 0 && existingPlans[0].objetivoGeral) {
-      prompt += `\n# OBJETIVO GERAL (referência - pode adaptar se necessário):\n${existingPlans[0].objetivoGeral}\n`;
-    }
-
-    if (existingPlans.length > 0 && existingPlans[0].objetivosEspecificos) {
-      prompt += `\n# OBJETIVOS ESPECÍFICOS (referência - pode adaptar se necessário):\n${existingPlans[0].objetivosEspecificos}\n`;
-    }
-
-    // Add existing references
-    if (existingPlans.length > 0 && existingPlans[0].referencias) {
-      prompt += `\n# REFERÊNCIAS BIBLIOGRÁFICAS (NÃO ALTERAR - já estão no sistema):\n${existingPlans[0].referencias}\n`;
-    }
-
-    // Add user preferences
-    if (userInput?.objectives) {
-      prompt += `\n# OBJETIVOS DESEJADOS PELO PROFESSOR:\n${userInput.objectives}\n`;
-    }
-
-    if (userInput?.methodology) {
-      prompt += `\n# METODOLOGIA PREFERIDA:\n${userInput.methodology}\n`;
-    }
-
-    if (userInput?.additionalNotes) {
-      prompt += `\n# OBSERVAÇÕES ADICIONAIS:\n${userInput.additionalNotes}\n`;
-    }
-
-    prompt += `\n# TAREFA
-Gere um plano de ensino COMPLETO e DETALHADO no formato JSON com a seguinte estrutura:
-
-IMPORTANTE - O que VOCÊ DEVE GERAR:
-- objetivoGeral: Objetivo geral da disciplina (baseado na ementa fornecida)
-- objetivosEspecificos: Lista de objetivos específicos (use bullet points •)
-- metodologia: Descrição detalhada das estratégias metodológicas
-- avaliacaoAprendizagem: Array de avaliações distribuídas ao longo do semestre, cada uma com os campos: etapa, avaliacao, instrumentos, dataPrevista, valorMaximo (veja exemplo abaixo)
-- recuperacaoAprendizagem: Descrição do processo de recuperação
-- propostaTrabalho: Array SEMANAL (${totalWeeks} semanas), cada semana deve conter os campos: conteudo (string), tecnicasEnsino (array de strings), recursosEnsino (array de strings), tema, atividades, datas
-
-IMPORTANTE - O que NÃO DEVE GERAR (já está no sistema):
-- ementa (será mantida do sistema acadêmico)
-- cargaHoraria (vem do diário)
-- referencias (serão mantidas do sistema acadêmico)
-- datas das aulas (já foram fornecidas no calendário)
-
-# EXEMPLO DE FORMATO JSON ESPERADO
-{
-  "objetivoGeral": "Objetivo geral da disciplina baseado na ementa fornecida",
-  "objetivosEspecificos": "Lista de objetivos específicos (use bullet points •)",
-  "metodologia": "Descrição das estratégias metodológicas que serão utilizadas",
-  "avaliacaoAprendizagem": [
-    {
-      "etapa": "1ª Parcial (NP1)",
-      "avaliacao": "Atividades Semanais",
-      "instrumentos": "Trabalhos",
-      "dataPrevista": "02/09/2025",
-      "valorMaximo": 10
-    }
-  ],
-  "recuperacaoAprendizagem": "Descrição do processo de recuperação",
-  "propostaTrabalho": [
-    {
-      "semana": 1,
-      "datas": "02/09/2025",
-      "tema": "Tema da semana",
-      "conteudo": "Conteúdo detalhado da semana",
-      "atividades": "Atividades detalhadas",
-      "tecnicasEnsino": ["Aula expositiva", "Estudo de caso"],
-      "recursosEnsino": ["Projetor", "Laboratório"]
-    }
-  ]
-}
-
-REGRAS IMPORTANTES:
-- A propostaTrabalho deve ter uma entrada para CADA SEMANA (${totalWeeks} semanas no total)
-- Cada semana deve conter os campos: conteudo, tecnicasEnsino (array), recursosEnsino (array), tema, atividades, datas
-- Distribua o conteúdo da EMENTA FORNECIDA ao longo das ${totalWeeks} semanas de forma equilibrada
-- Use as horas semanais fornecidas para o campo "numAulas" se necessário
-- Seja específico e detalhado em cada seção
-- As avaliações devem estar distribuídas ao longo do semestre (sugestão: 3-4 avaliações)
-- NÃO gere novas referências bibliográficas (use as existentes do sistema)
-- NÃO modifique a ementa (use-a como base para o conteúdo)
-- Retorne APENAS o JSON, sem texto adicional ou markdown`;
-
-    return prompt;
   }
 
   /**
@@ -255,6 +182,7 @@ REGRAS IMPORTANTES:
       if (onProgress) onProgress('Carregando dados do diário...', 10);
       const diary = await this.diaryRepository.findOne({
         where: { id: dto.diaryId, userId },
+        relations: ['user'],
       });
 
       if (!diary) {
@@ -298,82 +226,164 @@ Retorne APENAS JSON válido, sem markdown ou texto adicional.`;
         systemPrompt,
         temperature: 0.7,
         maxTokens: 8192,
+        responseSchema: teachingPlanSchema,
       });
 
-      // Step 7: Parse response and ensure well-formed JSON
+      // Step 7: Parse response (Gemini garante JSON válido com schema)
       if (onProgress) onProgress('Processando resposta...', 90);
-      // Remove markdown code blocks if present
-      let cleanResponse = response.trim();
-      if (cleanResponse.startsWith('```')) {
-        cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      }
+      
+      // Robust JSON extraction/parsing: providers sometimes return markdown
+      // fences, streaming prefixes ("data: ...") or small wrappers. Try to
+      // normalize before JSON.parse and log helpful diagnostics on failure.
+      const extractJsonString = (raw: any): string | null => {
+        if (!raw && raw !== 0) return null;
+        if (typeof raw !== 'string') {
+          try {
+            return JSON.stringify(raw);
+          } catch (e) {
+            return null;
+          }
+        }
 
-      // Exemplo do JSON esperado (para instruir correções automáticas)
-      const exampleStructure = {
-        objetivoGeral: 'Objetivo geral da disciplina baseado na ementa fornecida',
-        objetivosEspecificos: 'Lista de objetivos específicos (use bullet points •)',
-        metodologia: 'Descrição das estratégias metodológicas que serão utilizadas',
-        avaliacaoAprendizagem: [
-          {
-            etapa: '1ª Parcial (NP1)',
-            avaliacao: 'Atividades Semanais',
-            instrumentos: 'Trabalhos',
-            dataPrevista: '02/09/2025',
-            valorMaximo: 10,
-          },
-        ],
-        recuperacaoAprendizagem: 'Descrição do processo de recuperação',
-        propostaTrabalho: [
-          {
-            semana: 1,
-            datas: '02/09/2025',
-            tema: 'Tema da semana',
-            conteudo: 'Conteúdo detalhado da semana',
-            atividades: 'Atividades detalhadas',
-            tecnicasEnsino: ['Aula expositiva', 'Estudo de caso'],
-            recursosEnsino: ['Projetor', 'Laboratório'],
-          },
-        ],
+        let text = raw.trim();
+
+        // Remove common markdown code fences
+        if (text.startsWith('```')) {
+          // remove first and last fences if present
+          const fenceRemoved = text.replace(/^```\w*\n?/i, '').replace(/\n?```$/i, '');
+          text = fenceRemoved.trim();
+        }
+
+        // Remove leading streaming prefixes like `data: ` per-line
+        if (text.includes('\ndata:')) {
+          const lines = text.split('\n');
+          const cleaned = lines
+            .map(l => l.startsWith('data:') ? l.slice(5).trim() : l)
+            .join('\n');
+          text = cleaned.trim();
+        }
+
+        // If the full text is valid JSON, return it quickly
+        try {
+          JSON.parse(text);
+          return text;
+        } catch (e) {
+          // fallback: try to extract the first {...} or [...] block
+          const m = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+          if (m && m[0]) return m[0];
+          return null;
+        }
       };
 
-      const expectedJsonExample = JSON.stringify(exampleStructure, null, 2);
+      let parsed: GeneratedTeachingPlan;
+      const jsonStr = extractJsonString(response);
+      if (!jsonStr) {
+        this.logger.error('Não foi possível extrair JSON da resposta da IA. Pré-visualização:', String(response).slice(0, 2000));
+        throw new Error('Resposta inválida do provedor LLM: JSON inválido ou não encontrado');
+      }
 
-      let parsed: any = null;
-      let lastResponse = cleanResponse;
-      let attempts = 0;
-      const maxRetries = 2;
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch (e) {
+        this.logger.error('Erro inesperado ao parsear JSON da IA (string extraída):', jsonStr.slice(0, 2000));
+        throw new Error('Resposta inválida do provedor LLM: JSON inválido');
+      }
 
-      while (attempts <= maxRetries) {
+      // Accept alternate shapes (best-effort mapping) and validate against schema
+      const ajv = new Ajv({ allErrors: true, strict: false });
+      const validate = ajv.compile(teachingPlanSchema as any);
+
+      // If the provider returned an alternative wrapped structure, try to map it
+      let candidate: any = parsed;
+      if ((parsed as any)?.plano_de_ensino) {
+        const p = (parsed as any).plano_de_ensino;
+        // Best-effort mapping from provider-specific keys to our schema
+        candidate = {
+          objetivoGeral: p.objetivos_educacionais?.geral ?? p.informacoes_basicas?.objetivoGeral ?? '',
+          objetivosEspecificos: p.objetivos_educacionais?.especificos ?? [],
+          metodologia: p.objetivos_educacionais?.fundamentacao_pedagogica ?? p.metodologia ?? '',
+          avaliacaoAprendizagem: [],
+          recuperacaoAprrendizagem: '',
+          propostaTrabalho: Array.isArray(p.proposta_de_trabalho_semanal)
+            ? p.proposta_de_trabalho_semanal.map((w: any) => ({
+                semana: w.semana,
+                datas: w.periodo,
+                tema: w.conteudo_programatico ?? w.tema ?? '',
+                conteudo: w.conteudo_programatico ?? w.tema ?? '',
+                atividades: '',
+                tecnicasEnsino: w.tecnicas_de_ensino ?? [],
+                recursosEnsino: w.recursos_didaticos ?? [],
+                numAulas: w.aulas_previstas ?? w.numAulas ?? 0,
+              }))
+            : [],
+        };
+
+        // Try to extract some evaluation entries from weekly items
         try {
-          parsed = JSON.parse(lastResponse);
-          break;
+          const evals: any[] = [];
+          for (const w of (p.proposta_de_trabalho_semanal || [])) {
+            if (w.metodos_de_avaliacao) {
+              evals.push({
+                etapa: `Semana ${w.semana}`,
+                avaliacao: JSON.stringify(w.metodos_de_avaliacao),
+                instrumentos: '',
+                dataPrevista: '',
+                valorMaximo: 0,
+              });
+            }
+          }
+          if (evals.length) candidate.avaliacaoAprendizagem = evals;
+          // Attempt to set recuperation from first week's estrategia_de_recuperacao
+          candidate.recuperacaoAprrendizagem = p.proposta_de_trabalho_semanal?.[0]?.estrategias_de_recuperacao ?? '';
         } catch (e) {
-          attempts++;
-          this.logger.warn(`Falha ao parsear JSON da IA (tentativa ${attempts}): ${(e as Error).message}`);
-          if (attempts > maxRetries) {
-            this.logger.error('Erro ao parsear JSON da IA, resposta bruta:', lastResponse);
-            throw new Error('Resposta inválida do provedor LLM: JSON inválido');
-          }
-
-          // Solicita correção ao LLM com instruções estritas
-          const fixPrompt = `A resposta anterior NÃO era um JSON válido. Corrija APENAS o JSON e retorne SOMENTE o JSON válido sem texto adicional.\n\nFormato esperado de exemplo:\n${expectedJsonExample}\n\nResposta anterior:\n${lastResponse}\n\nCorrija e retorne somente o JSON válido.`;
-
-          this.logger.debug('Enviando prompt de correção ao LLM');
-          let corrected = await llmProvider.generateCompletion(fixPrompt, {
-            systemPrompt,
-            temperature: 0.0,
-            maxTokens: 4096,
-          });
-
-          corrected = corrected.trim();
-          if (corrected.startsWith('```')) {
-            corrected = corrected.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-          }
-
-          lastResponse = corrected;
-          // Loop tentará parsear novamente
+          // ignore mapping errors
         }
       }
+
+      // Normalize fields that may come as comma-separated strings into arrays
+      try {
+        if (candidate?.propostaTrabalho && Array.isArray(candidate.propostaTrabalho)) {
+          candidate.propostaTrabalho = candidate.propostaTrabalho.map((item: any) => {
+            const copy = { ...item };
+            // Normalize tecnicasEnsino
+            if (typeof copy.tecnicasEnsino === 'string') {
+              copy.tecnicasEnsino = copy.tecnicasEnsino
+                .split(/[\n;,]+/) // split on newline, semicolon or comma
+                .map((s: string) => s.trim())
+                .filter((s: string) => s.length > 0);
+            }
+            if (!Array.isArray(copy.tecnicasEnsino)) {
+              copy.tecnicasEnsino = Array.isArray(copy.tecnicasEnsino) ? copy.tecnicasEnsino : [];
+            }
+
+            // Normalize recursosEnsino
+            if (typeof copy.recursosEnsino === 'string') {
+              copy.recursosEnsino = copy.recursosEnsino
+                .split(/[\n;,]+/)
+                .map((s: string) => s.trim())
+                .filter((s: string) => s.length > 0);
+            }
+            if (!Array.isArray(copy.recursosEnsino)) {
+              copy.recursosEnsino = Array.isArray(copy.recursosEnsino) ? copy.recursosEnsino : [];
+            }
+
+            return copy;
+          });
+        }
+      } catch (e) {
+        // If normalization fails, ignore and let AJV report the schema errors
+      }
+
+      // Validate candidate against schema
+      const valid = validate(candidate);
+      if (!valid) {
+        const errors = (validate.errors || []).map((er: any) => `${er.instancePath} ${er.message}`).join('; ');
+        this.logger.error('Resposta da IA não está conforme o schema:', errors, 'Resposta bruta:', parsed);
+        throw new Error(`Resposta do provedor LLM não conforme ao schema: ${errors}`);
+      }
+
+      // Assign parsed to the validated/mapped candidate
+      parsed = candidate as GeneratedTeachingPlan;
 
       if (!parsed) {
         this.logger.error('Não foi possível obter JSON válido do provedor LLM.');

@@ -14,6 +14,8 @@ interface LLMConfigItemProps {
   config: LLMConfig
   onDelete: () => void
   onTest: () => void
+  onActivate: () => void
+  onDeactivate: () => void
   testing: boolean
 }
 
@@ -22,6 +24,7 @@ const providerLabels: Record<string, string> = {
   openai: 'OpenAI (ChatGPT)',
   claude: 'Anthropic Claude',
   grok: 'xAI Grok',
+  openrouter: 'OpenRouter (Deepseek Free)'
 }
 
 const providerColors: Record<string, string> = {
@@ -29,9 +32,10 @@ const providerColors: Record<string, string> = {
   openai: 'text-green-600',
   claude: 'text-purple-600',
   grok: 'text-orange-600',
+  openrouter: 'text-teal-600',
 }
 
-function LLMConfigItem({ config, onDelete, onTest, testing }: LLMConfigItemProps) {
+function LLMConfigItem({ config, onDelete, onTest, onActivate, onDeactivate, testing }: LLMConfigItemProps) {
   const providerColor = providerColors[config.provider] || 'text-gray-600'
 
   return (
@@ -68,6 +72,25 @@ function LLMConfigItem({ config, onDelete, onTest, testing }: LLMConfigItemProps
             'Testar'
           )}
         </Button>
+        {config.isActive ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDeactivate}
+            className="ml-2"
+          >
+            Desativar
+          </Button>
+        ) : (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onActivate}
+            className="ml-2"
+          >
+            Definir como padrão
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
@@ -87,7 +110,7 @@ export function LLMConfigSection() {
   const [showAddForm, setShowAddForm] = useState(false)
   
   // Form state
-  const [provider, setProvider] = useState<'gemini' | 'openai' | 'claude' | 'grok'>('gemini')
+  const [provider, setProvider] = useState<'gemini' | 'openai' | 'claude' | 'grok' | 'openrouter'>('gemini')
   const [apiKey, setApiKey] = useState('')
   const [modelName, setModelName] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
@@ -158,6 +181,30 @@ export function LLMConfigSection() {
     }
   }
 
+  const handleActivate = async (configId: string) => {
+    try {
+      const activated = await llmConfigApi.activateConfig(configId)
+      // update local state: set only the activated config as active
+      setConfigs(configs.map(c => ({ ...c, isActive: c.id === activated.id })))
+      toast.success('Configuração definida como padrão')
+    } catch (err: any) {
+      console.error('Erro ao ativar configuração:', err)
+      toast.error('Erro ao definir configuração como padrão')
+    }
+  }
+
+  const handleDeactivate = async (configId: string) => {
+    try {
+      // Set isActive = false for the config
+      await llmConfigApi.updateConfig(configId, { isActive: false })
+      setConfigs(configs.map(c => c.id === configId ? { ...c, isActive: false } : c))
+      toast.success('Configuração desativada')
+    } catch (err: any) {
+      console.error('Erro ao desativar configuração:', err)
+      toast.error('Erro ao desativar configuração')
+    }
+  }
+
   const handleDelete = async (configId: string) => {
     if (!confirm('Tem certeza que deseja remover esta configuração?')) {
       return
@@ -192,6 +239,8 @@ export function LLMConfigSection() {
               config={config}
               onDelete={() => handleDelete(config.id)}
               onTest={() => handleTest(config.id)}
+              onActivate={() => handleActivate(config.id)}
+              onDeactivate={() => handleDeactivate(config.id)}
               testing={testingId === config.id}
             />
           ))}
@@ -237,6 +286,12 @@ export function LLMConfigSection() {
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-blue-600" />
                       Google Gemini
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="openrouter">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-teal-600" />
+                      OpenRouter (Deepseek Free)
                     </div>
                   </SelectItem>
                   <SelectItem value="openai">

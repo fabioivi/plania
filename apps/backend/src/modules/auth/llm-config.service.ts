@@ -62,7 +62,13 @@ export class LLMConfigService {
       existing.iv = encrypted.iv;
       existing.authTag = encrypted.authTag;
       existing.modelName = dto.modelName || existing.modelName;
+      const willActivate = dto.isActive === true;
       existing.isActive = dto.isActive ?? existing.isActive;
+      if (willActivate) {
+        // Deactivate other configs for this user
+        await this.llmConfigRepository.update({ userId, provider: existing.provider }, { isActive: false });
+        existing.isActive = true;
+      }
       existing.additionalConfig = dto.additionalConfig || existing.additionalConfig;
 
       const updated = await this.llmConfigRepository.save(existing);
@@ -70,6 +76,22 @@ export class LLMConfigService {
     } else {
       // Create new config
       console.log('🔍 Creating new config with userId:', userId);
+      const isActive = dto.isActive ?? false;
+      if (isActive) {
+        // If creating an active config, deactivate others for this user
+        try {
+          const others = await this.llmConfigRepository.find({ where: { userId } });
+          for (const c of others) {
+            if (c.isActive) {
+              c.isActive = false;
+            }
+          }
+          if (others.length) await this.llmConfigRepository.save(others);
+        } catch (e) {
+          // ignore
+        }
+      }
+
       const config = this.llmConfigRepository.create({
         userId,
         provider: dto.provider,
@@ -77,13 +99,28 @@ export class LLMConfigService {
         iv: encrypted.iv,
         authTag: encrypted.authTag,
         modelName: dto.modelName,
-        isActive: dto.isActive ?? true,
+        isActive,
         additionalConfig: dto.additionalConfig,
       });
 
       console.log('🔍 Config object before save:', config);
       const saved = await this.llmConfigRepository.save(config);
       return this.toResponse(saved);
+    }
+  }
+
+  private get fetchImpl() {
+    // Prefer global fetch when available (Node 18+). If not, try dynamic require of undici.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const globalFetch = (globalThis as any).fetch;
+    if (globalFetch) return globalFetch;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const undici = require('undici');
+      return undici.fetch;
+    } catch (e) {
+      throw new Error('No fetch implementation available. Install "undici" or run on Node 18+.');
     }
   }
 
@@ -172,12 +209,50 @@ export class LLMConfigService {
 
     // Update other fields
     if (dto.modelName !== undefined) config.modelName = dto.modelName;
-    if (dto.isActive !== undefined) config.isActive = dto.isActive;
+    const willActivate = dto.isActive === true;
+    if (dto.isActive !== undefined) {
+      config.isActive = dto.isActive;
+      if (willActivate) {
+        // deactivate other configs for this user
+        try {
+          const others = await this.llmConfigRepository.find({ where: { userId } });
+          for (const c of others) {
+            if (c.id !== configId && c.isActive) c.isActive = false;
+          }
+          await this.llmConfigRepository.save(others);
+          config.isActive = true;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
     if (dto.additionalConfig !== undefined)
       config.additionalConfig = dto.additionalConfig;
 
     const updated = await this.llmConfigRepository.save(config);
     return this.toResponse(updated);
+  }
+
+  /**
+   * Activate a specific LLM config for the user and deactivate others.
+   * Ensures there is at most one active configuration per user.
+   */
+  async activateConfig(userId: string, configId: string): Promise<LLMConfigResponse> {
+    const config = await this.llmConfigRepository.findOne({ where: { id: configId, userId } });
+    if (!config) {
+      throw new NotFoundException('LLM configuration not found');
+    }
+
+    // Fetch all user configs and toggle isActive accordingly
+    const userConfigs = await this.llmConfigRepository.find({ where: { userId } });
+    for (const c of userConfigs) {
+      c.isActive = c.id === configId;
+    }
+
+    await this.llmConfigRepository.save(userConfigs);
+
+    const activated = await this.llmConfigRepository.findOne({ where: { id: configId } });
+    return this.toResponse(activated!);
   }
 
   /**
@@ -222,6 +297,8 @@ export class LLMConfigService {
           return await this.testOpenAIApiKey(apiKey);
         case LLMProvider.CLAUDE:
           return await this.testClaudeApiKey(apiKey);
+        case LLMProvider.OPENROUTER:
+          return await this.testOpenRouterApiKey(apiKey);
         case LLMProvider.GROK:
           return await this.testGrokApiKey(apiKey);
         default:
@@ -253,7 +330,7 @@ export class LLMConfigService {
   // API Testing Methods
 
   private async testGeminiApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
-    const response = await fetch(
+    const response = await this.fetchImpl(
       `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
     );
     
@@ -266,7 +343,7 @@ export class LLMConfigService {
   }
 
   private async testOpenAIApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
-    const response = await fetch('https://api.openai.com/v1/models', {
+    const response = await this.fetchImpl('https://api.openai.com/v1/models', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
       },
@@ -281,7 +358,7 @@ export class LLMConfigService {
   }
 
   private async testClaudeApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await this.fetchImpl('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
@@ -305,7 +382,7 @@ export class LLMConfigService {
 
   private async testGrokApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
     // Grok uses OpenAI-compatible API
-    const response = await fetch('https://api.x.ai/v1/models', {
+    const response = await this.fetchImpl('https://api.x.ai/v1/models', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
       },
@@ -315,6 +392,35 @@ export class LLMConfigService {
       return { success: true, message: 'API key is valid' };
     } else {
       return { success: false, message: 'Invalid API key' };
+    }
+  }
+
+  private async testOpenRouterApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
+    const url = process.env.OPENROUTER_URL || 'https://openrouter.ai/api/v1/chat/completions';
+    try {
+      const res = await this.fetchImpl(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: process.env.OPENROUTER_MODEL || 'mistralai/devstral-2512:free',
+          messages: [{ role: 'user', content: ' testar ' }],
+          max_tokens: 1,
+        }),
+      });
+
+      if (res.ok) {
+        return { success: true, message: 'API key is valid' };
+      }
+
+      // Some providers return 4xx with a body
+      let body: any;
+      try { body = await res.json(); } catch { body = null; }
+      return { success: false, message: body?.error?.message || `Invalid API key (status ${res.status})` };
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Failed to test OpenRouter key' };
     }
   }
 }

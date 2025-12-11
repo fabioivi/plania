@@ -5,6 +5,7 @@ import { LLMProvider } from './llm-provider.interface';
 import { GeminiProvider } from './gemini.provider';
 import { OpenAIProvider } from './openai.provider';
 import { ClaudeProvider } from './claude.provider';
+import { OpenRouterProvider } from './openrouter.provider';
 
 @Injectable()
 export class LLMService {
@@ -48,6 +49,8 @@ export class LLMService {
         return new OpenAIProvider(apiKey);
       case LLMProviderEnum.CLAUDE:
         return new ClaudeProvider(apiKey);
+      case LLMProviderEnum.OPENROUTER:
+        return new OpenRouterProvider(apiKey);
       case LLMProviderEnum.GROK:
         throw new Error('Grok provider not yet implemented');
       default:

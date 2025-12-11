@@ -39,7 +39,8 @@
     "playwright": "^1.40.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.17",
+    "undici": "^7.16.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.14",

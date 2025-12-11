@@ -14,6 +14,7 @@ export enum LLMProvider {
   OPENAI = 'openai',
   CLAUDE = 'claude',
   GROK = 'grok',
+  OPENROUTER = 'openrouter',
 }
 
 @Entity('llm_configs')

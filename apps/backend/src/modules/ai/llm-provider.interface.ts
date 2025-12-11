@@ -26,10 +26,11 @@ export interface LLMOptions {
   model?: string;
   topP?: number;
   topK?: number;
+  responseSchema?: any; // JSON Schema for structured responses
 }
 
 export interface LLMConfig {
-  provider: 'gemini' | 'openai' | 'claude' | 'grok';
+  provider: 'gemini' | 'openai' | 'claude' | 'grok' | 'openrouter';
   apiKey: string;
   model?: string;
   options?: Partial<LLMOptions>;

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { GraduationCap, LogOut } from "lucide-react"
+import { GraduationCap, LogOut, Settings as SettingsIcon } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
@@ -52,6 +52,9 @@ export function Header() {
           </Link>
           <Link href="/plans">
             <Button variant="ghost">Planos</Button>
+          </Link>
+          <Link href="/settings">
+            <Button variant="ghost">Configurações</Button>
           </Link>
           <div className="flex items-center gap-2 ml-4 pl-4 border-l">
             <div className="flex flex-col items-end">

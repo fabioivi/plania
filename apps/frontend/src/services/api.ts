@@ -1,3 +1,13 @@
+/**
+ * @deprecated This file is deprecated. Use individual services from @/services/api instead:
+ * - authService from '@/services/api/auth.service'
+ * - academicService from '@/services/api/academic.service'
+ * - llmService from '@/services/api/llm.service'
+ * - aiService from '@/services/api/ai.service'
+ *
+ * This file is kept for backwards compatibility and will be removed in a future version.
+ */
+
 import axios, { AxiosError } from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';

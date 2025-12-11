@@ -14,3 +14,6 @@ export * from './useAuth'
 
 // LLM Config hooks
 export * from './useLLMConfig'
+
+// Credentials hooks
+export * from './useCredentials'

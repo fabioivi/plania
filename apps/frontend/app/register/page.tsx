@@ -1,56 +1,26 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useAuth } from "@/contexts/AuthContext"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { AuthLayout } from "@/components/auth/AuthLayout"
 import { AuthCard } from "@/components/auth/AuthCard"
-import { FormField } from "@/components/auth/FormField"
-import { ErrorMessage } from "@/components/auth/ErrorMessage"
+import { useRegisterForm } from "@/hooks/forms"
 
 export default function RegisterPage() {
-  const { register, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
+  const { register, onSubmit, isSubmitting, formState: { errors } } = useRegisterForm()
 
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/dashboard")
     }
   }, [isAuthenticated, router])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      await register(name, email, password)
-      router.push("/dashboard")
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao criar conta")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <AuthLayout>
@@ -66,52 +36,67 @@ export default function RegisterPage() {
           </p>
         }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <ErrorMessage message={error} />
+        <form onSubmit={onSubmit} className="space-y-4">
+          {/* Name Field */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="John Doe"
+              {...register('name')}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+          </div>
 
-          <FormField
-            id="name"
-            label="Full Name"
-            type="text"
-            placeholder="John Doe"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          {/* Email Field */}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@email.com"
+              {...register('email')}
+            />
+            {errors.email && (
+              <p className="text-sm text-destructive">{errors.email.message}</p>
+            )}
+          </div>
 
-          <FormField
-            id="email"
-            label="Email"
-            type="email"
-            placeholder="you@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          {/* Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              {...register('password')}
+            />
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+          </div>
 
-          <FormField
-            id="password"
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            helperText="Minimum 6 characters"
-          />
+          {/* Confirm Password Field */}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="••••••••"
+              {...register('confirmPassword')}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+            )}
+          </div>
 
-          <FormField
-            id="confirm-password"
-            label="Confirm Password"
-            type="password"
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-          />
-
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? "Creating Account..." : "Create Account"}
+          {/* Submit Button */}
+          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? "Creating Account..." : "Create Account"}
           </Button>
         </form>
       </AuthCard>

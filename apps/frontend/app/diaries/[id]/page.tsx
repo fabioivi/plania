@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,125 +8,89 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, BookOpen, Loader2, FileText, Download, ExternalLink, Upload } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { academicApi, DiaryContent } from "@/services/api"
-import { toast } from "sonner"
 import { DiaryContentTable } from "@/components/diary/DiaryContentTable"
 import { SyncProgressDisplay } from "@/components/sync"
 import { useSyncState } from "@/hooks/useSyncState"
+import { useDiary, useDiaryContent, useDiaryContentStats } from "@/hooks/api"
+import type { DiaryContent } from "@/types"
 
 export default function DiaryContentPage() {
   const params = useParams()
   const router = useRouter()
   const diaryId = params?.id as string
 
-  const [content, setContent] = useState<DiaryContent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [diaryInfo, setDiaryInfo] = useState<any>(null)
-  const [stats, setStats] = useState<{ total: number; realClasses: number; anticipations: number } | null>(null)
-  
+  // React Query hooks
+  const { data: rawContent = [], isLoading: loadingContent } = useDiaryContent(diaryId)
+  const { data: diaryInfo, isLoading: loadingInfo } = useDiary(diaryId)
+  const { data: stats, isLoading: loadingStats } = useDiaryContentStats(diaryId)
+
+  const loading = loadingContent || loadingInfo || loadingStats
+
   // Sistema de sincronização para download
   const { state: downloadState, startSync: startDownload, complete: completeDownload, error: errorDownload, reset: resetDownload } = useSyncState('download')
-  
+
   // Sistema de sincronização para upload
   const { state: uploadState, startSync: startUpload, complete: completeUpload, error: errorUpload, reset: resetUpload } = useSyncState('upload')
 
-  useEffect(() => {
-    if (diaryId) {
-      loadDiaryContent()
-      loadDiaryInfo()
-      loadStats()
-    }
-  }, [diaryId])
+  // Process and sort diary content
+  const content = useMemo(() => {
+    if (!rawContent || rawContent.length === 0) return []
 
-  const loadDiaryContent = async () => {
-    try {
-      setLoading(true)
-      const data = await academicApi.getDiaryContent(diaryId)
-      
-      // Separar aulas normais e antecipações
-      const normalClasses = data.filter(item => !item.isAntecipation)
-      const anticipations = data.filter(item => item.isAntecipation)
-      
-      // Identificar IDs de aulas que foram antecipadas (para não incluir na ordem cronológica)
-      const anticipatedClassIds = new Set(anticipations.map(ant => ant.originalContentId))
-      
-      // Criar mapa de aulas canceladas (que foram antecipadas)
-      const anticipatedClassMap = new Map(
-        normalClasses
-          .filter(cls => anticipatedClassIds.has(cls.contentId))
-          .map(cls => [cls.contentId, cls])
-      )
-      
-      // Pegar apenas as aulas regulares (que não foram antecipadas)
-      const regularClasses = normalClasses.filter(cls => !anticipatedClassIds.has(cls.contentId))
-      
-      // Adicionar as antecipações na lista de aulas regulares
-      const allActiveClasses = [...regularClasses, ...anticipations]
-      
-      // Ordenar todas as aulas ativas (regulares + antecipações) por data e horário
-      const sortedClasses = allActiveClasses.sort((a, b) => {
-        const dateA = new Date(a.date).getTime()
-        const dateB = new Date(b.date).getTime()
-        if (dateA !== dateB) {
-          return dateA - dateB
+    // Separar aulas normais e antecipações
+    const normalClasses = rawContent.filter(item => !item.isAntecipation)
+    const anticipations = rawContent.filter(item => item.isAntecipation)
+
+    // Identificar IDs de aulas que foram antecipadas
+    const anticipatedClassIds = new Set(anticipations.map(ant => ant.originalContentId))
+
+    // Criar mapa de aulas canceladas (que foram antecipadas)
+    const anticipatedClassMap = new Map(
+      normalClasses
+        .filter(cls => anticipatedClassIds.has(cls.contentId))
+        .map(cls => [cls.contentId, cls])
+    )
+
+    // Pegar apenas as aulas regulares (que não foram antecipadas)
+    const regularClasses = normalClasses.filter(cls => !anticipatedClassIds.has(cls.contentId))
+
+    // Adicionar as antecipações na lista de aulas regulares
+    const allActiveClasses = [...regularClasses, ...anticipations]
+
+    // Ordenar todas as aulas ativas por data e horário
+    const sortedClasses = allActiveClasses.sort((a, b) => {
+      const dateA = new Date(a.date).getTime()
+      const dateB = new Date(b.date).getTime()
+      if (dateA !== dateB) {
+        return dateA - dateB
+      }
+      return a.timeRange.localeCompare(b.timeRange)
+    })
+
+    // Construir resultado final: quando encontrar uma antecipação, inserir a aula cancelada logo abaixo
+    const result: DiaryContent[] = []
+    sortedClasses.forEach(item => {
+      result.push(item)
+      // Se for uma antecipação, adicionar a aula cancelada logo após
+      if (item.isAntecipation && item.originalContentId) {
+        const canceledClass = anticipatedClassMap.get(item.originalContentId)
+        if (canceledClass) {
+          result.push(canceledClass)
         }
-        return a.timeRange.localeCompare(b.timeRange)
-      })
-      
-      // Construir resultado final: quando encontrar uma antecipação, inserir a aula cancelada logo abaixo
-      const result: DiaryContent[] = []
-      sortedClasses.forEach(item => {
-        result.push(item)
-        
-        // Se for uma antecipação, adicionar a aula original (cancelada) logo abaixo
-        if (item.isAntecipation && item.originalContentId) {
-          const cancelledClass = anticipatedClassMap.get(item.originalContentId)
-          if (cancelledClass) {
-            result.push(cancelledClass)
-          }
-        }
-      })
-      
-      setContent(result)
-    } catch (err: any) {
-      console.error('Erro ao carregar conteúdo do diário:', err)
-      toast.error('Erro ao carregar conteúdo do diário')
-    } finally {
-      setLoading(false)
-    }
-  }
+      }
+    })
 
-  const loadDiaryInfo = async () => {
-    try {
-      const diaries = await academicApi.getDiaries()
-      const diary = diaries.find(d => d.id === diaryId)
-      setDiaryInfo(diary)
-    } catch (err: any) {
-      console.error('Erro ao carregar informações do diário:', err)
-    }
-  }
+    return result
+  }, [rawContent])
 
-  const loadStats = async () => {
-    try {
-      const statsData = await academicApi.getDiaryContentStats(diaryId)
-      setStats(statsData)
-    } catch (err: any) {
-      console.error('Erro ao carregar estatísticas:', err)
-    }
-  }
-
-  const handleReorder = async (reorderedContents: DiaryContent[]) => {
+  const handleReorder = (reorderedContents: DiaryContent[]) => {
     console.log('Nova ordem dos conteúdos:', reorderedContents.map(c => ({
       id: c.id,
       date: c.date,
       timeRange: c.timeRange,
       content: c.content?.substring(0, 50) + '...'
     })))
-    
-    // Atualizar estado local
-    setContent(reorderedContents)
-    
-    // TODO: Salvar nova ordem no backend
+
+    // TODO: Salvar nova ordem no backend usando mutation
     // await academicApi.updateDiaryContentOrder(diaryId, reorderedContents)
     
     toast.success('Ordem atualizada!')

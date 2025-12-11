@@ -20,18 +20,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Verificar se há token e usuário salvos
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
 
-    if (token && savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      if (token && savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (error) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (for cross-tab sync and after login)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event for same-tab updates
+    window.addEventListener('auth-change', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-change', handleStorageChange);
+    };
   }, []);
 
   const handleAuthResponse = (response: AuthResponse) => {

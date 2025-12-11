@@ -1,96 +1,65 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { BookOpen, Search, Filter, Plus, Download, Upload, RefreshCw, Loader2, FileText, AlertCircle } from "lucide-react"
+import { BookOpen, Search, Filter, Plus, Download, Upload, RefreshCw, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useState, useEffect } from "react"
-import { academicApi, Diary, TeachingPlan } from "@/services/api"
-import { toast } from "sonner"
+import { useMemo, useEffect } from "react"
 import { useSyncProgress } from "@/hooks/useSyncProgress"
 import { SyncProgressDisplay } from "@/components/sync"
 import { useSyncState } from "@/hooks/useSyncState"
+import { useDiaries, useSyncDiaries } from "@/hooks/api"
+import { DiaryCard } from "./DiaryCard"
 
 export default function DisciplinesPage() {
-  const [diaries, setDiaries] = useState<Diary[]>([])
-  const [diaryPlans, setDiaryPlans] = useState<Record<string, TeachingPlan[]>>({})
-  const [loadingPlans, setLoadingPlans] = useState<Record<string, boolean>>({})
-  const [loading, setLoading] = useState(true)
-  const [lastSync, setLastSync] = useState<Date | null>(null)
-  
+  // React Query hooks
+  const { data: diaries = [], isLoading: loading } = useDiaries()
+  const { mutate: syncDiaries, isPending: isSyncing } = useSyncDiaries()
+
   // Sistema de sincronização genérico
   const { state: syncState, startSync, complete, error: syncError, reset } = useSyncState('download')
-  
+
   // Hook de progresso SSE (mantido para compatibilidade)
   const { progress, isConnected, connect, disconnect } = useSyncProgress()
 
-  useEffect(() => {
-    loadDiaries()
-  }, [])
-
-  const loadDiaries = async () => {
-    try {
-      setLoading(true)
-      const data = await academicApi.getDiaries()
-      setDiaries(data)
-      
-      // Load teaching plans for each diary
-      data.forEach(diary => {
-        loadTeachingPlans(diary.id)
-      })
-      
-      // Get last sync from most recent diary update
-      if (data.length > 0) {
-        const mostRecent = data.reduce((latest, diary) => {
-          return new Date(diary.updatedAt) > new Date(latest.updatedAt) ? diary : latest
-        })
-        setLastSync(new Date(mostRecent.updatedAt))
-      }
-    } catch (err: any) {
-      console.error('Erro ao carregar diários:', err)
-      toast.error('Erro ao carregar diários')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadTeachingPlans = async (diaryId: string) => {
-    try {
-      setLoadingPlans(prev => ({ ...prev, [diaryId]: true }))
-      const plans = await academicApi.getDiaryTeachingPlans(diaryId)
-      setDiaryPlans(prev => ({ ...prev, [diaryId]: plans }))
-    } catch (err: any) {
-      console.error(`Erro ao carregar planos do diário ${diaryId}:`, err)
-    } finally {
-      setLoadingPlans(prev => ({ ...prev, [diaryId]: false }))
-    }
-  }
+  // Calculate last sync from diaries
+  const lastSync = useMemo(() => {
+    if (diaries.length === 0) return null
+    const mostRecent = diaries.reduce((latest, diary) => {
+      return new Date(diary.updatedAt) > new Date(latest.updatedAt) ? diary : latest
+    })
+    return new Date(mostRecent.updatedAt)
+  }, [diaries])
 
   const handleSync = async () => {
     try {
       startSync(1, 'Conectando ao servidor...')
-      
+
       // Conectar ao SSE para receber atualizações em tempo real
       connect()
-      
+
       // Aguardar um pouco para garantir que SSE conectou
       await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const result = await academicApi.syncDiaries()
-      
-      if (!result.success) {
-        toast.error(result.message || 'Erro ao sincronizar diários')
-        syncError(result.message || 'Erro ao sincronizar diários')
-        disconnect()
-      }
+
+      // Use the React Query mutation
+      syncDiaries(undefined, {
+        onError: (err: any) => {
+          syncError(err.response?.data?.message || 'Erro ao sincronizar diários', [{
+            id: 'ERROR',
+            name: 'Erro de sincronização',
+            success: false,
+            message: err.response?.data?.message || err.message
+          }])
+          disconnect()
+        }
+      })
+      // Success is handled by the mutation's onSuccess
       // Se success, mantém em syncing até SSE enviar 'completed' ou 'error'
     } catch (err: any) {
       console.error('Erro ao sincronizar:', err)
-      toast.error(err.response?.data?.message || 'Erro ao sincronizar diários')
       syncError(err.response?.data?.message || 'Erro ao sincronizar diários', [{
         id: 'ERROR',
         name: 'Erro de sincronização',
@@ -104,16 +73,13 @@ export default function DisciplinesPage() {
   // Detectar quando sincronização termina pelo progresso SSE
   useEffect(() => {
     if (progress?.stage === 'completed') {
-      toast.success('Sincronização concluída com sucesso!')
       complete('Sincronização concluída com sucesso!')
-      // Recarregar diários quando completar
+      // React Query will refetch automatically via mutation onSuccess
       setTimeout(() => {
-        loadDiaries()
         disconnect()
         reset()
       }, 2000)
     } else if (progress?.stage === 'error') {
-      toast.error(progress.message || 'Erro na sincronização')
       syncError(progress.message || 'Erro na sincronização')
       setTimeout(() => {
         disconnect()
@@ -250,112 +216,9 @@ export default function DisciplinesPage() {
           <>
             {/* Disciplines Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {diaries.map((diary) => {
-                const plans = diaryPlans[diary.id] || []
-                const isLoadingPlans = loadingPlans[diary.id]
-                
-                return (
-                  <Card key={diary.id} className="hover:border-primary/50 transition-colors">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="secondary" className="text-xs">
-                              {diary.turma}
-                            </Badge>
-                            <Badge variant="outline" className="bg-orange-500/10 text-orange-700 border-orange-200">
-                              Em Andamento
-                            </Badge>
-                          </div>
-                          <CardTitle className="text-lg">{diary.disciplina}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {diary.curso}
-                          </CardDescription>
-                          {diary.periodo && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Período: {diary.periodo}
-                            </p>
-                          )}
-                        </div>
-                        <BookOpen className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Teaching Plans Section */}
-                      {isLoadingPlans ? (
-                        <div className="mb-4 p-3 bg-muted/50 rounded-md flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Carregando planos...</span>
-                        </div>
-                      ) : plans.length > 0 ? (
-                        <div className="mb-4 space-y-2">
-                          <div className="flex items-center gap-2 mb-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium">
-                              {plans.length} {plans.length === 1 ? 'Plano de Ensino' : 'Planos de Ensino'}
-                            </span>
-                          </div>
-                          {plans.map((plan) => (
-                            <Link
-                              key={plan.id}
-                              href={`/teaching-plans/${plan.id}`}
-                              className="block p-3 bg-muted/30 hover:bg-muted/60 rounded-md transition-colors border border-transparent hover:border-primary/30"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">
-                                    {plan.unidadeCurricular || diary.disciplina}
-                                  </p>
-                                  {plan.professores && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Prof. {plan.professores}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline" className="text-xs">
-                                      {plan.status}
-                                    </Badge>
-                                    {plan.anoSemestre && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {plan.anoSemestre}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-2">
-                          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-sm text-yellow-800">Nenhum plano de ensino encontrado</p>
-                            <p className="text-xs text-yellow-700 mt-1">
-                              Sincronize novamente ou crie um plano manualmente
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="flex gap-2">
-                        <Link href={`/generate?diaryId=${diary.id}`} className="flex-1">
-                          <Button variant="default" size="sm" className="w-full">
-                            Gerar Plano com IA
-                          </Button>
-                        </Link>
-                        <Link href={`/diaries/${diary.id}`}>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <FileText className="h-4 w-4" />
-                            Ver Conteúdo
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+              {diaries.map((diary) => (
+                <DiaryCard key={diary.id} diary={diary} />
+              ))}
 
               {/* Add Manual Discipline Card */}
               <Card className="border-dashed bg-muted/20 hover:border-primary/50 transition-colors">

@@ -21,6 +21,21 @@ export function useTeachingPlans(diaryId: string | undefined) {
 }
 
 /**
+ * Get a specific teaching plan by ID
+ */
+export function useTeachingPlan(planId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.teachingPlans.detail(planId!),
+    queryFn: async () => {
+      const { apiClient } = await import('@/services/api/client')
+      const response = await apiClient.get<TeachingPlan>(`/academic/teaching-plans/${planId}`)
+      return response.data
+    },
+    enabled: !!planId,
+  })
+}
+
+/**
  * Sync specific teaching plan
  */
 export function useSyncTeachingPlan() {

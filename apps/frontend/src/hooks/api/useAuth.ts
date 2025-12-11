@@ -24,6 +24,9 @@ export function useLogin() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', response.accessToken)
         localStorage.setItem('user', JSON.stringify(response.user))
+
+        // Dispatch custom event to notify AuthContext
+        window.dispatchEvent(new Event('auth-change'))
       }
 
       // Set user in query cache
@@ -55,6 +58,9 @@ export function useRegister() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', response.accessToken)
         localStorage.setItem('user', JSON.stringify(response.user))
+
+        // Dispatch custom event to notify AuthContext
+        window.dispatchEvent(new Event('auth-change'))
       }
 
       // Set user in query cache

@@ -383,3 +383,9 @@ export const aiApi = {
     return response.data;
   },
 };
+
+// Re-export new services for backwards compatibility with new hooks
+export { authService } from './api/auth.service';
+export { academicService } from './api/academic.service';
+export { llmService } from './api/llm.service';
+export { aiService } from './api/ai.service';

@@ -11,133 +11,76 @@ import { Header } from "@/components/layout/header"
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useState, useEffect } from "react"
-import { academicApi, AcademicCredential } from "@/services/api"
+import { useState, useMemo } from "react"
 import { toast } from "sonner"
 import { LLMConfigSection } from "@/components/settings/LLMConfigSection"
+import { useCredentials, useSaveCredential, useTestCredential, useDeleteCredential } from "@/hooks/api"
+import type { AcademicCredential } from "@/types"
 
 export default function SettingsPage() {
+  // React Query hooks
+  const { data: credentials = [], isLoading: loadingCredential } = useCredentials()
+  const { mutate: saveCredential, isPending: isSaving } = useSaveCredential()
+  const { mutate: testCredential, isPending: isTesting } = useTestCredential()
+  const { mutate: deleteCredential, isPending: isDeleting } = useDeleteCredential()
+
+  // Local form state
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [testing, setTesting] = useState(false)
-  const [credential, setCredential] = useState<AcademicCredential | null>(null)
-  const [loadingCredential, setLoadingCredential] = useState(true)
 
-  useEffect(() => {
-    loadCredentials()
-  }, [])
+  // Get IFMS credential from list
+  const credential = useMemo(() => {
+    return credentials.find((c: AcademicCredential) => c.system === 'ifms') || null
+  }, [credentials])
 
-  const loadCredentials = async () => {
-    try {
-      setLoadingCredential(true)
-      console.log('🔄 Carregando credenciais...')
-      const credentials = await academicApi.getCredentials()
-      console.log('📦 Credenciais recebidas:', credentials)
-      
-      // Pegar a credencial do IFMS se existir
-      const ifmsCredential = credentials.find((c: AcademicCredential) => c.system === 'ifms')
-      console.log('🔍 Credencial IFMS encontrada:', ifmsCredential)
-      
-      if (ifmsCredential) {
-        setCredential(ifmsCredential)
-        setUsername(ifmsCredential.username)
-        console.log('✅ Credenciais carregadas com sucesso:', ifmsCredential.username)
-      } else {
-        console.log('ℹ️ Nenhuma credencial IFMS encontrada')
-      }
-    } catch (err: any) {
-      console.error('❌ Erro ao carregar credenciais:', err)
-    } finally {
-      setLoadingCredential(false)
+  // Update username when credential loads
+  useMemo(() => {
+    if (credential) {
+      setUsername(credential.username)
     }
-  }
+  }, [credential])
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!username || !password) {
       toast.error('Preencha todos os campos')
       return
     }
 
-    try {
-      setLoading(true)
-
-      const savedCredential = await academicApi.saveCredential({
-        system: 'ifms',
-        username,
-        password,
-      })
-
-      setCredential(savedCredential)
-      toast.success("Credenciais salvas com sucesso!")
-      setPassword('') // Limpar senha do formulário
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Erro ao salvar credenciais')
-    } finally {
-      setLoading(false)
-    }
+    saveCredential({
+      system: 'ifms',
+      username,
+      password,
+    }, {
+      onSuccess: () => {
+        setPassword('') // Limpar senha do formulário
+      }
+    })
   }
 
-  const handleTest = async () => {
+  const handleTest = () => {
     if (!credential) {
       toast.error('Salve as credenciais antes de testar')
       return
     }
 
-    try {
-      setTesting(true)
-
-      const result = await academicApi.testCredential(credential.id)
-      
-      if (result.isVerified) {
-        toast.success("✅ Credenciais verificadas com sucesso!")
-        // Atualizar credencial local
-        setCredential({
-          ...credential,
-          isVerified: true,
-          lastVerifiedAt: result.lastTestedAt,
-          lastTestedAt: result.lastTestedAt,
-          lastError: null,
-        })
-      } else {
-        toast.error(result.lastError || '❌ Falha na autenticação. Verifique suas credenciais.')
-        // Atualizar credencial local
-        setCredential({
-          ...credential,
-          isVerified: false,
-          lastVerifiedAt: null,
-          lastTestedAt: result.lastTestedAt,
-          lastError: result.lastError,
-        })
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Erro ao testar credenciais')
-    } finally {
-      setTesting(false)
-    }
+    testCredential(credential.id)
+    // Toast messages are handled by the mutation
   }
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!credential) return
 
     if (!confirm('Tem certeza que deseja remover suas credenciais?')) {
       return
     }
 
-    try {
-      setLoading(true)
-      
-      await academicApi.deleteCredential(credential.id)
-      setCredential(null)
-      setUsername('')
-      setPassword('')
-      toast.success("Credenciais removidas com sucesso!")
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Erro ao remover credenciais')
-    } finally {
-      setLoading(false)
-    }
+    deleteCredential(credential.id, {
+      onSuccess: () => {
+        setUsername('')
+        setPassword('')
+      }
+    })
   }
 
   const getStatusColor = () => {
@@ -219,7 +162,7 @@ export default function SettingsPage() {
                     variant="ghost"
                     size="icon"
                     onClick={handleDelete}
-                    disabled={loading}
+                    disabled={isDeleting || isSaving}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -240,13 +183,13 @@ export default function SettingsPage() {
                     <User className="h-4 w-4" />
                     Usuário / Matrícula
                   </Label>
-                  <Input 
-                    id="username" 
+                  <Input
+                    id="username"
                     placeholder="Digite seu usuário do sistema acadêmico"
                     type="text"
                         value={username}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-                        disabled={loading}
+                        disabled={isSaving || isDeleting}
                       />
                     </div>
 
@@ -256,13 +199,13 @@ export default function SettingsPage() {
                         Senha
                       </Label>
                       <div className="relative">
-                        <Input 
-                          id="password" 
+                        <Input
+                          id="password"
                           placeholder={credential ? "Digite nova senha (deixe vazio para manter)" : "Digite sua senha"}
                           type={showPassword ? "text" : "password"}
                           value={password}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                          disabled={loading}
+                          disabled={isSaving || isDeleting}
                         />
                         <Button 
                           variant="ghost" 
@@ -281,12 +224,12 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex gap-3 pt-2">
-                      <Button 
+                      <Button
                         className="flex-1 bg-blue-600 hover:bg-blue-700"
                         onClick={handleSave}
-                        disabled={loading || testing}
+                        disabled={isSaving || isTesting || isDeleting}
                       >
-                        {loading ? (
+                        {isSaving ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Salvando...
@@ -295,13 +238,13 @@ export default function SettingsPage() {
                           credential ? 'Atualizar Credenciais' : 'Salvar Credenciais'
                         )}
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1"
                         onClick={handleTest}
-                        disabled={!credential || loading || testing}
+                        disabled={!credential || isSaving || isTesting || isDeleting}
                       >
-                        {testing ? (
+                        {isTesting ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Testando...

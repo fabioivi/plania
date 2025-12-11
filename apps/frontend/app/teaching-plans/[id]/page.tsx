@@ -7,59 +7,27 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
-import { api, TeachingPlan } from "@/services/api"
 import { toast } from "sonner"
 import { TeachingPlanView } from "@/components/teaching-plan/TeachingPlanView"
+import { useTeachingPlan, useSyncTeachingPlan } from "@/hooks/api"
 
 export default function TeachingPlanViewPage() {
   const params = useParams()
   const router = useRouter()
   const planId = params.id as string
-  
-  const [plan, setPlan] = useState<TeachingPlan | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
 
-  useEffect(() => {
-    loadPlan()
-  }, [planId])
-
-  const loadPlan = async () => {
-    try {
-      setLoading(true)
-      // Fetch plan details - you'll need to create this endpoint or fetch from parent
-      const response = await api.get(`/academic/teaching-plans/${planId}`)
-      setPlan(response.data)
-    } catch (err: any) {
-      console.error('Erro ao carregar plano:', err)
-      toast.error('Erro ao carregar plano de ensino')
-    } finally {
-      setLoading(false)
-    }
-  }
+  // React Query hooks
+  const { data: plan, isLoading: loading } = useTeachingPlan(planId)
+  const { mutate: syncPlan, isPending: syncing } = useSyncTeachingPlan()
 
   const handlePrint = () => {
     window.print()
   }
 
-  const handleSync = async () => {
-    setSyncing(true)
-    try {
-      await api.post(`/academic/teaching-plans/${planId}/sync`)
-      toast.success('Plano de ensino sincronizado com sucesso!')
-      
-      // Recarrega o plano
-      setLoading(true)
-      await loadPlan()
-      setLoading(false)
-    } catch (error: any) {
-      console.error('Erro ao sincronizar plano:', error)
-      toast.error(error.response?.data?.message || 'Erro ao sincronizar plano de ensino')
-    } finally {
-      setSyncing(false)
-    }
+  const handleSync = () => {
+    syncPlan(planId)
+    // Toast and refetch are handled by the mutation
   }
 
   const handleGenerateDiaryContent = () => {

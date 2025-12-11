@@ -31,7 +31,6 @@ export default function GeneratePage() {
   
   const [formData, setFormData] = useState({
     diaryId: "",
-    objectives: "",
     methodology: "",
     additionalNotes: ""
   })
@@ -247,19 +246,21 @@ export default function GeneratePage() {
                   </div>
                 )}
 
-                {/* Objectives */}
-                <div className="space-y-2">
-                  <Label htmlFor="objectives">Objetivos de Aprendizagem (Opcional)</Label>
-                  <Textarea 
-                    id="objectives"
-                    placeholder="Ex: Desenvolver habilidades analíticas para resolver problemas de cálculo diferencial..."
-                    rows={4}
-                    value={formData.objectives}
-                    onChange={(e) => setFormData({...formData, objectives: e.target.value})}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    A IA pode sugerir objetivos se deixado em branco
-                  </p>
+                {/* Info: Objectives will be generated */}
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                        Objetivos Gerados Automaticamente
+                      </h4>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        A IA irá gerar os objetivos de aprendizagem (geral e específicos)
+                        automaticamente com base na ementa e nas diretrizes do MEC.
+                        Isso garante alinhamento pedagógico adequado.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Methodology */}

@@ -3,29 +3,20 @@ export function buildTeachingPlanPrompt({ anoSemestre, curso, unidadeCurricular,
 Crie um **Plano de Ensino** rigoroso e estruturado para a seguinte solicitação:
 
 # Dados da Disciplina
-Semestre: ${anoSemestre}
+Período Letivo: ${anoSemestre}
 Curso: ${curso}
 Unidade Curricular: ${unidadeCurricular}
-Carga Horária Total: ${cargaHorariaTotal}
+Carga Horária Total: ${cargaHorariaTotal} horas
+Número de Semanas: ${semanas.length}
 Ementa: ${ementa}
 
-# Objetivos Educacionais
-Objetivo Geral: ${objetivoGeral}
-Objetivos Específicos: ${objetivosEspecificos.join('; ')}
-
-# Calendário de Aulas
+# Calendário de Aulas (Distribuição Semanal)
+O plano deve cobrir ${semanas.length} semanas de aulas, distribuindo o conteúdo da ementa de forma equilibrada.
 `;
 
   semanas.forEach((week) => {
-    prompt += `Semana ${week.weekNumber} (${week.startDate} - ${week.endDate}): ${week.totalHours}h\n`;
-    // week.classes.forEach((cls) => {
-    //   prompt += `  - ${cls.date}: ${cls.timeRange}\n`;
-    // });
+    prompt += `Semana ${week.weekNumber}: ${week.startDate} - ${week.endDate}\n`;
   });
-
-  if (userObjectives) {
-    prompt += `\n# Objetivos Desejados pelo Professor:\n${userObjectives}\n`;
-  }
 
   if (userMethodology) {
     prompt += `\n# Metodologia Preferida:\n${userMethodology}\n`;
@@ -36,40 +27,58 @@ Objetivos Específicos: ${objetivosEspecificos.join('; ')}
   }
 
   prompt += `
-Elabore um plano de ensino completo e detalhado no formato JSON exato abaixo. Não adicione nenhum texto fora do JSON. A saída deve ser apenas o objeto JSON válido, sem introduções, explicações ou formatação extra.
-A estrutura deve ser exatamente esta:
+# Instruções de Geração
+Com base na EMENTA e no calendário de aulas fornecidos, você deve GERAR:
+
+1. **Objetivos Educacionais**: Crie objetivo geral e objetivos específicos alinhados à ementa e às diretrizes do MEC
+2. **Metodologia**: Sugira estratégias pedagógicas apropriadas para o conteúdo
+3. **Proposta de Trabalho Semanal**: Distribua o conteúdo da ementa ao longo das ${semanas.length} semanas
+4. **Avaliações**: Proponha avaliações formativas e somativas apropriadas
+5. **Recuperação**: Descreva o processo de recuperação da aprendizagem
+
+Elabore um plano de ensino completo e detalhado no formato JSON exato abaixo.
+
+**IMPORTANTE**:
+- Retorne APENAS JSON válido
+- NÃO adicione texto, introduções, explicações ou markdown fora do JSON
+- A saída deve começar com { e terminar com }
+
+A estrutura JSON deve ser EXATAMENTE esta:
 {
-"objetivoGeral": "String refletindo a finalidade ampla da disciplina, em português brasileiro técnico.",
-"objetivosEspecificos": ["Array de strings mensuráveis e alinhadas ao objetivo geral, em português brasileiro técnico."],
-"metodologia": "String descrevendo as estratégias pedagógicas, em português brasileiro técnico.",
-"recuperacaoAprrendizagem": "Descreva o processo de recuperação da aprendizagem: quando ocorrerá, critérios, atividades e instrumentos utilizados para recuperação.",
+"objetivoGeral": "String refletindo a finalidade ampla da disciplina. GERE com base na ementa, em português brasileiro técnico.",
+"objetivosEspecificos": ["Array de strings mensuráveis e alinhadas ao objetivo geral. GERE objetivos específicos baseados na ementa."],
+"metodologia": "String descrevendo as estratégias pedagógicas apropriadas para esta disciplina, em português brasileiro técnico.",
+"recuperacaoAprrendizagem": "Descreva o processo de recuperação da aprendizagem: quando ocorrerá, critérios, atividades e instrumentos utilizados.",
 "propostaTrabalho": [
 {
-"semana": Número inteiro sequencial começando de 1 (use números únicos e incrementais para cada entrada do calendário, mesmo se houver rótulos duplicados como 'Semana 1'),
-"dataInicial": "dd/mm/yyyy (extraída do calendário)",
-"dataFinal": "dd/mm/yyyy (extraída do calendário)",
-"tema": "Tema resumido da semana, em português brasileiro técnico",
-"numAulas": Número inteiro correspondente às horas do calendário (ex: 2 para 2h),
-"conteudo": "Conteúdo programático específico, em português brasileiro técnico",
-"tecnicasEnsino": ["Array de strings como 'Aula prática', 'Estudo de caso', 'Expositiva/dialogada', 'Pesquisa'"],
-"recursosEnsino": ["Array de strings como 'Biblioteca', 'Laboratório', 'Projetor multimídia', 'Quadro branco/canetão'"]
+"semana": Número inteiro sequencial começando de 1,
+"dataInicial": "dd/mm/yyyy (extraída do calendário fornecido)",
+"dataFinal": "dd/mm/yyyy (extraída do calendário fornecido)",
+"tema": "Tema resumido da semana",
+"numAulas": Número estimado de aulas necessárias para o conteúdo da semana (calcule proporcionalmente: carga horária total / número de semanas),
+"conteudo": "Conteúdo programático específico desta semana, extraído e organizado da ementa",
+"tecnicasEnsino": ["Array de técnicas como 'Aula expositiva', 'Estudo de caso', 'Laboratório', 'Seminário'"],
+"recursosEnsino": ["Array de recursos como 'Biblioteca', 'Laboratório', 'Projetor multimídia', 'Computadores'"]
 }
 ],
 "avaliacaoAprendizagem": [
 {
-"etapa": "Identificador da etapa (ex.: 'NP1', 'Avaliação Formativa 1').",
-"avaliacao": "Nome ou tipo da avaliação (ex.: 'Prova escrita', 'Trabalho prático').",
-"instrumentos": "Instrumentos utilizados (ex.: prova, relatório, apresentação).",
-"dataPrevista": "Data prevista para realização da avaliação no formato dd/MM/yyyy, se aplicável.",
-"valorMaximo": Número representando o valor máximo ou peso da avaliação (ex.: 10, 30).
+"etapa": "Identificador da etapa (ex.: 'NP1', 'NP2', 'Avaliação Formativa 1')",
+"avaliacao": "Nome ou tipo da avaliação (ex.: 'Prova escrita', 'Trabalho prático', 'Seminário')",
+"instrumentos": "Instrumentos utilizados (ex.: 'Prova individual', 'Relatório técnico', 'Apresentação')",
+"dataPrevista": "Data prevista no formato dd/MM/yyyy, distribuída ao longo do período",
+"valorMaximo": Número representando o peso (ex.: 10, 30, 40)
 }
 ]
 }
 
-INSTRUÇÕES PEDAGÓGICAS:
-- Todo o plano deve ser redigido em português brasileiro culto e técnico.
-- Garanta alinhamento com as diretrizes curriculares do MEC para educação profissional.
-- Assegure progressão lógica do conteúdo e integração entre teoria e prática.
+DIRETRIZES PEDAGÓGICAS:
+- Todo o plano deve ser redigido em português brasileiro culto e técnico
+- Garanta alinhamento com as diretrizes curriculares do MEC para educação profissional/técnica
+- Assegure progressão lógica do conteúdo, do mais simples ao mais complexo
+- Integre teoria e prática de forma equilibrada
+- Distribua o conteúdo da ementa de forma uniforme entre as ${semanas.length} semanas
+- Calcule numAulas proporcionalmente: ${cargaHorariaTotal} horas total / ${semanas.length} semanas
 `;
 
   return prompt;

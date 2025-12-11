@@ -126,11 +126,19 @@ export class TeachingPlanGeneratorService {
     existingPlans: TeachingPlan[],
     userInput?: Partial<GenerateTeachingPlanDto>,
   ): string {
-    const anoSemestre = `${diary.anoLetivo}.${diary.semestre}`;
+    // Período acadêmico: trata undefined em semestre
+    const anoSemestre = diary.anoLetivo
+      ? `${diary.anoLetivo}${diary.semestre ? `.${diary.semestre}` : ''}`
+      : 'Não informado';
+
     const curso = diary.curso;
     const unidadeCurricular = diary.disciplina;
     const professores = diary.user?.name || 'Não informado';
-    const cargaHorariaTotal = diary.cargaHoraria || weekSchedule.reduce((sum, week) => sum + week.totalHours, 0) + ' horas';
+
+    // Carga horária: mantém como número (não concatena com " horas")
+    const cargaHorariaTotal = diary.cargaHoraria ||
+      weekSchedule.reduce((sum, week) => sum + week.totalHours, 0);
+
     const aulasTeoricas = 'Não especificado'; // TODO: extract from diary if available
     const aulasPraticas = 'Não especificado'; // TODO: extract from diary if available
     const ementa = existingPlans.length > 0 ? existingPlans[0].ementa : 'Não disponível';
@@ -216,17 +224,25 @@ export class TeachingPlanGeneratorService {
 
       // Step 6: Generate with LLM
       if (onProgress) onProgress('Gerando plano de ensino com IA...', 60);
-      
-      const systemPrompt = `Você é um especialista em educação brasileira e elaboração de planos de ensino. 
+
+      const systemPrompt = `Você é um especialista em educação brasileira e elaboração de planos de ensino.
 Você conhece as diretrizes do MEC e as melhores práticas pedagógicas.
 Sempre responda em português do Brasil.
-Retorne APENAS JSON válido, sem markdown ou texto adicional.`;
+
+**CRÍTICO**: Retorne APENAS JSON válido.
+- NÃO use markdown (sem \`\`\`json ou \`\`\`)
+- NÃO adicione texto explicativo antes ou depois do JSON
+- NÃO inclua comentários no JSON
+- A resposta deve começar com { e terminar com }
+- Garanta que todas as strings estejam entre aspas duplas
+- Garanta que arrays e objetos estejam corretamente formatados`;
 
       const response = await llmProvider.generateCompletion(prompt, {
         systemPrompt,
-        temperature: 0.7,
+        temperature: 0.2,  // Baixa temperatura para geração estruturada e consistente
         maxTokens: 8192,
-        responseSchema: teachingPlanSchema,
+        responseFormat: { type: 'json_object' },  // Force JSON mode (OpenAI/Gemini)
+        responseSchema: teachingPlanSchema,       // Schema validation (quando suportado)
       });
 
       // Step 7: Parse response (Gemini garante JSON válido com schema)

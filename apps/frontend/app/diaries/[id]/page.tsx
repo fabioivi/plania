@@ -11,7 +11,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { DiaryContentTable } from "@/components/diary/DiaryContentTable"
 import { SyncProgressDisplay } from "@/components/sync"
 import { useSyncState } from "@/hooks/useSyncState"
-import { useDiary, useDiaryContent, useDiaryContentStats } from "@/hooks/api"
+import { useDiary, useDiaryContent, useDiaryContentStats, useSyncSpecificDiary } from "@/hooks/api"
+import { toast } from "sonner"
 import type { DiaryContent } from "@/types"
 
 export default function DiaryContentPage() {
@@ -23,6 +24,7 @@ export default function DiaryContentPage() {
   const { data: rawContent = [], isLoading: loadingContent } = useDiaryContent(diaryId)
   const { data: diaryInfo, isLoading: loadingInfo } = useDiary(diaryId)
   const { data: stats, isLoading: loadingStats } = useDiaryContentStats(diaryId)
+  const syncSpecificDiaryMutation = useSyncSpecificDiary()
 
   const loading = loadingContent || loadingInfo || loadingStats
 
@@ -98,30 +100,19 @@ export default function DiaryContentPage() {
 
   const handleSync = async () => {
     startDownload(1, 'Baixando conteúdos do sistema IFMS...')
-    
+
     try {
-      const result = await academicApi.syncSpecificDiary(diaryId)
-      
+      const result = await syncSpecificDiaryMutation.mutateAsync(diaryId)
+
       completeDownload(`${result.synced} conteúdos atualizados com sucesso!`)
-      toast.success(`Diário sincronizado! ${result.synced} conteúdos atualizados`)
-      
-      // Força o recarregamento dos dados
-      setLoading(true)
-      await Promise.all([
-        loadDiaryContent(),
-        loadStats(),
-        loadDiaryInfo()
-      ])
-      setLoading(false)
-      
+
       // Reset após 2 segundos
       setTimeout(() => {
         resetDownload()
       }, 2000)
-      
+
     } catch (error: any) {
       console.error('Erro ao sincronizar diário:', error)
-      toast.error(error.response?.data?.message || 'Erro ao sincronizar diário')
       errorDownload(error.response?.data?.message || 'Erro ao sincronizar diário', [{
         id: 'ERROR',
         name: 'Erro de sincronização',

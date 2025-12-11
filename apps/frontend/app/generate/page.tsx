@@ -62,9 +62,16 @@ export default function GeneratePage() {
   }
 
   const selectDiary = async (diary: Diary) => {
+    console.log('📊 Diary selecionado:', {
+      id: diary.id,
+      disciplina: diary.disciplina,
+      cargaHoraria: diary.cargaHoraria,
+      modalidade: diary.modalidade,
+      allFields: diary
+    })
     setSelectedDiary(diary)
     setFormData(prev => ({ ...prev, diaryId: diary.id }))
-    
+
     // Load existing teaching plans for reference
     try {
       const plans = await academicApi.getDiaryTeachingPlans(diary.id)
@@ -208,33 +215,31 @@ export default function GeneratePage() {
                         <p className="font-medium">{selectedDiary.curso}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Turma:</span>
-                        <p className="font-medium">{selectedDiary.turma}</p>
+                        <span className="text-muted-foreground">Carga Horária:</span>
+                        <p className="font-medium">
+                          {(() => {
+                            // Prioriza dados do plano existente
+                            const cargaHoraria = existingPlans.length > 0 && existingPlans[0].cargaHorariaTotal
+                              ? existingPlans[0].cargaHorariaTotal
+                              : selectedDiary.cargaHoraria;
+
+                            if (!cargaHoraria) return 'Não informado';
+                            return `${cargaHoraria} horas aula`;
+                          })()}
+                        </p>
                       </div>
-                      {selectedDiary.periodo && (
-                        <div>
-                          <span className="text-muted-foreground">Período:</span>
-                          <p className="font-medium">{selectedDiary.periodo}</p>
-                        </div>
-                      )}
-                      {selectedDiary.cargaHoraria && (
-                        <div>
-                          <span className="text-muted-foreground">Carga Horária:</span>
-                          <p className="font-medium">{selectedDiary.cargaHoraria}</p>
-                        </div>
-                      )}
-                      {selectedDiary.anoLetivo && (
-                        <div>
-                          <span className="text-muted-foreground">Ano Letivo:</span>
-                          <p className="font-medium">{selectedDiary.anoLetivo}{selectedDiary.semestre ? `.${selectedDiary.semestre}` : ''}</p>
-                        </div>
-                      )}
-                      {selectedDiary.modalidade && (
-                        <div>
-                          <span className="text-muted-foreground">Modalidade:</span>
-                          <p className="font-medium">{selectedDiary.modalidade}</p>
-                        </div>
-                      )}
+                      <div>
+                        <span className="text-muted-foreground">Ano Letivo:</span>
+                        <p className="font-medium">
+                          {selectedDiary.anoLetivo
+                            ? `${selectedDiary.anoLetivo}${selectedDiary.semestre ? `.${selectedDiary.semestre}` : ''}`
+                            : 'Não informado'}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Modalidade:</span>
+                        <p className="font-medium">{selectedDiary.modalidade || 'Não informado'}</p>
+                      </div>
                     </div>
                     {existingPlans.length > 0 && (
                       <div className="pt-2 mt-2 border-t border-blue-200 dark:border-blue-800">
@@ -485,12 +490,37 @@ export default function GeneratePage() {
                       {generatedPlan.propostaTrabalho && (
                         <WorkProposalTable
                           data={generatedPlan.propostaTrabalho.map((semana: any, idx: number) => {
+                            // Formata período a partir de dataInicial e dataFinal
+                            const formatPeriod = (dataInicial?: string, dataFinal?: string) => {
+                              if (!dataInicial || !dataFinal) return '';
+
+                              // Parse dates (formato: dd/mm/yyyy)
+                              const [diaIni, mesIni] = dataInicial.split('/');
+                              const [diaFim, mesFim] = dataFinal.split('/');
+
+                              // Se mesmo mês: "01 a 07"
+                              if (mesIni === mesFim) {
+                                return `${diaIni} a ${diaFim}`;
+                              }
+                              // Se meses diferentes: "28/02 a 06/03"
+                              return `${diaIni}/${mesIni} a ${diaFim}/${mesFim}`;
+                            };
+
+                            // Extrai mês da dataInicial
+                            const getMonth = (dataInicial?: string) => {
+                              if (!dataInicial) return '';
+                              const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+                                             'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                              const [, mes] = dataInicial.split('/');
+                              return meses[parseInt(mes) - 1] || '';
+                            };
+
                             // Normaliza campos do plano gerado para o formato WeekSchedule
                             const ws: WeekSchedule = {
                               id: semana.id || `${idx}`,
                               week: semana.semana ?? idx + 1,
-                              month: semana.mes || (semana.datas || '').split('-')[0] || '',
-                              period: semana.datas || '',
+                              month: semana.mes || getMonth(semana.dataInicial),
+                              period: semana.periodo || formatPeriod(semana.dataInicial, semana.dataFinal),
                               classes: semana.horasAula ?? semana.numAulas ?? 1,
                               observations: semana.observacoes || semana.observacao || '',
                               content: semana.tema || semana.conteudo || semana.assunto || '',

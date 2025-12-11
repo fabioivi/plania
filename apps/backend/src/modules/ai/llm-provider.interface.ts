@@ -26,7 +26,8 @@ export interface LLMOptions {
   model?: string;
   topP?: number;
   topK?: number;
-  responseSchema?: any; // JSON Schema for structured responses
+  responseSchema?: any; // JSON Schema for structured responses (Gemini native)
+  responseFormat?: { type: 'json_object' | 'text' }; // JSON mode (OpenAI/compatible providers)
 }
 
 export interface LLMConfig {

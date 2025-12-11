@@ -15,7 +15,7 @@ O plano deve cobrir ${semanas.length} semanas de aulas, distribuindo o conteúdo
 `;
 
   semanas.forEach((week) => {
-    prompt += `Semana ${week.weekNumber}: ${week.startDate} - ${week.endDate}\n`;
+    prompt += `Semana ${week.weekNumber} (${week.startDate} - ${week.endDate}): ${week.totalHours}h de aula\n`;
   });
 
   if (userMethodology) {
@@ -55,7 +55,7 @@ A estrutura JSON deve ser EXATAMENTE esta:
 "dataInicial": "dd/mm/yyyy (extraída do calendário fornecido)",
 "dataFinal": "dd/mm/yyyy (extraída do calendário fornecido)",
 "tema": "Tema resumido da semana",
-"numAulas": Número estimado de aulas necessárias para o conteúdo da semana (calcule proporcionalmente: carga horária total / número de semanas),
+"numAulas": Use EXATAMENTE o número de horas de aula indicado no calendário para cada semana (ex: se a semana tem "4h de aula", use numAulas: 4),
 "conteudo": "Conteúdo programático específico desta semana, extraído e organizado da ementa",
 "tecnicasEnsino": ["Array de técnicas como 'Aula expositiva', 'Estudo de caso', 'Laboratório', 'Seminário'"],
 "recursosEnsino": ["Array de recursos como 'Biblioteca', 'Laboratório', 'Projetor multimídia', 'Computadores'"]
@@ -78,7 +78,8 @@ DIRETRIZES PEDAGÓGICAS:
 - Assegure progressão lógica do conteúdo, do mais simples ao mais complexo
 - Integre teoria e prática de forma equilibrada
 - Distribua o conteúdo da ementa de forma uniforme entre as ${semanas.length} semanas
-- Calcule numAulas proporcionalmente: ${cargaHorariaTotal} horas total / ${semanas.length} semanas
+- **CRÍTICO**: Para o campo "numAulas" de cada semana, use EXATAMENTE as horas indicadas no calendário acima
+  (ex: "Semana 1 (...): 4h de aula" → numAulas: 4)
 `;
 
   return prompt;

@@ -96,12 +96,10 @@ export class AIController {
         };
       }),
       takeWhile((event: any) => {
-        return (
-          event.data.type === 'progress' ||
-          (event.data.type === 'complete' && !event.data.plan) ||
-          event.data.type === 'error'
-        );
-      }, true),
+        // Continue enquanto for 'progress'
+        // Para quando for 'complete' (com ou sem plan) ou 'error'
+        return event.data.type === 'progress';
+      }, true),  // true = inclui o último evento antes de parar
     );
   }
 

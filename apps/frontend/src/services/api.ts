@@ -130,6 +130,7 @@ export const academicApi = {
     return response.data;
   },
 
+
   async syncDiaries(): Promise<{ success: boolean; message: string }> {
     const response = await api.post('/academic/diaries/sync');
     return response.data;

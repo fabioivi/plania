@@ -797,11 +797,67 @@ export class AcademicService {
       throw new BadRequestException('Apenas planos gerados por IA podem ser excluídos. Planos do IFMS devem ser gerenciados no sistema acadêmico.');
     }
 
+
     // Delete the plan
     await this.teachingPlanRepository.remove(plan);
-
-    this.logger.log(`Teaching plan ${planId} deleted by user ${userId}`);
   }
+
+  /**
+   * Delete all academic data (diaries and teaching plans) for a user
+   * Keeps credentials intact
+   */
+  async deleteAllData(userId: string): Promise<void> {
+    this.logger.log(`⚠️ Deletando todos os dados acadêmicos do usuário ${userId}`);
+
+    // 1. Get all user diaries to find related contents
+    const diaries = await this.diaryRepository.find({
+      where: { userId },
+      select: ['id'],
+    });
+    const diaryIds = diaries.map(d => d.id);
+
+    // 2. Get all user teaching plans to find related history
+    const plans = await this.teachingPlanRepository.find({
+      where: { userId },
+      select: ['id'],
+    });
+    const planIds = plans.map(p => p.id);
+
+    // 3. Delete Teaching Plan History
+    if (planIds.length > 0) {
+      const historyDeleteResult = await this.teachingPlanHistoryRepository
+        .createQueryBuilder()
+        .delete()
+        .where('teaching_plan_id IN (:...planIds)', { planIds })
+        .execute();
+      this.logger.log(`- Histórico de planos excluídos: ${historyDeleteResult.affected}`);
+    }
+
+    // 4. Delete Teaching Plans
+    if (planIds.length > 0) {
+      const plansDeleteResult = await this.teachingPlanRepository.delete({ userId });
+      this.logger.log(`- Planos de ensino excluídos: ${plansDeleteResult.affected}`);
+    }
+
+    // 5. Delete Diary Contents
+    if (diaryIds.length > 0) {
+      const contentsDeleteResult = await this.diaryContentRepository
+        .createQueryBuilder()
+        .delete()
+        .where('diary_id IN (:...diaryIds)', { diaryIds })
+        .execute();
+      this.logger.log(`- Conteúdos de diário excluídos: ${contentsDeleteResult.affected}`);
+    }
+
+    // 6. Delete Diaries
+    if (diaryIds.length > 0) {
+      const diariesDeleteResult = await this.diaryRepository.delete({ userId });
+      this.logger.log(`- Diários excluídos: ${diariesDeleteResult.affected}`);
+    }
+
+    this.logger.log(`✅ Dados acadêmicos removidos com sucesso para o usuário ${userId}`);
+  }
+
 
   /**
    * Send a teaching plan to IFMS via scraping

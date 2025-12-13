@@ -42,7 +42,7 @@ export class AcademicController {
     private academicService: AcademicService,
     @InjectQueue('auth-queue') private authQueue: Queue,
     private authQueueProcessor: AuthQueueProcessor,
-  ) {}
+  ) { }
 
   @Post('credentials')
   @ApiSaveCredential()
@@ -74,6 +74,17 @@ export class AcademicController {
     return this.academicService.deleteCredential(req.user.id, id);
   }
 
+  @Delete('data')
+  @ApiOperation({ summary: 'Delete all academic data (diaries and teaching plans)' })
+  @ApiResponse({ status: 200, description: 'All data deleted successfully' })
+  async deleteAllData(@Request() req) {
+    await this.academicService.deleteAllData(req.user.id);
+    return {
+      success: true,
+      message: 'Todos os dados acadêmicos foram excluídos com sucesso.',
+    };
+  }
+
   @Post('diaries/sync')
   @ApiSyncDiariesDecorator()
   async syncDiaries(@Request() req) {
@@ -82,16 +93,16 @@ export class AcademicController {
     const ifmsCredential = credentials.find((c) => c.system === 'ifms');
 
     if (!ifmsCredential) {
-      return { 
-        success: false, 
-        message: 'IFMS credential not found. Please configure your credentials first.' 
+      return {
+        success: false,
+        message: 'IFMS credential not found. Please configure your credentials first.'
       };
     }
 
     if (!ifmsCredential.isVerified) {
-      return { 
-        success: false, 
-        message: 'Credencial IFMS não verificada. Por favor, teste suas credenciais primeiro.' 
+      return {
+        success: false,
+        message: 'Credencial IFMS não verificada. Por favor, teste suas credenciais primeiro.'
       };
     }
 
@@ -101,9 +112,9 @@ export class AcademicController {
       credentialId: ifmsCredential.id,
     });
 
-    return { 
+    return {
       success: true,
-      message: 'Sincronização de diários iniciada. Isso pode levar alguns instantes.' 
+      message: 'Sincronização de diários iniciada. Isso pode levar alguns instantes.'
     };
   }
 
@@ -118,11 +129,11 @@ export class AcademicController {
   async getDiary(@Request() req, @Param('diaryId') diaryId: string) {
     const diaries = await this.academicService.getUserDiaries(req.user.id);
     const diary = diaries.find((d) => d.id === diaryId);
-    
+
     if (!diary) {
       return { success: false, message: 'Diary not found' };
     }
-    
+
     return diary;
   }
 
@@ -138,7 +149,7 @@ export class AcademicController {
     const diary = await this.academicService.getUserDiaries(req.user.id).then(
       (diaries) => diaries.find((d) => d.id === diaryId),
     );
-    
+
     if (!diary) {
       return { success: false, message: 'Diary not found' };
     }
@@ -327,7 +338,7 @@ export class AcademicController {
     @Param('diaryId') diaryId: string,
   ) {
     const contentIds = req.query.contentIds?.split(',') || [];
-    
+
     req.res.setHeader('Content-Type', 'text/event-stream');
     req.res.setHeader('Cache-Control', 'no-cache');
     req.res.setHeader('Connection', 'keep-alive');

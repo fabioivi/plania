@@ -83,3 +83,24 @@ export function useDeleteCredential() {
     },
   })
 }
+
+/**
+ * Delete all academic data
+ */
+export function useDeleteAllData() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => academicService.deleteAllData(),
+    onSuccess: () => {
+      // Invalidate everything related to academic data
+      queryClient.invalidateQueries({ queryKey: queryKeys.diaries.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all }) // Maybe not credentials, but good to be safe if status changes
+      toast.success('Todos os dados foram excluídos com sucesso!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao excluir dados'
+      toast.error(message)
+    },
+  })
+}

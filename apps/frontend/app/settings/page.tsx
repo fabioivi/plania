@@ -17,6 +17,59 @@ import { LLMConfigSection } from "@/components/settings/LLMConfigSection"
 import { useCredentials, useSaveCredential, useTestCredential, useDeleteCredential } from "@/hooks/api"
 import type { AcademicCredential } from "@/types"
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useDeleteAllData } from "@/hooks/api/useCredentials"
+
+function DeleteDataButton() {
+  const { mutate: deleteAllData, isPending } = useDeleteAllData()
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" disabled={isPending}>
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Apagando...
+            </>
+          ) : (
+            'Apagar Tudo'
+          )}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Isso excluirá permanentemente todos os seus diários importados e planos de ensino gerados.
+            Suas credenciais do IFMS serão mantidas, então você poderá sincronizar os dados novamente,
+            mas perderá quaisquer planos gerados pela IA que não foram enviados.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => deleteAllData()}
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+          >
+            Sim, apagar tudo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 export default function SettingsPage() {
   // React Query hooks
   const { data: credentials = [], isLoading: loadingCredential } = useCredentials()
@@ -115,78 +168,78 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-background">
-      <Header />
+      <div className="min-h-screen bg-background">
+        <Header />
 
-      <main className="container mx-auto py-8 px-4 max-w-4xl">
-        <Link href="/dashboard">
-          <Button variant="ghost" className="mb-6 gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Voltar ao Dashboard
-          </Button>
-        </Link>
+        <main className="container mx-auto py-8 px-4 max-w-4xl">
+          <Link href="/dashboard">
+            <Button variant="ghost" className="mb-6 gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar ao Dashboard
+            </Button>
+          </Link>
 
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Configurações</h2>
-          <p className="text-muted-foreground">
-            Gerencie suas preferências e integrações
-          </p>
-        </div>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold mb-2">Configurações</h2>
+            <p className="text-muted-foreground">
+              Gerencie suas preferências e integrações
+            </p>
+          </div>
 
-        <div className="space-y-6">
-          {/* Sistema Acadêmico */}
-          {loadingCredential ? (
-            <Card>
-              <CardContent className="py-12">
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                  <p className="text-sm text-muted-foreground">Carregando configurações...</p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Database className="h-6 w-6 text-blue-600" />
-                  <div>
-                    <CardTitle>Sistema Acadêmico IFMS</CardTitle>
-                    <CardDescription>
-                      Configure suas credenciais para importar dados automaticamente
-                    </CardDescription>
+          <div className="space-y-6">
+            {/* Sistema Acadêmico */}
+            {loadingCredential ? (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                    <p className="text-sm text-muted-foreground">Carregando configurações...</p>
                   </div>
-                </div>
-                {credential && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleDelete}
-                    disabled={isDeleting || isSaving}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  🔒 Seus dados são criptografados e usados apenas para sincronizar suas disciplinas e horários
-                </p>
-              </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Database className="h-6 w-6 text-blue-600" />
+                      <div>
+                        <CardTitle>Sistema Acadêmico IFMS</CardTitle>
+                        <CardDescription>
+                          Configure suas credenciais para importar dados automaticamente
+                        </CardDescription>
+                      </div>
+                    </div>
+                    {credential && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleDelete}
+                        disabled={isDeleting || isSaving}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      🔒 Seus dados são criptografados e usados apenas para sincronizar suas disciplinas e horários
+                    </p>
+                  </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Usuário / Matrícula
-                  </Label>
-                  <Input
-                    id="username"
-                    placeholder="Digite seu usuário do sistema acadêmico"
-                    type="text"
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="username" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Usuário / Matrícula
+                      </Label>
+                      <Input
+                        id="username"
+                        placeholder="Digite seu usuário do sistema acadêmico"
+                        type="text"
                         value={username}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                         disabled={isSaving || isDeleting}
@@ -207,8 +260,8 @@ export default function SettingsPage() {
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                           disabled={isSaving || isDeleting}
                         />
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           className="absolute right-0 top-0 h-full"
                           onClick={() => setShowPassword(!showPassword)}
@@ -279,30 +332,56 @@ export default function SettingsPage() {
                       </Alert>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Preferências de IA */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <SettingsIcon className="h-6 w-6 text-purple-600" />
+                  <div>
+                    <CardTitle>Configurações de IA</CardTitle>
+                    <CardDescription>
+                      Configure suas chaves de API para geração de planos de ensino com IA
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <LLMConfigSection />
               </CardContent>
             </Card>
-          )}
 
-          {/* Preferências de IA */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <SettingsIcon className="h-6 w-6 text-purple-600" />
-                <div>
-                  <CardTitle>Configurações de IA</CardTitle>
-                  <CardDescription>
-                    Configure suas chaves de API para geração de planos de ensino com IA
-                  </CardDescription>
+            {/* Zona de Perigo */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Trash2 className="h-6 w-6 text-red-600" />
+                  <div>
+                    <CardTitle>Zona de Perigo</CardTitle>
+                    <CardDescription>
+                      Ações irreversíveis que afetam seus dados
+                    </CardDescription>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <LLMConfigSection />
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                  <div className="space-y-1">
+                    <h4 className="font-medium">Apagar dados acadêmicos</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Exclui todos os diários, planos de ensino e históricos. Suas credenciais serão mantidas.
+                    </p>
+                  </div>
+                  <DeleteDataButton />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
     </ProtectedRoute>
   )
 }

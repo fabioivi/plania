@@ -51,6 +51,11 @@ export const academicService = {
     return response.data
   },
 
+  async deleteAllData(): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete<{ success: boolean; message: string }>('/academic/data')
+    return response.data
+  },
+
   // ============================================
   // Diaries
   // ============================================

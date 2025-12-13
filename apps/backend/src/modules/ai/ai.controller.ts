@@ -24,7 +24,7 @@ export class AIController {
   constructor(
     private readonly teachingPlanGeneratorService: TeachingPlanGeneratorService,
     private readonly llmService: LLMService,
-  ) {}
+  ) { }
 
   /**
    * Generate teaching plan with Server-Sent Events for progress
@@ -114,7 +114,7 @@ export class AIController {
   ) {
     const userId = req.user.id;
     const plan = await this.teachingPlanGeneratorService.generatePlan(userId, dto);
-    
+
     return {
       success: true,
       plan,
@@ -142,6 +142,84 @@ export class AIController {
       return { success: true, models };
     } catch (e: any) {
       return { success: false, message: e.message || String(e) };
+    }
+  }
+
+  /**
+   * Improve a specific field of a teaching plan using AI
+   */
+  @Post('teaching-plans/:planId/improve')
+  async improveField(
+    @Param('planId') planId: string,
+    @Request() req,
+    @Body() body: {
+      field: 'objetivoGeral' | 'objetivosEspecificos' | 'metodologia' | 'avaliacaoAprendizagem' | 'propostaTrabalho' | 'custom';
+      currentContent: string;
+      prompt?: string;
+      planContext?: {
+        unidadeCurricular?: string;
+        curso?: string;
+        ementa?: string;
+      };
+    },
+  ) {
+    const userId = req.user.id;
+    const { field, currentContent, prompt, planContext } = body;
+
+    try {
+      const provider = await this.llmService.getProvider(userId);
+
+      // Build the prompt based on the field
+      let systemPrompt = `Você é um especialista em pedagogia e educação superior no Brasil. 
+Sua tarefa é melhorar ou criar conteúdo para planos de ensino de forma profissional e acadêmica.
+Responda APENAS com o conteúdo melhorado, sem explicações adicionais.
+Use português brasileiro formal e acadêmico.`;
+
+      let userPrompt = '';
+
+      const context = planContext
+        ? `Contexto:\n- Unidade Curricular: ${planContext.unidadeCurricular || 'N/A'}\n- Curso: ${planContext.curso || 'N/A'}\n- Ementa: ${planContext.ementa || 'N/A'}\n\n`
+        : '';
+
+      switch (field) {
+        case 'objetivoGeral':
+          userPrompt = `${context}Melhore o seguinte Objetivo Geral de um plano de ensino, tornando-o mais claro, mensurável e alinhado com as competências esperadas:\n\nObjetivo atual:\n${currentContent}\n\n${prompt ? `Instrução adicional: ${prompt}` : ''}`;
+          break;
+        case 'objetivosEspecificos':
+          userPrompt = `${context}Melhore os seguintes Objetivos Específicos de um plano de ensino. Cada objetivo deve iniciar com verbo no infinitivo e ser observável/mensurável:\n\nObjetivos atuais:\n${currentContent}\n\n${prompt ? `Instrução adicional: ${prompt}` : ''}`;
+          break;
+        case 'metodologia':
+          userPrompt = `${context}Sugira metodologias de ensino adequadas para esta disciplina. Inclua estratégias pedagógicas modernas como aprendizagem ativa, sala de aula invertida, etc. quando apropriado:\n\nMetodologia atual:\n${currentContent || 'Nenhuma definida'}\n\n${prompt ? `Instrução adicional: ${prompt}` : ''}`;
+          break;
+        case 'avaliacaoAprendizagem':
+          userPrompt = `${context}Sugira instrumentos e critérios de avaliação da aprendizagem para esta disciplina. Considere avaliações formativas e somativas:\n\nAvaliações atuais:\n${currentContent || 'Nenhuma definida'}\n\n${prompt ? `Instrução adicional: ${prompt}` : ''}`;
+          break;
+        case 'propostaTrabalho':
+          userPrompt = `${context}Expanda e melhore o conteúdo programático semanal a seguir, adicionando mais detalhes sobre atividades, recursos e técnicas de ensino:\n\nConteúdo atual:\n${currentContent}\n\n${prompt ? `Instrução adicional: ${prompt}` : ''}`;
+          break;
+        case 'custom':
+          userPrompt = `${context}${prompt || 'Melhore o seguinte conteúdo:'}\n\nConteúdo:\n${currentContent}`;
+          break;
+        default:
+          throw new Error(`Campo inválido: ${field}`);
+      }
+
+      const response = await provider.generateCompletion(userPrompt, {
+        systemPrompt,
+        temperature: 0.7,
+        maxTokens: 2000,
+      });
+
+      return {
+        success: true,
+        field,
+        improvedContent: response.trim(),
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.message || 'Erro ao processar com IA',
+      };
     }
   }
 }

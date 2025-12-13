@@ -32,6 +32,7 @@ import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan } from "@
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Header } from "@/components/layout/header"
 import { toast } from "sonner"
+import { aiService, type ImproveFieldRequest } from "@/services/api/ai.service"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +63,9 @@ export default function PlanReviewPage() {
   const [isFilling, setIsFilling] = useState(false)
   const [fillSuccess, setFillSuccess] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  // AI loading states
+  const [aiLoading, setAiLoading] = useState<string | null>(null) // Which action is loading
 
   // Editable fields state
   const [objetivoGeral, setObjetivoGeral] = useState(plan?.objetivoGeral || '')
@@ -124,6 +128,162 @@ export default function PlanReviewPage() {
     updated[index] = { ...updated[index], conteudo: newConteudo }
     setPropostaTrabalho(updated)
     setHasChanges(true)
+  }
+
+  // AI Quick Actions Handlers
+  const handleImproveObjectives = async () => {
+    if (aiLoading) return
+    setAiLoading('objectives')
+    try {
+      // Improve general objective
+      const generalResult = await aiService.improveField(planId, {
+        field: 'objetivoGeral',
+        currentContent: objetivoGeral,
+        planContext: {
+          unidadeCurricular: plan?.unidadeCurricular,
+          curso: plan?.curso,
+          ementa: plan?.ementa,
+        },
+      })
+      if (generalResult.success && generalResult.improvedContent) {
+        setObjetivoGeral(generalResult.improvedContent)
+        setHasChanges(true)
+      }
+
+      // Improve specific objectives
+      const specificResult = await aiService.improveField(planId, {
+        field: 'objetivosEspecificos',
+        currentContent: objetivosEspecificos,
+        planContext: {
+          unidadeCurricular: plan?.unidadeCurricular,
+          curso: plan?.curso,
+          ementa: plan?.ementa,
+        },
+      })
+      if (specificResult.success && specificResult.improvedContent) {
+        setObjetivosEspecificos(specificResult.improvedContent)
+        setHasChanges(true)
+      }
+
+      toast.success('Objetivos melhorados com IA!')
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao melhorar objetivos')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  const handleSuggestMethodology = async () => {
+    if (aiLoading) return
+    setAiLoading('methodology')
+    try {
+      const result = await aiService.improveField(planId, {
+        field: 'metodologia',
+        currentContent: '',
+        planContext: {
+          unidadeCurricular: plan?.unidadeCurricular,
+          curso: plan?.curso,
+          ementa: plan?.ementa,
+        },
+      })
+      if (result.success && result.improvedContent) {
+        toast.success('Metodologias sugeridas! Veja na tab Metodologia.')
+        // For now, show in a toast since metodologia field might not be editable
+        toast.info(result.improvedContent.substring(0, 200) + '...')
+      } else {
+        toast.error(result.message || 'Erro ao sugerir metodologias')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao sugerir metodologias')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  const handleAddEvaluations = async () => {
+    if (aiLoading) return
+    setAiLoading('evaluations')
+    try {
+      const result = await aiService.improveField(planId, {
+        field: 'avaliacaoAprendizagem',
+        currentContent: JSON.stringify(plan?.avaliacaoAprendizagem || []),
+        planContext: {
+          unidadeCurricular: plan?.unidadeCurricular,
+          curso: plan?.curso,
+          ementa: plan?.ementa,
+        },
+      })
+      if (result.success && result.improvedContent) {
+        toast.success('Sugestões de avaliação geradas!')
+        toast.info(result.improvedContent.substring(0, 200) + '...')
+      } else {
+        toast.error(result.message || 'Erro ao sugerir avaliações')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao sugerir avaliações')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  const handleExpandContent = async () => {
+    if (aiLoading) return
+    setAiLoading('content')
+    try {
+      const contentSummary = propostaTrabalho
+        .map((item: any, i: number) => `Semana ${i + 1}: ${item.conteudo || 'N/A'}`)
+        .join('\n')
+
+      const result = await aiService.improveField(planId, {
+        field: 'propostaTrabalho',
+        currentContent: contentSummary,
+        planContext: {
+          unidadeCurricular: plan?.unidadeCurricular,
+          curso: plan?.curso,
+          ementa: plan?.ementa,
+        },
+      })
+      if (result.success && result.improvedContent) {
+        toast.success('Conteúdo expandido! Revise as sugestões.')
+        toast.info(result.improvedContent.substring(0, 300) + '...')
+      } else {
+        toast.error(result.message || 'Erro ao expandir conteúdo')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao expandir conteúdo')
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  const handleCustomPrompt = async () => {
+    if (aiLoading || !aiPrompt.trim()) return
+    setAiLoading('custom')
+    try {
+      const result = await aiService.improveField(planId, {
+        field: 'custom',
+        currentContent: objetivoGeral + '\n\n' + objetivosEspecificos,
+        prompt: aiPrompt,
+        planContext: {
+          unidadeCurricular: plan?.unidadeCurricular,
+          curso: plan?.curso,
+          ementa: plan?.ementa,
+        },
+      })
+      if (result.success && result.improvedContent) {
+        toast.success('Prompt aplicado com sucesso!')
+        // Apply the result to the objectives for now
+        setObjetivoGeral(result.improvedContent)
+        setHasChanges(true)
+        setAiPrompt('')
+      } else {
+        toast.error(result.message || 'Erro ao aplicar prompt')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao processar com IA')
+    } finally {
+      setAiLoading(null)
+    }
   }
 
   // Sync state when plan data loads
@@ -717,21 +877,61 @@ export default function PlanReviewPage() {
                     Ações Rápidas
                   </Label>
                   <div className="space-y-2">
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Wand2 className="h-4 w-4" />
-                      Melhorar objetivos
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start gap-2"
+                      onClick={handleImproveObjectives}
+                      disabled={!!aiLoading}
+                    >
+                      {aiLoading === 'objectives' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-4 w-4" />
+                      )}
+                      {aiLoading === 'objectives' ? 'Melhorando...' : 'Melhorar objetivos'}
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Wand2 className="h-4 w-4" />
-                      Sugerir metodologias
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start gap-2"
+                      onClick={handleSuggestMethodology}
+                      disabled={!!aiLoading}
+                    >
+                      {aiLoading === 'methodology' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-4 w-4" />
+                      )}
+                      {aiLoading === 'methodology' ? 'Sugerindo...' : 'Sugerir metodologias'}
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Wand2 className="h-4 w-4" />
-                      Adicionar avaliações
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start gap-2"
+                      onClick={handleAddEvaluations}
+                      disabled={!!aiLoading}
+                    >
+                      {aiLoading === 'evaluations' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-4 w-4" />
+                      )}
+                      {aiLoading === 'evaluations' ? 'Gerando...' : 'Adicionar avaliações'}
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                      <Wand2 className="h-4 w-4" />
-                      Expandir conteúdo
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start gap-2"
+                      onClick={handleExpandContent}
+                      disabled={!!aiLoading}
+                    >
+                      {aiLoading === 'content' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-4 w-4" />
+                      )}
+                      {aiLoading === 'content' ? 'Gerando...' : 'Gerar conteúdo'}
                     </Button>
                   </div>
                 </div>
@@ -746,10 +946,19 @@ export default function PlanReviewPage() {
                     rows={4}
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
+                    disabled={!!aiLoading}
                   />
-                  <Button className="w-full gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Aplicar com IA
+                  <Button
+                    className="w-full gap-2"
+                    onClick={handleCustomPrompt}
+                    disabled={!!aiLoading || !aiPrompt.trim()}
+                  >
+                    {aiLoading === 'custom' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    {aiLoading === 'custom' ? 'Processando...' : 'Aplicar com IA'}
                   </Button>
                 </div>
 

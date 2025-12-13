@@ -221,6 +221,163 @@ Uses Server-Sent Events (SSE) to stream progress updates:
 - `SyncProgressDialog` displays real-time updates
 - Automatic reconnection on disconnect
 
+## Development Standards & Best Practices
+
+### REST API Standards
+
+**CRITICAL:** This project follows strict REST conventions for all API endpoints.
+
+**HTTP Methods:**
+```typescript
+GET    /resource         // Retrieve resource(s) - READ
+POST   /resource         // Create new resource - CREATE
+PUT    /resource/:id     // Update entire resource - UPDATE
+PATCH  /resource/:id     // Partial update - PARTIAL UPDATE
+DELETE /resource/:id     // Delete resource - DELETE
+```
+
+**Examples:**
+```typescript
+// ✅ CORRECT
+GET    /academic/teaching-plans/:id           // Get plan
+POST   /academic/teaching-plans/ai            // Create AI plan
+PUT    /academic/teaching-plans/:id           // Update plan
+DELETE /academic/teaching-plans/:id           // Delete plan
+
+// ❌ INCORRECT - Don't do this
+POST   /academic/teaching-plans/:id           // DON'T use POST for updates
+GET    /academic/teaching-plans/update/:id    // DON'T use GET for mutations
+```
+
+**Response Format:**
+```typescript
+// Success responses
+{
+  success: true,
+  data: { ... },           // or specific field like 'plan', 'diary'
+  message?: string         // Optional success message
+}
+
+// Error responses
+{
+  success: false,
+  message: string,
+  errors?: ValidationError[]
+}
+```
+
+### React Query for Data Fetching
+
+**CRITICAL:** ALWAYS use React Query hooks for API calls in the frontend. Never use raw `fetch` or `axios` in components.
+
+**Location of Hooks:**
+- All React Query hooks are in `apps/frontend/src/hooks/api/`
+- Organized by domain: `useDiaries.ts`, `useTeachingPlans.ts`, `useAuth.ts`, etc.
+- Centralized exports in `apps/frontend/src/hooks/api/index.ts`
+
+**Query Hooks Pattern:**
+```typescript
+// ✅ CORRECT - Use existing hooks
+import { useTeachingPlan, useTeachingPlans } from '@/hooks/api'
+
+function MyComponent() {
+  const { data: plan, isLoading, error } = useTeachingPlan(planId)
+  const { data: plans = [] } = useTeachingPlans(diaryId)
+
+  // Component logic...
+}
+```
+
+**Mutation Hooks Pattern:**
+```typescript
+// ✅ CORRECT - Use mutation hooks
+import { useSyncTeachingPlan, useUpdateTeachingPlan } from '@/hooks/api'
+
+function MyComponent() {
+  const { mutate: syncPlan, isPending: syncing } = useSyncTeachingPlan()
+
+  const handleSync = () => {
+    syncPlan(planId, {
+      onSuccess: () => toast.success('Synced!'),
+      onError: (err) => toast.error(err.message)
+    })
+  }
+}
+```
+
+**Creating New Hooks:**
+
+When adding a new API endpoint, ALWAYS create a corresponding React Query hook:
+
+```typescript
+// apps/frontend/src/hooks/api/useTeachingPlans.ts
+
+/**
+ * Save AI-generated teaching plan
+ */
+export function useSaveAITeachingPlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: SaveAITeachingPlanRequest) =>
+      teachingPlanService.saveAIGeneratedPlan(data),
+    onSuccess: (data) => {
+      // Invalidate related queries to refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
+      toast.success('Plano salvo com sucesso!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao salvar plano'
+      toast.error(message)
+    },
+  })
+}
+```
+
+**Query Keys:**
+- Centralized in `apps/frontend/src/lib/api/query-client.ts`
+- Follow hierarchical structure: `queryKeys.teachingPlans.detail(id)`
+- Used for cache invalidation and refetching
+
+**Benefits:**
+- Automatic caching and background refetching
+- Loading and error states handled automatically
+- Optimistic updates support
+- Request deduplication
+- Stale-while-revalidate pattern
+
+**What NOT to do:**
+```typescript
+// ❌ WRONG - Don't use raw API calls in components
+const [data, setData] = useState(null)
+useEffect(() => {
+  fetch('/api/teaching-plans/123')
+    .then(res => res.json())
+    .then(setData)
+}, [])
+
+// ❌ WRONG - Don't bypass React Query
+const handleSave = async () => {
+  await axios.post('/api/teaching-plans', data)
+  // Manual refetch... no cache invalidation... error handling...
+}
+```
+
+### Data Flow Architecture
+
+**Frontend → Backend:**
+1. Component uses React Query hook
+2. Hook calls service function (`apps/frontend/src/services/api.ts`)
+3. Service uses `apiClient` (axios instance with interceptors)
+4. Request sent to NestJS backend
+
+**Backend → Database:**
+1. Controller receives request (validates with DTOs)
+2. Calls service method
+3. Service uses TypeORM repositories
+4. Database operation executed
+5. Response returned with standard format
+
 ## Environment Setup
 
 ### Required Environment Variables

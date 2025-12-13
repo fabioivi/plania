@@ -108,13 +108,8 @@ export function DiaryCard({ diary }: DiaryCardProps) {
         )}
 
         <div className="flex gap-2">
-          <Link href={`/generate?diaryId=${diary.id}`} className="flex-1">
-            <Button variant="default" size="sm" className="w-full">
-              Gerar Plano com IA
-            </Button>
-          </Link>
-          <Link href={`/diaries/${diary.id}`}>
-            <Button variant="outline" size="sm" className="gap-2">
+          <Link href={`/diaries/${diary.id}`} className="flex-1">
+            <Button variant="outline" size="sm" className="gap-2 w-full">
               <FileText className="h-4 w-4" />
               Ver Conteúdo
             </Button>

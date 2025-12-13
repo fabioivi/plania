@@ -6,8 +6,9 @@ Crie um **Plano de Ensino** rigoroso e estruturado para a seguinte solicitação
 Período Letivo: ${anoSemestre}
 Curso: ${curso}
 Unidade Curricular: ${unidadeCurricular}
-Carga Horária Total: ${cargaHorariaTotal} horas
-Número de Semanas: ${semanas.length}
+Aulas Teóricas: ${aulasTeoricas}
+Aulas Práticas: ${aulasPraticas}
+Total de Aulas: ${(typeof aulasTeoricas === 'number' && typeof aulasPraticas === 'number') ? aulasTeoricas + aulasPraticas : 'Não especificado'}
 Ementa: ${ementa}
 
 # Calendário de Aulas (Distribuição Semanal)
@@ -80,6 +81,7 @@ DIRETRIZES PEDAGÓGICAS:
 - Distribua o conteúdo da ementa de forma uniforme entre as ${semanas.length} semanas
 - **CRÍTICO**: Para o campo "numAulas" de cada semana, use EXATAMENTE as horas indicadas no calendário acima
   (ex: "Semana 1 (...): 4h de aula" → numAulas: 4)
+- **OBRIGATÓRIO**: A soma total de "numAulas" de todas as semanas no array "propostaTrabalho" DEVE ser EXATAMENTE igual ao Total de Aulas informado acima (${(typeof aulasTeoricas === 'number' && typeof aulasPraticas === 'number') ? aulasTeoricas + aulasPraticas : 'conforme especificado'}). Distribua as aulas proporcionalmente entre as semanas respeitando este total.
 `;
 
   return prompt;

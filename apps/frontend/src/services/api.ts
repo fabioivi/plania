@@ -145,6 +145,11 @@ export const academicApi = {
     return response.data;
   },
 
+  async getTeachingPlan(planId: string): Promise<TeachingPlan> {
+    const response = await api.get<TeachingPlan>(`/academic/teaching-plans/${planId}`);
+    return response.data;
+  },
+
   async getDiaryWithPlans(diaryId: string): Promise<DiaryWithPlans> {
     const response = await api.get<DiaryWithPlans>(`/academic/diaries/${diaryId}/with-plans`);
     return response.data;

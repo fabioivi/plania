@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -19,6 +20,8 @@ import { ScrapingService } from '../scraping/scraping.service';
 
 @Injectable()
 export class AcademicService {
+  private readonly logger = new Logger(AcademicService.name);
+
   // Track last request time per user to implement rate limiting
   private lastRequestTime: Map<string, number> = new Map();
   private readonly MIN_REQUEST_INTERVAL = 0; // Minimum time between requests (0 = disabled)
@@ -645,6 +648,190 @@ export class AcademicService {
   async updateTeachingPlan(planId: string, data: Partial<TeachingPlan>): Promise<TeachingPlan> {
     await this.teachingPlanRepository.update(planId, data);
     return await this.teachingPlanRepository.findOne({ where: { id: planId } });
+  }
+
+  /**
+   * Save an AI-generated teaching plan
+   */
+  async saveAIGeneratedTeachingPlan(
+    userId: string,
+    diaryId: string,
+    generatedPlan: any,
+    basePlanId?: string,
+  ): Promise<TeachingPlan> {
+    // Verify diary exists and belongs to user
+    const diary = await this.diaryRepository.findOne({
+      where: { id: diaryId, userId },
+    });
+
+    if (!diary) {
+      throw new NotFoundException('Diário não encontrado');
+    }
+
+    // If basePlanId provided, verify it exists
+    let basePlan: TeachingPlan | null = null;
+    if (basePlanId) {
+      basePlan = await this.teachingPlanRepository.findOne({
+        where: { id: basePlanId, diaryId },
+      });
+      if (!basePlan) {
+        throw new NotFoundException('Plano base não encontrado');
+      }
+    }
+
+    // Create new teaching plan with AI-generated data
+    const newPlan = this.teachingPlanRepository.create({
+      userId,
+      diaryId,
+      source: 'ai',
+      basePlanId: basePlanId || null,
+      sentToIFMS: false,
+      status: 'Gerado por IA - Rascunho',
+      excluido: false,
+
+      // Copy identification fields from base plan or diary
+      campus: basePlan?.campus || diary.curso,
+      anoSemestre: basePlan?.anoSemestre || (diary.anoLetivo ? `${diary.anoLetivo}${diary.semestre ? `.${diary.semestre}` : ''}` : null),
+      curso: basePlan?.curso || diary.curso,
+      unidadeCurricular: basePlan?.unidadeCurricular || diary.disciplina,
+      cargaHorariaTotal: basePlan?.cargaHorariaTotal || (diary.cargaHoraria ? parseFloat(diary.cargaHoraria) : null),
+
+      // Copy static fields from base plan (ementa, referencias)
+      ementa: basePlan?.ementa || null,
+      referencias: basePlan?.referencias || null,
+
+      // AI-generated fields
+      objetivoGeral: generatedPlan.objetivoGeral,
+      objetivosEspecificos: generatedPlan.objetivosEspecificos,
+      avaliacaoAprendizagem: generatedPlan.avaliacaoAprendizagem || [],
+      recuperacaoAprendizagem: generatedPlan.recuperacaoAprrendizagem || generatedPlan.recuperacaoAprendizagem || '',
+
+      // Copy quantity of classes from base plan (don't calculate, just copy)
+      numSemanas: basePlan?.numSemanas || null,
+      numAulasTeorica: basePlan?.numAulasTeorica || null,
+      numAulasPraticas: basePlan?.numAulasPraticas || null,
+
+      // Map propostaTrabalho from AI schema to entity schema
+      propostaTrabalho: (generatedPlan.propostaTrabalho || []).map((item: any) => {
+        // Extract month from dataInicial (format: "02/03/2025")
+        const dataInicial = item.dataInicial || '';
+        const dataFinal = item.dataFinal || '';
+        const monthMatch = dataInicial.match(/\/(\d+)\/(\d+)$/);
+        const monthNumber = monthMatch ? parseInt(monthMatch[1]) : 1;
+        const monthNames = [
+          'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+        const mes = `${monthNumber} - ${monthNames[monthNumber - 1]}`;
+
+        // Build periodo from dataInicial and dataFinal (ex: "02 a 08")
+        const dayInicial = dataInicial.split('/')[0] || '';
+        const dayFinal = dataFinal.split('/')[0] || '';
+        const periodo = `${dayInicial} a ${dayFinal}`;
+
+        // Join arrays into comma-separated strings for metodologia
+        const tecnicas = Array.isArray(item.tecnicasEnsino) ? item.tecnicasEnsino.join(', ') : '';
+        const recursos = Array.isArray(item.recursosEnsino) ? item.recursosEnsino.join(', ') : '';
+
+        return {
+          mes,
+          periodo,
+          numAulas: String(item.numAulas || 0),
+          observacoes: null,
+          conteudo: item.tema || null, // Usa apenas o tema, não o conteúdo detalhado
+          metodologia: tecnicas, // tecnicasEnsino como metodologia
+          tecnicasEnsino: item.tecnicasEnsino || [],
+          recursosEnsino: item.recursosEnsino || [],
+        };
+      }),
+    });
+
+    const savedPlan = await this.teachingPlanRepository.save(newPlan);
+
+    // Note: TeachingPlanHistory is for IFMS event history, not for versioning
+    // No need to create a history entry when creating an AI-generated plan
+
+    return savedPlan;
+  }
+
+  /**
+   * Delete a teaching plan (AI-generated plans only)
+   */
+  async deleteTeachingPlan(userId: string, planId: string): Promise<void> {
+    // Find the teaching plan
+    const plan = await this.teachingPlanRepository.findOne({
+      where: { id: planId },
+      relations: ['diary'],
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plano de ensino não encontrado');
+    }
+
+    // Verify the plan belongs to a diary of this user
+    if (plan.diary.userId !== userId) {
+      throw new BadRequestException('Plano não pertence a este usuário');
+    }
+
+    // Only allow deletion of AI-generated plans
+    if (plan.source !== 'ai') {
+      throw new BadRequestException('Apenas planos gerados por IA podem ser excluídos. Planos do IFMS devem ser gerenciados no sistema acadêmico.');
+    }
+
+    // Delete the plan
+    await this.teachingPlanRepository.remove(plan);
+
+    this.logger.log(`Teaching plan ${planId} deleted by user ${userId}`);
+  }
+
+  /**
+   * Send a teaching plan to IFMS via scraping
+   */
+  async sendTeachingPlanToIFMS(userId: string, planId: string): Promise<{ success: boolean; message: string; externalId?: string }> {
+    // Find the teaching plan
+    const plan = await this.teachingPlanRepository.findOne({
+      where: { id: planId },
+      relations: ['diary'],
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plano de ensino não encontrado');
+    }
+
+    // Verify the plan belongs to a diary of this user
+    if (plan.diary.userId !== userId) {
+      throw new BadRequestException('Plano não pertence a este usuário');
+    }
+
+    // Verify plan is AI-generated and not yet sent
+    if (plan.source !== 'ai') {
+      throw new BadRequestException('Apenas planos gerados por IA podem ser enviados');
+    }
+
+    if (plan.sentToIFMS) {
+      throw new BadRequestException('Este plano já foi enviado ao IFMS');
+    }
+
+    // Get user's IFMS credentials
+    const credential = await this.credentialRepository.findOne({
+      where: { userId, system: 'ifms', isVerified: true },
+    });
+
+    if (!credential) {
+      throw new NotFoundException('Credencial IFMS verificada não encontrada');
+    }
+
+    // TODO: Implement actual scraping logic to send plan to IFMS
+    // This is a placeholder that will be implemented in Phase 4
+    throw new BadRequestException('Envio ao IFMS ainda não implementado. Será implementado na Fase 4.');
+
+    // Future implementation will:
+    // 1. Use scrapingService to login to IFMS
+    // 2. Navigate to teaching plan form
+    // 3. Fill form with plan data
+    // 4. Submit form
+    // 5. Get external ID from IFMS
+    // 6. Update plan with externalId, sentToIFMS=true, sentAt=now
   }
 
   /**

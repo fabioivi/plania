@@ -35,6 +35,7 @@ export class AIController {
     @Request() req,
   ): Promise<Observable<MessageEvent>> {
     const userId = req.user.id;
+    const basePlanId = req.query.basePlanId as string | undefined;
     let generatedPlan: any = null;
     let currentProgress = 0;
     let currentMessage = 'Iniciando geração...';
@@ -46,7 +47,7 @@ export class AIController {
     this.teachingPlanGeneratorService
       .generatePlan(
         userId,
-        { diaryId },
+        { diaryId, basePlanId },
         (message: string, progress: number) => {
           currentMessage = message;
           currentProgress = progress;

@@ -82,8 +82,12 @@ export interface TeachingPlanWorkProposal {
 // Teaching Plan entity
 export interface TeachingPlan {
   id: string
-  externalId: string
+  externalId: string | null
   diaryId: string
+  source: 'ifms' | 'ai' // Origem: scraped do IFMS ou gerado por IA
+  basePlanId?: string | null // ID do plano IFMS usado como base (se source='ai')
+  sentToIFMS: boolean // Se o plano AI foi enviado ao sistema IFMS
+  sentAt?: string | null // Data/hora de envio ao IFMS
   status: string
   statusCoord?: string
   excluido: boolean

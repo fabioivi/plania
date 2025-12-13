@@ -55,3 +55,102 @@ export function useSyncTeachingPlan() {
     },
   })
 }
+
+/**
+ * Save AI-generated teaching plan
+ */
+export function useSaveAITeachingPlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: {
+      diaryId: string
+      generatedPlan: any
+      basePlanId?: string
+    }) => {
+      const { apiClient } = await import('@/services/api/client')
+      const response = await apiClient.post<{ success: boolean; plan: TeachingPlan }>(
+        '/academic/teaching-plans/ai',
+        data
+      )
+      return response.data
+    },
+    onSuccess: (data) => {
+      // Invalidate teaching plans queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
+      if (data.plan.diaryId) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.teachingPlans.list(data.plan.diaryId),
+        })
+      }
+      toast.success('Plano de ensino salvo com sucesso!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao salvar plano de ensino'
+      toast.error(message)
+    },
+  })
+}
+
+/**
+ * Update teaching plan
+ */
+export function useUpdateTeachingPlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ planId, data }: {
+      planId: string
+      data: {
+        objetivoGeral?: string
+        objetivosEspecificos?: string
+        numAulasTeorica?: number
+        numAulasPraticas?: number
+        propostaTrabalho?: any[]
+      }
+    }) => {
+      const { apiClient } = await import('@/services/api/client')
+      const response = await apiClient.put<{ success: boolean; plan: TeachingPlan }>(
+        `/academic/teaching-plans/${planId}`,
+        data
+      )
+      return response.data
+    },
+    onSuccess: (data, { planId }) => {
+      // Invalidate teaching plan queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.detail(planId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao atualizar plano de ensino'
+      toast.error(message)
+    },
+  })
+}
+
+/**
+ * Delete teaching plan (AI-generated plans only)
+ */
+export function useDeleteTeachingPlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (planId: string) => {
+      const { apiClient } = await import('@/services/api/client')
+      const response = await apiClient.delete<{ success: boolean; message: string }>(
+        `/academic/teaching-plans/${planId}`
+      )
+      return response.data
+    },
+    onSuccess: (data, planId) => {
+      // Invalidate all teaching plan queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
+      queryClient.removeQueries({ queryKey: queryKeys.teachingPlans.detail(planId) })
+      toast.success('Plano de ensino excluído com sucesso!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro ao excluir plano de ensino'
+      toast.error(message)
+    },
+  })
+}

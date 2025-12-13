@@ -1,84 +1,72 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-react"
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, CheckCircle2, Space } from "lucide-react"
 import { WorkProposalTable, WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { academicApi, Diary, TeachingPlan, aiApi, GeneratedTeachingPlan } from "@/services/api"
+import { GeneratedTeachingPlan } from "@/services/api"
 import { toast } from "sonner"
+import { useDiaries, useTeachingPlans, useTeachingPlan, useSaveAITeachingPlan } from "@/hooks/api"
 
 export default function GeneratePage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const diaryId = searchParams.get('diaryId')
-  
-  const [step, setStep] = useState<"config" | "generating" | "success">("config")
-  const [loading, setLoading] = useState(true)
-  const [diaries, setDiaries] = useState<Diary[]>([])
-  const [selectedDiary, setSelectedDiary] = useState<Diary | null>(null)
-  const [existingPlans, setExistingPlans] = useState<TeachingPlan[]>([])
+  const planId = searchParams.get('planId') // Base plan to use for generation
+
+  // React Query hooks
+  const { data: diaries = [], isLoading: loadingDiaries } = useDiaries()
+  const { data: basePlan, isLoading: loadingBasePlan } = useTeachingPlan(planId || undefined)
+  const { mutate: savePlan, isPending: saving } = useSaveAITeachingPlan()
+
+  const [step, setStep] = useState<"config" | "generating">("config")
+  const [selectedDiaryId, setSelectedDiaryId] = useState<string>(diaryId || "")
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedTeachingPlan | null>(null)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [generationMessage, setGenerationMessage] = useState('')
-  
+
   const [formData, setFormData] = useState({
-    diaryId: "",
+    diaryId: diaryId || "",
+    basePlanId: planId || "",
     methodology: "",
     additionalNotes: ""
   })
 
-  useEffect(() => {
-    loadDiaries()
-  }, [])
+  // Get teaching plans for selected diary
+  const { data: existingPlans = [] } = useTeachingPlans(selectedDiaryId || undefined)
 
+  // Find selected diary
+  const selectedDiary = diaries.find(d => d.id === selectedDiaryId)
+
+  // Auto-select diary from URL parameter
   useEffect(() => {
     if (diaryId && diaries.length > 0) {
-      const diary = diaries.find(d => d.id === diaryId)
-      if (diary) {
-        selectDiary(diary)
-      }
+      setSelectedDiaryId(diaryId)
+      setFormData(prev => ({ ...prev, diaryId }))
     }
   }, [diaryId, diaries])
 
-  const loadDiaries = async () => {
-    try {
-      setLoading(true)
-      const data = await academicApi.getDiaries()
-      setDiaries(data)
-    } catch (err: any) {
-      console.error('Erro ao carregar diários:', err)
-      toast.error('Erro ao carregar disciplinas')
-    } finally {
-      setLoading(false)
+  // Auto-set basePlanId when base plan is loaded
+  useEffect(() => {
+    if (planId && basePlan) {
+      setFormData(prev => ({ ...prev, basePlanId: planId }))
+      toast.success(`Plano "${basePlan.unidadeCurricular}" carregado como base`)
     }
-  }
+  }, [planId, basePlan])
 
-  const selectDiary = async (diary: Diary) => {
-    console.log('📊 Diary selecionado:', {
-      id: diary.id,
-      disciplina: diary.disciplina,
-      cargaHoraria: diary.cargaHoraria,
-      modalidade: diary.modalidade,
-      allFields: diary
-    })
-    setSelectedDiary(diary)
-    setFormData(prev => ({ ...prev, diaryId: diary.id }))
-
-    // Load existing teaching plans for reference
-    try {
-      const plans = await academicApi.getDiaryTeachingPlans(diary.id)
-      setExistingPlans(plans)
-    } catch (err) {
-      console.error('Erro ao carregar planos existentes:', err)
-    }
+  // Select diary handler
+  const selectDiary = (diaryId: string) => {
+    setSelectedDiaryId(diaryId)
+    setFormData(prev => ({ ...prev, diaryId }))
   }
 
   const handleGenerate = async () => {
@@ -94,8 +82,9 @@ export default function GeneratePage() {
     try {
       // Connect to SSE for real-time progress
       const token = localStorage.getItem('token')
+      const basePlanParam = formData.basePlanId ? `&basePlanId=${formData.basePlanId}` : ''
       const eventSource = new EventSource(
-        `${process.env.NEXT_PUBLIC_API_URL}/ai/teaching-plans/generate/${formData.diaryId}?token=${token}`
+        `${process.env.NEXT_PUBLIC_API_URL}/ai/teaching-plans/generate/${formData.diaryId}?token=${token}${basePlanParam}`
       )
 
       eventSource.onmessage = (event) => {
@@ -108,11 +97,29 @@ export default function GeneratePage() {
             setGenerationMessage(data.message)
           } else if (data.type === 'complete') {
             setGenerationProgress(100)
-            setGenerationMessage(data.message)
+            setGenerationMessage('Salvando plano de ensino...')
             setGeneratedPlan(data.plan)
-            setStep("success")
             eventSource.close()
-            toast.success('Plano gerado com sucesso!')
+
+            // Save the plan and redirect to review page
+            savePlan(
+              {
+                diaryId: formData.diaryId,
+                generatedPlan: data.plan,
+                basePlanId: formData.basePlanId || undefined,
+              },
+              {
+                onSuccess: (response) => {
+                  toast.success('Plano gerado e salvo com sucesso!')
+                  // Redirect to review page
+                  router.push(`/plans/review/${response.plan.id}`)
+                },
+                onError: (error) => {
+                  toast.error('Plano gerado mas erro ao salvar')
+                  setStep("config")
+                },
+              }
+            )
           } else if (data.type === 'error') {
             toast.error(data.message)
             setStep("config")
@@ -164,91 +171,125 @@ export default function GeneratePage() {
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Configuração do Plano</CardTitle>
-                <CardDescription>
-                  {selectedDiary 
-                    ? `Gerando plano para ${selectedDiary.disciplina}`
-                    : 'Selecione uma disciplina e configure os parâmetros para gerar um plano personalizado'}
-                </CardDescription>
-              </CardHeader>
+              
+          
               <CardContent className="space-y-6">
-                {/* Discipline Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="discipline">Disciplina *</Label>
-                  {loading ? (
-                    <div className="flex items-center gap-2 p-3 border rounded-md">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Carregando disciplinas...</span>
-                    </div>
-                  ) : (
-                    <Select 
-                      value={formData.diaryId}
-                      onValueChange={(value) => {
-                        const diary = diaries.find(d => d.id === value)
-                        if (diary) selectDiary(diary)
-                      }}
-                    >
-                      <SelectTrigger id="discipline">
-                        <SelectValue placeholder="Selecione uma disciplina" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {diaries.map((diary) => (
-                          <SelectItem key={diary.id} value={diary.id}>
-                            {diary.disciplina} - {diary.turma}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Disciplinas sincronizadas do sistema acadêmico
-                  </p>
-                </div>
+               
 
-                {/* Show diary info when selected */}
-                {selectedDiary && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg space-y-2">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Curso:</span>
-                        <p className="font-medium">{selectedDiary.curso}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Carga Horária:</span>
-                        <p className="font-medium">
-                          {(() => {
-                            // Prioriza dados do plano existente
-                            const cargaHoraria = existingPlans.length > 0 && existingPlans[0].cargaHorariaTotal
-                              ? existingPlans[0].cargaHorariaTotal
-                              : selectedDiary.cargaHoraria;
 
-                            if (!cargaHoraria) return 'Não informado';
-                            return `${cargaHoraria} horas aula`;
-                          })()}
-                        </p>
+                {/* Base Plan Details */}
+                {basePlan && (
+                  <Card className="border-green-200 dark:border-green-800">
+                    <CardHeader className="bg-green-50/50 dark:bg-green-950/30">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            Plano Base Carregado
+                          </CardTitle>
+                          <CardDescription>
+                            A IA usará este plano como referência para gerar uma nova versão
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Ano Letivo:</span>
-                        <p className="font-medium">
-                          {selectedDiary.anoLetivo
-                            ? `${selectedDiary.anoLetivo}${selectedDiary.semestre ? `.${selectedDiary.semestre}` : ''}`
-                            : 'Não informado'}
-                        </p>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        {/* Identification */}
+                        <div>
+                          <h4 className="text-sm font-semibold mb-3">Identificação</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Campus:</span>
+                              <p className="font-medium">{basePlan.campus || 'Não informado'}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Ano/Semestre:</span>
+                              <p className="font-medium">{basePlan.anoSemestre || 'Não informado'}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Curso:</span>
+                              <p className="font-medium">{basePlan.curso || 'Não informado'}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Unidade Curricular:</span>
+                              <p className="font-medium">{basePlan.unidadeCurricular || 'Não informado'}</p>
+                            </div>
+                            {basePlan.professores && (
+                              <div className="col-span-2">
+                                <span className="text-muted-foreground">Professor(es):</span>
+                                <p className="font-medium">{basePlan.professores}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Workload */}
+                        <div className="pt-4 border-t">
+                          <h4 className="text-sm font-semibold mb-3">Carga Horária</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Total:</span>
+                              <p className="font-medium">
+                                {basePlan.cargaHorariaTotal ? `${basePlan.cargaHorariaTotal}h` : 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Quantidade de Aulas:</span>
+                              <p className="font-medium">
+                                {basePlan.propostaTrabalho && basePlan.propostaTrabalho.length > 0
+                                  ? `${basePlan.propostaTrabalho.reduce((sum: number, item: any) => sum + parseInt(item.numAulas || '0'), 0)} aulas`
+                                  : (basePlan.numAulasTeorica || 0) + (basePlan.numAulasPraticas || 0) > 0
+                                  ? `${(basePlan.numAulasTeorica || 0) + (basePlan.numAulasPraticas || 0)} aulas`
+                                  : 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Aulas Teóricas:</span>
+                              <p className="font-medium">
+                                {basePlan.numAulasTeorica ? `${basePlan.numAulasTeorica}` : 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Aulas Práticas:</span>
+                              <p className="font-medium">
+                                {basePlan.numAulasPraticas ? `${basePlan.numAulasPraticas}` : 'Não informado'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Plan Info */}
+                        <div className="pt-4 border-t">
+                          <h4 className="text-sm font-semibold mb-3">Informações do Plano</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Status:</span>
+                              <p className="font-medium">{basePlan.status || 'Não informado'}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Origem:</span>
+                              <p className="font-medium">
+                                {basePlan.source === 'ifms' ? 'Sistema IFMS' : 'Gerado por IA'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Ementa Preview */}
+                        {basePlan.ementa && (
+                          <div className="pt-4 border-t">
+                            <h4 className="text-sm font-semibold mb-2">Ementa</h4>
+                            <div className="bg-muted/50 p-3 rounded-md">
+                              <p className="text-sm text-muted-foreground line-clamp-3">
+                                {basePlan.ementa}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Modalidade:</span>
-                        <p className="font-medium">{selectedDiary.modalidade || 'Não informado'}</p>
-                      </div>
-                    </div>
-                    {existingPlans.length > 0 && (
-                      <div className="pt-2 mt-2 border-t border-blue-200 dark:border-blue-800">
-                        <p className="text-xs text-blue-700 dark:text-blue-300">
-                          ℹ️ {existingPlans.length} plano(s) de ensino existente(s) será(ão) usado(s) como referência
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Info: Objectives will be generated */}
@@ -325,241 +366,112 @@ export default function GeneratePage() {
         {/* Generating Step */}
         {step === "generating" && (
           <div className="flex flex-col items-center justify-center min-h-[600px]">
-            <Card className="w-full max-w-2xl">
+            {/* Main Card */}
+            <Card className="w-full max-w-3xl border-primary/50 shadow-xl">
               <CardContent className="pt-12 pb-12">
-                <div className="flex flex-col items-center text-center space-y-6">
+                <div className="flex flex-col items-center text-center space-y-8">
                   {/* Animated Icon */}
                   <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
-                    <Loader2 className="relative h-20 w-20 text-primary animate-spin" />
+                    {/* Outer ping */}
+                    <div className="absolute inset-0 animate-ping opacity-75">
+                      <div className="h-24 w-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 blur-lg"></div>
+                    </div>
+                    {/* Main gradient circle */}
+                    <div className="relative h-24 w-24 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center shadow-2xl">
+                      <Sparkles className="h-12 w-12 text-white animate-pulse" />
+                    </div>
                   </div>
 
                   {/* Title */}
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">Gerando seu plano de ensino...</h2>
-                    <p className="text-muted-foreground">
-                      {generationMessage}
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      Gerando Plano de Ensino
+                    </h2>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Nossa IA está analisando o conteúdo e criando um plano pedagógico personalizado
                     </p>
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="w-full max-w-md">
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${generationProgress}%` }}
-                      />
+                  {/* Progress Bar with Shimmer */}
+                  <div className="w-full max-w-lg space-y-3">
+                    <div className="relative">
+                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden shadow-inner">
+                        <div
+                          className="h-3 rounded-full transition-all duration-500 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 relative overflow-hidden bg-[length:200%_100%] animate-gradient"
+                          style={{ width: `${generationProgress}%` }}
+                        >
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground text-center mt-2">
-                      {generationProgress}% concluído
-                    </p>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground font-medium">{generationProgress}% concluído</span>
+                      <span className="font-semibold text-primary">
+                        {generationProgress === 100 ? '✓ Finalizando...' : '⚡ Processando...'}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Current Step */}
-                  <div className="w-full max-w-md pt-4">
-                    <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                      <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0" />
-                      <p className="text-sm text-left">{generationMessage}</p>
+                  {/* Current Step Card */}
+                  <div className="w-full max-w-lg">
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border border-blue-200/50 dark:border-blue-800/50 rounded-xl shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5">
+                          <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className="text-sm font-medium text-foreground">
+                            {generationMessage}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Steps Indicator */}
+                  <div className="w-full max-w-lg pt-4">
+                    <div className="grid grid-cols-5 gap-3">
+                      {[
+                        { label: 'Carregar', threshold: 10 },
+                        { label: 'Analisar', threshold: 30 },
+                        { label: 'Gerar IA', threshold: 60 },
+                        { label: 'Processar', threshold: 90 },
+                        { label: 'Salvar', threshold: 100 }
+                      ].map((stepItem, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-2">
+                          <div className={`h-2 w-full rounded-full transition-all duration-300 ${
+                            generationProgress >= stepItem.threshold
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-md'
+                              : 'bg-muted'
+                          }`}></div>
+                          <span className={`text-xs transition-all duration-300 ${
+                            generationProgress >= stepItem.threshold
+                              ? 'text-primary font-semibold'
+                              : 'text-muted-foreground'
+                          }`}>
+                            {stepItem.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Info Tip */}
+            <Card className="mt-4 w-full max-w-3xl border-muted/50">
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start gap-3 text-sm">
+                  <Sparkles className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <p className="text-muted-foreground">
+                    <strong className="text-foreground">Aguarde:</strong> O plano será salvo automaticamente e você poderá editá-lo antes de enviar ao sistema IFMS.
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Success Step */}
-        {step === "success" && generatedPlan && (
-          <div>
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
-                <h1 className="text-3xl font-bold">Plano Gerado com Sucesso!</h1>
-              </div>
-              <p className="text-muted-foreground">
-                Revise o conteúdo gerado pela IA antes de salvar
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {/* Info Card */}
-              <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold mb-1">Plano de Ensino Gerado</h3>
-                      <p className="text-sm text-muted-foreground">
-                        A IA gerou o conteúdo pedagógico baseado na ementa e referências do sistema IFMS. 
-                        Dados preservados: <strong>ementa, carga horária, datas e referências bibliográficas</strong>.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Discipline Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informações da Disciplina</CardTitle>
-                  <CardDescription>Dados do Sistema IFMS (preservados)</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground">Disciplina</Label>
-                      <p className="font-medium">{selectedDiary?.disciplina}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Período</Label>
-                      <p className="font-medium">{selectedDiary?.anoLetivo}.{selectedDiary?.semestre}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Curso</Label>
-                      <p className="font-medium">{selectedDiary?.curso}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">Carga Horária</Label>
-                      <p className="font-medium">{selectedDiary?.cargaHoraria} horas</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Generated Content */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    Conteúdo Gerado pela IA
-                  </CardTitle>
-                  <CardDescription>Objetivos, metodologia e proposta de trabalho</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Objetivo Geral */}
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">Objetivo Geral</Label>
-                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
-                      <p className="text-sm">{generatedPlan.objetivoGeral}</p>
-                    </div>
-                  </div>
-
-                  {/* Objetivos Específicos */}
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">Objetivos Específicos</Label>
-                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
-                      <p className="text-sm whitespace-pre-line">{generatedPlan.objetivosEspecificos}</p>
-                    </div>
-                  </div>
-
-                  {/* Metodologia */}
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">Metodologia</Label>
-                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
-                      <p className="text-sm whitespace-pre-line">{generatedPlan.metodologia}</p>
-                    </div>
-                  </div>
-
-                  {/* Avaliação */}
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">Avaliação de Aprendizagem</Label>
-                    <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                      {generatedPlan.avaliacaoAprendizagem?.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-start gap-2">
-                          <span className="font-medium text-sm">{item.tipo}:</span>
-                          <span className="text-sm text-muted-foreground">{item.descricao} ({item.peso}%)</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Recuperação */}
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">Recuperação de Aprendizagem</Label>
-                    <div className="prose prose-sm max-w-none bg-muted/50 p-4 rounded-lg">
-                      <p className="text-sm whitespace-pre-line">{generatedPlan.recuperacaoAprendizagem}</p>
-                    </div>
-                  </div>
-
-                  {/* Proposta de Trabalho (usa componente reutilizável) */}
-                  <div>
-                    <Label className="text-base font-semibold mb-2 block">
-                      Proposta de Trabalho ({generatedPlan.propostaTrabalho?.length || 0} semanas)
-                    </Label>
-                    <div>
-                      {generatedPlan.propostaTrabalho && (
-                        <WorkProposalTable
-                          data={generatedPlan.propostaTrabalho.map((semana: any, idx: number) => {
-                            // Formata período a partir de dataInicial e dataFinal
-                            const formatPeriod = (dataInicial?: string, dataFinal?: string) => {
-                              if (!dataInicial || !dataFinal) return '';
-
-                              // Parse dates (formato: dd/mm/yyyy)
-                              const [diaIni, mesIni] = dataInicial.split('/');
-                              const [diaFim, mesFim] = dataFinal.split('/');
-
-                              // Se mesmo mês: "01 a 07"
-                              if (mesIni === mesFim) {
-                                return `${diaIni} a ${diaFim}`;
-                              }
-                              // Se meses diferentes: "28/02 a 06/03"
-                              return `${diaIni}/${mesIni} a ${diaFim}/${mesFim}`;
-                            };
-
-                            // Extrai mês da dataInicial
-                            const getMonth = (dataInicial?: string) => {
-                              if (!dataInicial) return '';
-                              const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-                                             'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                              const [, mes] = dataInicial.split('/');
-                              return meses[parseInt(mes) - 1] || '';
-                            };
-
-                            // Normaliza campos do plano gerado para o formato WeekSchedule
-                            const ws: WeekSchedule = {
-                              id: semana.id || `${idx}`,
-                              week: semana.semana ?? idx + 1,
-                              month: semana.mes || getMonth(semana.dataInicial),
-                              period: semana.periodo || formatPeriod(semana.dataInicial, semana.dataFinal),
-                              classes: semana.horasAula ?? semana.numAulas ?? 1,
-                              observations: semana.observacoes || semana.observacao || '',
-                              content: semana.tema || semana.conteudo || semana.assunto || '',
-                              teachingTechniques: Array.isArray(semana.tecnicasEnsino)
-                                ? semana.tecnicasEnsino.join(', ')
-                                : (semana.tecnicasEnsino || semana.tecnicas || semana.tecnica || '').toString(),
-                              teachingResources: Array.isArray(semana.recursosEnsino)
-                                ? semana.recursosEnsino.join(', ')
-                                : (semana.recursosEnsino || semana.recursos || '').toString(),
-                            }
-                            return ws
-                          })}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 justify-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setStep("config")
-                    setGeneratedPlan(null)
-                    setGenerationProgress(0)
-                  }}
-                >
-                  Gerar Novo Plano
-                </Button>
-                <Button className="gap-2">
-                  Salvar e Editar
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
     </ProtectedRoute>

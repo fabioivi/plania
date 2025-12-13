@@ -29,11 +29,23 @@ export class TeachingPlan {
   @JoinColumn({ name: 'diary_id' })
   diary: Diary;
 
-  @Column({ name: 'external_id', unique: true })
-  externalId: string; // ID do plano no sistema IFMS (ex: 46332)
+  @Column({ name: 'external_id', unique: true, nullable: true })
+  externalId: string; // ID do plano no sistema IFMS (ex: 46332) - null para planos AI não enviados
+
+  @Column({ name: 'source', default: 'ifms' })
+  source: 'ifms' | 'ai'; // Origem: 'ifms' = scraped do IFMS, 'ai' = gerado por IA
+
+  @Column({ name: 'base_plan_id', nullable: true })
+  basePlanId: string; // ID do plano IFMS usado como base (se source='ai')
+
+  @Column({ name: 'sent_to_ifms', default: false })
+  sentToIFMS: boolean; // Se o plano AI foi enviado ao sistema IFMS
+
+  @Column({ name: 'sent_at', nullable: true })
+  sentAt: Date; // Data/hora de envio ao IFMS (se sentToIFMS=true)
 
   @Column({ name: 'status' })
-  status: string; // Ex: "Aguardando aprovação", "Aprovado", "Em cadastro"
+  status: string; // Ex: "Aguardando aprovação", "Aprovado", "Em cadastro", "Gerado por IA - Rascunho"
 
   @Column({ name: 'status_coord', nullable: true })
   statusCoord: string; // Status do coordenador pedagógico

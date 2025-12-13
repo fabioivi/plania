@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Delete,
   Body,
   Param,
@@ -157,6 +158,70 @@ export class AcademicController {
   @ApiGetTeachingPlanDecorator()
   async getTeachingPlan(@Request() req, @Param('planId') planId: string) {
     return this.academicService.getTeachingPlan(req.user.id, planId);
+  }
+
+  @Post('teaching-plans/ai')
+  @ApiOperation({ summary: 'Save an AI-generated teaching plan' })
+  @ApiResponse({ status: 201, description: 'Teaching plan saved successfully' })
+  @ApiResponse({ status: 404, description: 'Diary or base plan not found' })
+  async saveAIGeneratedTeachingPlan(
+    @Request() req,
+    @Body() body: { diaryId: string; generatedPlan: any; basePlanId?: string },
+  ) {
+    const savedPlan = await this.academicService.saveAIGeneratedTeachingPlan(
+      req.user.id,
+      body.diaryId,
+      body.generatedPlan,
+      body.basePlanId,
+    );
+    return {
+      success: true,
+      plan: savedPlan,
+    };
+  }
+
+  @Put('teaching-plans/:id')
+  @ApiOperation({ summary: 'Update an existing teaching plan' })
+  @ApiParam({ name: 'id', description: 'ID of the teaching plan' })
+  @ApiResponse({ status: 200, description: 'Teaching plan updated successfully' })
+  async updateTeachingPlanEndpoint(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: Partial<any>,
+  ) {
+    const updatedPlan = await this.academicService.updateTeachingPlan(id, body);
+    return {
+      success: true,
+      plan: updatedPlan,
+    };
+  }
+
+  @Delete('teaching-plans/:id')
+  @ApiOperation({ summary: 'Delete an AI-generated teaching plan' })
+  @ApiParam({ name: 'id', description: 'ID of the teaching plan' })
+  @ApiResponse({ status: 200, description: 'Teaching plan deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Teaching plan not found' })
+  @ApiResponse({ status: 400, description: 'Cannot delete IFMS teaching plans' })
+  async deleteTeachingPlan(
+    @Request() req,
+    @Param('id') id: string,
+  ) {
+    await this.academicService.deleteTeachingPlan(req.user.id, id);
+    return {
+      success: true,
+      message: 'Plano de ensino excluído com sucesso',
+    };
+  }
+
+  @Post('teaching-plans/:id/send')
+  @ApiOperation({ summary: 'Send a teaching plan to IFMS' })
+  @ApiParam({ name: 'id', description: 'ID of the teaching plan' })
+  @ApiResponse({ status: 200, description: 'Teaching plan sent to IFMS successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid request or plan already sent' })
+  @ApiResponse({ status: 404, description: 'Teaching plan or credentials not found' })
+  async sendTeachingPlanToIFMS(@Request() req, @Param('id') id: string) {
+    const result = await this.academicService.sendTeachingPlanToIFMS(req.user.id, id);
+    return result;
   }
 
   @Get('diaries/:diaryId/content')

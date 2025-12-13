@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker build:*)",
+      "Bash(git -C \"C:\\Users\\fabioivi\\Documents\\GitHub\\PlanIA\" check-attr -a package-lock.json)",
+      "Bash(npm --version:*)",
+      "Bash(node --version)",
+      "Bash(git -C \"C:\\Users\\fabioivi\\Documents\\GitHub\\PlanIA\" config:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(npm ls:*)",
+      "Bash(tar:*)",
+      "Bash(npm install:*)",
+      "Bash(docker buildx version)"
     ]
   }
 }

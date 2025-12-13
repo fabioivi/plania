@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,9 +9,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  ArrowLeft, 
-  Sparkles, 
+import {
+  ArrowLeft,
+  Sparkles,
   FileText,
   Target,
   BookOpen,
@@ -20,250 +21,173 @@ import {
   Wand2,
   Upload,
   CheckCircle2,
-  Eye
+  Eye,
+  Loader2,
+  Trash2,
+  Save
 } from "lucide-react"
 import Link from "next/link"
 import { PlanHeader } from "@/components/layout/plan-header"
-import { WorkProposalTable, type WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
-
-// Dados de exemplo
-const weekScheduleData: WeekSchedule[] = [
-  {
-    id: "week-1",
-    week: 1,
-    month: "8 - Agosto",
-    period: "12 a 16",
-    classes: 1,
-    observations: "",
-    content: "Limites e Continuidade: Noção intuitiva de limite",
-    teachingTechniques: "Aula prática, Expositiva/dialogada",
-    teachingResources: "Projetor multimídia, Quadro branco/canetão"
-  },
-  {
-    id: "week-2",
-    week: 2,
-    month: "8 - Agosto",
-    period: "19 a 23",
-    classes: 4,
-    observations: "",
-    content: "Limites e Continuidade: Definição formal e propriedades",
-    teachingTechniques: "Aula prática, Estudo de caso, Expositiva/dialogada",
-    teachingResources: "Biblioteca, Laboratório, Projetor multimídia, Quadro branco/canetão"
-  },
-  {
-    id: "week-3",
-    week: 3,
-    month: "8 - Agosto",
-    period: "26 a 30",
-    classes: 4,
-    observations: "",
-    content: "Derivadas: Conceito e interpretação geométrica",
-    teachingTechniques: "Expositiva/dialogada, Resolução de exercícios",
-    teachingResources: "Quadro branco/canetão, Lista de exercícios"
-  },
-  {
-    id: "week-4",
-    week: 4,
-    month: "9 - Setembro",
-    period: "02 a 06",
-    classes: 4,
-    observations: "",
-    content: "Derivadas: Regras de derivação",
-    teachingTechniques: "Aula prática, Resolução de exercícios",
-    teachingResources: "Laboratório, Projetor multimídia, Software matemático"
-  },
-  {
-    id: "week-5",
-    week: 5,
-    month: "9 - Setembro",
-    period: "09 a 13",
-    classes: 4,
-    observations: "",
-    content: "Derivadas: Aplicações e problemas de otimização",
-    teachingTechniques: "Estudo de caso, Resolução de problemas",
-    teachingResources: "Biblioteca, Projetor multimídia, Artigos científicos"
-  },
-  {
-    id: "week-6",
-    week: 6,
-    month: "9 - Setembro",
-    period: "16 a 20",
-    classes: 4,
-    observations: "Semana de Ciência e Tecnologia",
-    content: "Integrais Indefinidas: Conceito e técnicas básicas",
-    teachingTechniques: "Expositiva/dialogada, Seminário",
-    teachingResources: "Auditório, Projetor multimídia"
-  },
-  {
-    id: "week-7",
-    week: 7,
-    month: "9 - Setembro",
-    period: "23 a 27",
-    classes: 4,
-    observations: "",
-    content: "Integrais Indefinidas: Métodos de integração",
-    teachingTechniques: "Aula prática, Resolução de exercícios",
-    teachingResources: "Quadro branco/canetão, Software matemático"
-  },
-  {
-    id: "week-8",
-    week: 8,
-    month: "9 - Setembro",
-    period: "30 a 04",
-    classes: 4,
-    observations: "",
-    content: "Integrais Definidas: Teorema Fundamental do Cálculo",
-    teachingTechniques: "Expositiva/dialogada, Demonstração",
-    teachingResources: "Projetor multimídia, Quadro branco/canetão"
-  },
-  {
-    id: "week-9",
-    week: 9,
-    month: "10 - Outubro",
-    period: "07 a 11",
-    classes: 4,
-    observations: "",
-    content: "Avaliação Parcial: Limites e Derivadas",
-    teachingTechniques: "Avaliação escrita",
-    teachingResources: "Sala de aula"
-  },
-  {
-    id: "week-10",
-    week: 10,
-    month: "10 - Outubro",
-    period: "14 a 18",
-    classes: 4,
-    observations: "",
-    content: "Aplicações de Integrais: Cálculo de áreas",
-    teachingTechniques: "Aula prática, Estudo de caso",
-    teachingResources: "Laboratório, Software de visualização"
-  },
-  {
-    id: "week-11",
-    week: 11,
-    month: "10 - Outubro",
-    period: "21 a 25",
-    classes: 4,
-    observations: "",
-    content: "Aplicações de Integrais: Volumes de sólidos de revolução",
-    teachingTechniques: "Expositiva/dialogada, Demonstração prática",
-    teachingResources: "Projetor multimídia, Modelos físicos"
-  },
-  {
-    id: "week-12",
-    week: 12,
-    month: "10 - Outubro",
-    period: "28 a 01",
-    classes: 4,
-    observations: "",
-    content: "Funções de Várias Variáveis: Introdução e domínio",
-    teachingTechniques: "Expositiva/dialogada, Visualização 3D",
-    teachingResources: "Software matemático, Projetor multimídia"
-  },
-  {
-    id: "week-13",
-    week: 13,
-    month: "11 - Novembro",
-    period: "04 a 08",
-    classes: 4,
-    observations: "",
-    content: "Derivadas Parciais: Conceito e interpretação",
-    teachingTechniques: "Aula prática, Resolução de exercícios",
-    teachingResources: "Quadro branco/canetão, Lista de exercícios"
-  },
-  {
-    id: "week-14",
-    week: 14,
-    month: "11 - Novembro",
-    period: "11 a 15",
-    classes: 4,
-    observations: "Recesso acadêmico",
-    content: "Revisão geral de conteúdos",
-    teachingTechniques: "Plantão de dúvidas, Resolução de exercícios",
-    teachingResources: "Sala de aula, Material de apoio"
-  },
-  {
-    id: "week-15",
-    week: 15,
-    month: "11 - Novembro",
-    period: "18 a 22",
-    classes: 4,
-    observations: "",
-    content: "Integrais Múltiplas: Integrais duplas",
-    teachingTechniques: "Expositiva/dialogada, Aula prática",
-    teachingResources: "Projetor multimídia, Software matemático"
-  },
-  {
-    id: "week-16",
-    week: 16,
-    month: "11 - Novembro",
-    period: "25 a 29",
-    classes: 4,
-    observations: "",
-    content: "Integrais Múltiplas: Aplicações em áreas e volumes",
-    teachingTechniques: "Estudo de caso, Resolução de problemas",
-    teachingResources: "Laboratório, Material digital"
-  },
-  {
-    id: "week-17",
-    week: 17,
-    month: "12 - Dezembro",
-    period: "02 a 06",
-    classes: 4,
-    observations: "",
-    content: "Revisão Final: Todos os conteúdos",
-    teachingTechniques: "Plantão de dúvidas, Resolução de exercícios",
-    teachingResources: "Biblioteca, Sala de aula, Material complementar"
-  },
-  {
-    id: "week-18",
-    week: 18,
-    month: "12 - Dezembro",
-    period: "09 a 13",
-    classes: 4,
-    observations: "",
-    content: "Avaliação Final: Prova integradora",
-    teachingTechniques: "Avaliação escrita",
-    teachingResources: "Sala de aula"
-  },
-]
+import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan } from "@/hooks/api"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { Header } from "@/components/layout/header"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function PlanReviewPage() {
+  const params = useParams()
+  const router = useRouter()
+  const planId = params.id as string
+
+  // Load plan data using React Query
+  const { data: plan, isLoading, error } = useTeachingPlan(planId)
+
+  // Delete mutation
+  const { mutate: deletePlan, isPending: deleting } = useDeleteTeachingPlan()
+
+  // Update mutation
+  const { mutate: updatePlan, isPending: saving } = useUpdateTeachingPlan()
+
   const [showAiAssistant, setShowAiAssistant] = useState(true)
   const [aiPrompt, setAiPrompt] = useState("")
   const [isFilling, setIsFilling] = useState(false)
   const [fillSuccess, setFillSuccess] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  // Editable fields state
+  const [objetivoGeral, setObjetivoGeral] = useState(plan?.objetivoGeral || '')
+  const [objetivosEspecificos, setObjetivosEspecificos] = useState(plan?.objetivosEspecificos || '')
+  const [numAulasTeorica, setNumAulasTeorica] = useState(plan?.numAulasTeorica || 0)
+  const [numAulasPraticas, setNumAulasPraticas] = useState(plan?.numAulasPraticas || 0)
+  const [propostaTrabalho, setPropostaTrabalho] = useState(plan?.propostaTrabalho || [])
+  const [hasChanges, setHasChanges] = useState(false)
 
   const handleFillDiary = async () => {
     setIsFilling(true)
     setFillSuccess(false)
-    
+
     // Simular preenchimento automático do diário
     await new Promise(resolve => setTimeout(resolve, 3000))
-    
+
     setIsFilling(false)
     setFillSuccess(true)
-    
+
     // Remover mensagem de sucesso após 5 segundos
     setTimeout(() => setFillSuccess(false), 5000)
   }
 
-  const handleEditWeek = (week: WeekSchedule) => {
-    // TODO: Abrir modal de edição
-    console.log("Editar semana", week)
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true)
   }
 
-  const handleDeleteWeek = (week: WeekSchedule) => {
-    // TODO: Confirmar e excluir semana
-    console.log("Excluir semana", week)
+  const handleConfirmDelete = () => {
+    deletePlan(planId, {
+      onSuccess: () => {
+        setShowDeleteDialog(false)
+        router.push('/disciplines')
+      },
+      onError: () => {
+        setShowDeleteDialog(false)
+      }
+    })
+  }
+
+  const handleSaveChanges = () => {
+    updatePlan({
+      planId,
+      data: {
+        objetivoGeral,
+        objetivosEspecificos,
+        numAulasTeorica,
+        numAulasPraticas,
+        propostaTrabalho,
+      }
+    }, {
+      onSuccess: () => {
+        setHasChanges(false)
+        toast.success('Plano atualizado com sucesso!')
+      }
+    })
+  }
+
+  const handleConteudoChange = (index: number, newConteudo: string) => {
+    const updated = [...propostaTrabalho]
+    updated[index] = { ...updated[index], conteudo: newConteudo }
+    setPropostaTrabalho(updated)
+    setHasChanges(true)
+  }
+
+  // Sync state when plan data loads
+  if (plan && !hasChanges) {
+    if (objetivoGeral !== plan.objetivoGeral) setObjetivoGeral(plan.objetivoGeral || '')
+    if (objetivosEspecificos !== plan.objetivosEspecificos) setObjetivosEspecificos(plan.objetivosEspecificos || '')
+    if (numAulasTeorica !== plan.numAulasTeorica) setNumAulasTeorica(plan.numAulasTeorica || 0)
+    if (numAulasPraticas !== plan.numAulasPraticas) setNumAulasPraticas(plan.numAulasPraticas || 0)
+    if (propostaTrabalho.length === 0 && plan.propostaTrabalho) setPropostaTrabalho(plan.propostaTrabalho)
+  }
+
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background">
+          <Header />
+          <main className="container mx-auto py-16 px-4">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Carregando plano de ensino...</p>
+            </div>
+          </main>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  // Error state
+  if (error || !plan) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background">
+          <Header />
+          <main className="container mx-auto py-16 px-4">
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Plano não encontrado</h3>
+                <p className="text-muted-foreground mb-6">
+                  O plano de ensino solicitado não foi encontrado.
+                </p>
+                <Link href="/disciplines">
+                  <Button>
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Voltar para Disciplinas
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </ProtectedRoute>
+    )
   }
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-background">
-      <PlanHeader 
-        planTitle="Cálculo Diferencial e Integral I"
-        planInfo="2024.2 • 60h"
-        status="draft"
+      <PlanHeader
+        planTitle={plan.unidadeCurricular || 'Plano de Ensino'}
+        planInfo={`${plan.anoSemestre || ''} • ${plan.cargaHorariaTotal || 0}h`}
+        status={plan.source === 'ai' && !plan.sentToIFMS ? 'draft' : 'approved'}
       />
 
       <div className="flex">
@@ -287,6 +211,25 @@ export default function PlanReviewPage() {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSaveChanges}
+                  disabled={!hasChanges || saving}
+                  className="gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Salvar Alterações
+                    </>
+                  )}
+                </Button>
                 <Link href="/plans/preview/1">
                   <Button
                     variant="outline"
@@ -330,6 +273,27 @@ export default function PlanReviewPage() {
                     </>
                   )}
                 </Button>
+                {plan?.source === 'ai' && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteClick}
+                    disabled={deleting}
+                    className="gap-2"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Excluindo...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        Excluir Plano
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -349,13 +313,12 @@ export default function PlanReviewPage() {
 
           {/* Plan Content Tabs */}
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Visão Geral</TabsTrigger>
               <TabsTrigger value="objectives">Objetivos</TabsTrigger>
               <TabsTrigger value="content">Conteúdo</TabsTrigger>
               <TabsTrigger value="methodology">Metodologia</TabsTrigger>
               <TabsTrigger value="evaluation">Avaliação</TabsTrigger>
-              <TabsTrigger value="events">Eventos</TabsTrigger>
             </TabsList>
 
             {/* Overview Tab */}
@@ -368,46 +331,99 @@ export default function PlanReviewPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="discipline">Disciplina</Label>
-                      <Input id="discipline" value="Cálculo Diferencial e Integral I" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="disciplineCode">Código da Disciplina</Label>
-                      <Input id="disciplineCode" value="MAT101" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="planCode">Código do Plano</Label>
-                      <Input id="planCode" placeholder="Ex: PE-2024-001" />
-                    </div>
-                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
+                      <Label htmlFor="discipline">Unidade Curricular</Label>
+                      <Input
+                        id="discipline"
+                        value={plan.unidadeCurricular || ''}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="course">Curso</Label>
+                      <Input
+                        id="course"
+                        value={plan.curso || ''}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="campus">Campus</Label>
+                      <Input
+                        id="campus"
+                        value={plan.campus || ''}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="semester">Período</Label>
-                      <Input id="semester" value="2024.2" />
+                      <Input
+                        id="semester"
+                        value={plan.anoSemestre || ''}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="workload">Carga Horária</Label>
-                      <Input id="workload" value="60h" />
+                      <Input
+                        id="workload"
+                        value={`${plan.cargaHorariaTotal || 0}h`}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="theoretical">Total de Aulas Teóricas</Label>
-                      <Input id="theoretical" type="number" placeholder="Ex: 40" />
+                      <Label htmlFor="weeks">Número de Semanas</Label>
+                      <Input
+                        id="weeks"
+                        type="number"
+                        value={plan.numSemanas || 0}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="practical">Total de Aulas Práticas</Label>
-                      <Input id="practical" type="number" placeholder="Ex: 40" />
+                      <Label htmlFor="theoretical">Aulas Teóricas</Label>
+                      <Input
+                        id="theoretical"
+                        type="number"
+                        value={numAulasTeorica}
+                        onChange={(e) => {
+                          setNumAulasTeorica(parseInt(e.target.value) || 0)
+                          setHasChanges(true)
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="practical">Aulas Práticas</Label>
+                      <Input
+                        id="practical"
+                        type="number"
+                        value={numAulasPraticas}
+                        onChange={(e) => {
+                          setNumAulasPraticas(parseInt(e.target.value) || 0)
+                          setHasChanges(true)
+                        }}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Ementa</Label>
-                    <Textarea 
+                    <Textarea
                       id="description"
                       rows={4}
-                      value="Estudo de funções reais de uma variável real. Limites e continuidade. Derivadas e suas aplicações. Integrais definidas e indefinidas. Teorema Fundamental do Cálculo."
+                      value={plan.ementa || ''}
+                      disabled
+                      className="bg-muted cursor-not-allowed"
                     />
                   </div>
                 </CardContent>
@@ -429,22 +445,26 @@ export default function PlanReviewPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Objetivo Geral</Label>
-                    <Textarea 
+                    <Textarea
                       rows={3}
-                      value="Proporcionar ao estudante o conhecimento fundamental do cálculo diferencial e integral de funções reais de uma variável, desenvolvendo o raciocínio lógico-matemático necessário para a resolução de problemas em diversas áreas do conhecimento."
+                      value={objetivoGeral}
+                      onChange={(e) => {
+                        setObjetivoGeral(e.target.value)
+                        setHasChanges(true)
+                      }}
+                      placeholder="Descreva o objetivo geral da disciplina..."
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Objetivos Específicos</Label>
-                    <Textarea 
+                    <Textarea
                       rows={8}
-                      value={`• Compreender os conceitos de limite e continuidade de funções reais
-• Aplicar técnicas de derivação para resolver problemas de otimização
-• Analisar o comportamento de funções utilizando derivadas
-• Calcular integrais definidas e indefinidas
-• Aplicar o Teorema Fundamental do Cálculo
-• Resolver problemas práticos envolvendo taxas de variação
-• Desenvolver o pensamento analítico e a capacidade de abstração matemática`}
+                      value={objetivosEspecificos}
+                      onChange={(e) => {
+                        setObjetivosEspecificos(e.target.value)
+                        setHasChanges(true)
+                      }}
+                      placeholder="Liste os objetivos específicos da disciplina..."
                     />
                   </div>
                 </CardContent>
@@ -460,61 +480,103 @@ export default function PlanReviewPage() {
                     Detalhamento da Proposta de Trabalho
                   </CardTitle>
                   <CardDescription>
-                    Configure o cronograma semanal de aulas com conteúdo e metodologia
+                    Cronograma semanal de aulas com conteúdo e metodologia
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <WorkProposalTable 
-                    data={weekScheduleData}
-                    showCheckbox={true}
-                    showActions={true}
-                    onEdit={handleEditWeek}
-                    onDelete={handleDeleteWeek}
-                  />
+                  {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
+                    <>
+                      <div className="rounded-md border overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="p-3 text-left font-semibold min-w-[120px]">Mês/Período</th>
+                              <th className="p-3 text-center font-semibold">Nº Aulas</th>
+                              <th className="p-3 text-left font-semibold min-w-[200px]">Conteúdo</th>
+                              <th className="p-3 text-left font-semibold min-w-[150px]">Técnicas de Ensino</th>
+                              <th className="p-3 text-left font-semibold min-w-[150px]">Recursos de Ensino</th>
+                              <th className="p-3 text-left font-semibold">Observações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {propostaTrabalho.map((item, index) => (
+                              <tr key={index} className="border-t">
+                                <td className="p-3">
+                                  <div className="font-medium">{item.mes}</div>
+                                  <div className="text-xs text-muted-foreground">{item.periodo}</div>
+                                </td>
+                                <td className="p-3 text-center">
+                                  <Badge>{item.numAulas}</Badge>
+                                </td>
+                                <td className="p-3">
+                                  <Textarea
+                                    value={item.conteudo || ''}
+                                    onChange={(e) => handleConteudoChange(index, e.target.value)}
+                                    rows={2}
+                                    className="text-sm min-w-[200px]"
+                                    placeholder="Conteúdo da aula..."
+                                  />
+                                </td>
+                                <td className="p-3">
+                                  {item.tecnicasEnsino && item.tecnicasEnsino.length > 0 ? (
+                                    <div className="flex gap-1.5 flex-wrap">
+                                      {item.tecnicasEnsino.map((tecnica, i) => (
+                                        <Badge
+                                          key={i}
+                                          variant="secondary"
+                                          className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700"
+                                        >
+                                          {tecnica}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">-</span>
+                                  )}
+                                </td>
+                                <td className="p-3">
+                                  {item.recursosEnsino && item.recursosEnsino.length > 0 ? (
+                                    <div className="flex gap-1.5 flex-wrap">
+                                      {item.recursosEnsino.map((recurso, i) => (
+                                        <Badge
+                                          key={i}
+                                          variant="secondary"
+                                          className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700"
+                                        >
+                                          {recurso}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">-</span>
+                                  )}
+                                </td>
+                                <td className="p-3 text-muted-foreground">{item.observacoes || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
 
-                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold">Total de Aulas:</span>
-                      <span className="text-sm text-muted-foreground">
-                        Carga horária: 60h (80 aulas de 45min)
-                      </span>
+                      <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold">Total de Aulas:</span>
+                          <span className="text-sm text-muted-foreground">
+                            Carga horária: {plan.cargaHorariaTotal || 0}h
+                          </span>
+                        </div>
+                        <div className="flex gap-3 items-center">
+                          <Badge variant="secondary" className="text-lg px-4">
+                            {plan.propostaTrabalho.reduce((sum, item) => sum + parseInt(item.numAulas || '0'), 0)} aulas
+                          </Badge>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhuma proposta de trabalho definida ainda.
                     </div>
-                    <div className="flex gap-3 items-center">
-                      <Badge variant="secondary" className="text-lg px-4">
-                        {weekScheduleData.reduce((sum, week) => sum + week.classes, 0)} aulas
-                      </Badge>
-                      {(() => {
-                        const totalClasses = weekScheduleData.reduce((sum, week) => sum + week.classes, 0)
-                        const targetClasses = 80 // 60h ÷ 0.75h = 80 aulas de 45min
-                        const difference = targetClasses - totalClasses
-                        
-                        if (difference > 0) {
-                          return (
-                            <Badge variant="outline" className="text-sm px-3 border-yellow-500 text-yellow-700">
-                              Faltam {difference} aulas
-                            </Badge>
-                          )
-                        } else if (difference === 0) {
-                          return (
-                            <Badge variant="outline" className="text-sm px-3 border-green-500 text-green-700 bg-green-50">
-                              ✓ Carga horária completa
-                            </Badge>
-                          )
-                        } else {
-                          return (
-                            <Badge variant="outline" className="text-sm px-3 border-red-500 text-red-700 bg-red-50">
-                              Excedendo em {Math.abs(difference)} aulas
-                            </Badge>
-                          )
-                        }
-                      })()}
-                    </div>
-                  </div>
-
-                  <Button variant="outline" className="w-full gap-2">
-                    <Wand2 className="h-4 w-4" />
-                    Adicionar Nova Semana
-                  </Button>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -529,26 +591,31 @@ export default function PlanReviewPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Estratégias Didáticas</Label>
-                    <Textarea 
-                      rows={6}
-                      value={`As aulas serão ministradas de forma expositiva-dialogada, com resolução de exercícios em sala. Serão utilizados recursos audiovisuais e softwares matemáticos para visualização de conceitos.
-
-Metodologias ativas serão empregadas através de:
-• Resolução de problemas em grupo
-• Estudos de caso aplicados
-• Listas de exercícios graduadas
-• Atendimento individualizado em horário de monitoria`}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Recursos Didáticos</Label>
-                    <Textarea 
-                      rows={4}
-                      value="• Quadro branco e projetor multimídia\n• Software GeoGebra para visualização\n• Plataforma AVA para materiais complementares\n• Calculadoras científicas"
-                    />
-                  </div>
+                  {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
+                    <div className="space-y-2">
+                      <Label>Metodologias Utilizadas</Label>
+                      <div className="rounded-md border p-4 bg-muted/30">
+                        <div className="space-y-2">
+                          {Array.from(
+                            new Set(
+                              plan.propostaTrabalho
+                                .map(item => item.metodologia)
+                                .filter(Boolean)
+                            )
+                          ).map((metodologia, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <div className="h-1.5 w-1.5 rounded-full bg-primary mt-2" />
+                              <span>{metodologia}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhuma metodologia definida ainda.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -563,122 +630,64 @@ Metodologias ativas serão empregadas através de:
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Critérios de Avaliação</Label>
-                    <Textarea 
-                      rows={5}
-                      value={`A avaliação será contínua e processual, considerando:
-• Participação nas atividades em sala (10%)
-• Listas de exercícios (20%)
-• Duas provas escritas (35% cada)
-• Trabalho final aplicado (opcional, substitui menor nota)`}
-                    />
-                  </div>
+                  {plan.avaliacaoAprendizagem && plan.avaliacaoAprendizagem.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Avaliações</Label>
+                      <div className="rounded-md border">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="p-3 text-left font-semibold">Etapa</th>
+                              <th className="p-3 text-left font-semibold">Avaliação</th>
+                              <th className="p-3 text-left font-semibold">Instrumentos</th>
+                              <th className="p-3 text-left font-semibold">Data Prevista</th>
+                              <th className="p-3 text-left font-semibold">Valor Máximo</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {plan.avaliacaoAprendizagem.map((avaliacao, index) => (
+                              <tr key={index} className="border-t">
+                                <td className="p-3">{avaliacao.etapa}</td>
+                                <td className="p-3">{avaliacao.avaliacao}</td>
+                                <td className="p-3">{avaliacao.instrumentos}</td>
+                                <td className="p-3">{avaliacao.dataPrevista}</td>
+                                <td className="p-3 text-center">{avaliacao.valorMaximo}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {plan.observacoesAvaliacoes && (
+                    <div className="space-y-2">
+                      <Label>Observações sobre Avaliações</Label>
+                      <Textarea
+                        rows={3}
+                        value={plan.observacoesAvaliacoes}
+                        readOnly
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label>Recuperação da Aprendizagem</Label>
-                    <Textarea 
+                    <Textarea
                       rows={4}
-                      value="A recuperação dos conteúdos propostos ocorrerá através de atividades complementares, revisão do conteúdo e atendimento de Permanência de Estudante (PE). A recuperação de notas se dará através de trabalhos ou prova."
+                      value={plan.recuperacaoAprendizagem || ''}
+                      readOnly
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label>Bibliografia</Label>
-                    <Textarea 
+                    <Label>Referências Bibliográficas</Label>
+                    <Textarea
                       rows={6}
-                      value={`Básica:
-• STEWART, James. Cálculo, Volume I. 8ª ed. Cengage, 2017.
-• GUIDORIZZI, Hamilton. Um Curso de Cálculo, Vol. 1. 6ª ed. LTC, 2018.
-
-Complementar:
-• ANTON, Howard. Cálculo, Volume I. 10ª ed. Bookman, 2014.
-• LEITHOLD, Louis. O Cálculo com Geometria Analítica, Vol. 1. Harbra, 1994.`}
+                      value={plan.referencias || ''}
+                      readOnly
                     />
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Events Tab */}
-            <TabsContent value="events" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Eventos e Datas Especiais
-                  </CardTitle>
-                  <CardDescription>
-                    Configure as datas de eventos institucionais que serão exibidos no cronograma
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Evento 1 */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Semana de Ciência e Tecnologia</Label>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="event1-start">Data Início</Label>
-                        <Input id="event1-start" type="date" defaultValue="2024-10-07" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="event1-end">Data Fim</Label>
-                        <Input id="event1-end" type="date" defaultValue="2024-10-11" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Evento 2 */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Festival de Arte e Cultura</Label>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="event2-start">Data Início</Label>
-                        <Input id="event2-start" type="date" defaultValue="2024-11-04" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="event2-end">Data Fim</Label>
-                        <Input id="event2-end" type="date" defaultValue="2024-11-08" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Evento 3 */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Dia da Consciência Negra</Label>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="event3-date">Data</Label>
-                        <Input id="event3-date" type="date" defaultValue="2024-11-20" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Evento 4 */}
-                  <div className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">SEMICT - Semana de Iniciação Científica</Label>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="event4-start">Data Início</Label>
-                        <Input id="event4-start" type="date" defaultValue="2024-11-25" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="event4-end">Data Fim</Label>
-                        <Input id="event4-end" type="date" defaultValue="2024-11-29" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button variant="outline" className="w-full gap-2">
-                    <Wand2 className="h-4 w-4" />
-                    Adicionar Novo Evento
-                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -799,6 +808,30 @@ Complementar:
           </aside>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este plano de ensino gerado por IA?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+    </ProtectedRoute>
   )
 }

@@ -2,14 +2,23 @@ node_modules
 .next
 dist
 build
-.env
-.env.local
 .DS_Store
 *.log
 .vscode
 .idea
 coverage
 .turbo
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Docker volumes
+postgres_data/
+redis_data/
 
 # Backend storage and screenshots
 storage/

@@ -26,6 +26,7 @@ export interface WeekSchedule {
 
 export interface GenerateTeachingPlanDto {
   diaryId: string;
+  basePlanId?: string; // ID do plano IFMS a ser usado como base
   objectives?: string;
   methodology?: string;
   additionalNotes?: string;
@@ -73,26 +74,65 @@ export class TeachingPlanGeneratorService {
     }
 
     const weekMap = new Map<string, WeekSchedule>();
-    
-    // Convert first date if needed
-    const firstDateStr = typeof contents[0].date === 'string' 
-      ? contents[0].date 
-      : contents[0].date.toISOString();
-    const firstDate = parseISO(firstDateStr);
+    let weekCounter = 0;
 
     for (const content of contents) {
+      // Skip aulas de antecipação (tipo A)
+      if (content.type === 'A') {
+        continue;
+      }
+
       const dateStr = typeof content.date === 'string'
         ? content.date
         : content.date.toISOString();
       const date = parseISO(dateStr);
       const weekStart = startOfWeek(date, { locale: ptBR });
       const weekEnd = endOfWeek(date, { locale: ptBR });
-      const weekNumber = differenceInWeeks(date, firstDate) + 1;
       const weekKey = format(weekStart, 'yyyy-MM-dd');
 
+      // Assign week number sequentially as we encounter new weeks
+      if (!weekMap.has(weekKey)) {
+        weekCounter++;
+      }
+      const weekNumber = weekCounter;
+
       // Parse time range to calculate hours
-      const timeMatch = content.timeRange.match(/(\d+)h/);
-      const hours = timeMatch ? parseInt(timeMatch[1]) : 2; // Default 2 hours
+      // Format can be: "07:45 às 08:30", "2h", "45min", "2h + 2h", etc.
+      let horasAula = 0;
+
+      // Check if it's a time range format (HH:MM às HH:MM)
+      const timeRangeMatch = content.timeRange.match(/(\d{1,2}):(\d{2})\s+às\s+(\d{1,2}):(\d{2})/);
+      if (timeRangeMatch) {
+        const [_, startHour, startMin, endHour, endMin] = timeRangeMatch;
+        const startMinutes = parseInt(startHour) * 60 + parseInt(startMin);
+        const endMinutes = parseInt(endHour) * 60 + parseInt(endMin);
+        const durationMinutes = endMinutes - startMinutes;
+        // Convert to horas-aula (cada 45 min = 1 hora-aula)
+        horasAula = durationMinutes / 45;
+      } else {
+        // Try to extract hour values (e.g., "2h", "4h")
+        const hourMatches = content.timeRange.match(/(\d+)h/g);
+        if (hourMatches) {
+          const totalHours = hourMatches.reduce((sum, match) => sum + parseInt(match.replace('h', '')), 0);
+          // Assume "h" means horas-aula
+          horasAula += totalHours;
+        }
+
+        // Try to extract minute values (e.g., "45min", "30min")
+        const minuteMatches = content.timeRange.match(/(\d+)min/g);
+        if (minuteMatches) {
+          const totalMinutes = minuteMatches.reduce((sum, match) => sum + parseInt(match.replace('min', '')), 0);
+          // Convert to horas-aula (cada 45 min = 1 hora-aula)
+          horasAula += totalMinutes / 45;
+        }
+      }
+
+      // Default to 1 hora-aula if nothing found
+      if (horasAula === 0) {
+        horasAula = 1;
+      }
+
+      const hours = horasAula;
 
       if (!weekMap.has(weekKey)) {
         weekMap.set(weekKey, {
@@ -123,7 +163,7 @@ export class TeachingPlanGeneratorService {
   private buildPrompt(
     diary: Diary,
     weekSchedule: WeekSchedule[],
-    existingPlans: TeachingPlan[],
+    basePlan: TeachingPlan | null,
     userInput?: Partial<GenerateTeachingPlanDto>,
   ): string {
     // Período acadêmico: trata undefined em semestre
@@ -139,13 +179,17 @@ export class TeachingPlanGeneratorService {
     const cargaHorariaTotal = diary.cargaHoraria ||
       weekSchedule.reduce((sum, week) => sum + week.totalHours, 0);
 
-    const aulasTeoricas = 'Não especificado'; // TODO: extract from diary if available
-    const aulasPraticas = 'Não especificado'; // TODO: extract from diary if available
-    const ementa = existingPlans.length > 0 ? existingPlans[0].ementa : 'Não disponível';
-    const objetivoGeral = existingPlans.length > 0 ? existingPlans[0].objetivoGeral : 'Não disponível';
-    const objetivosEspecificos = existingPlans.length > 0 && existingPlans[0].objetivosEspecificos ? existingPlans[0].objetivosEspecificos.split('\n').filter(obj => obj.trim()) : ['Não disponíveis'];
+    // Get total aulas from base plan (theoretical + practical)
+    const aulasTeoricas = basePlan?.numAulasTeorica || 'Não especificado';
+    const aulasPraticas = basePlan?.numAulasPraticas || 'Não especificado';
+    const totalAulas = (basePlan?.numAulasTeorica || 0) + (basePlan?.numAulasPraticas || 0);
+
+    const ementa = basePlan?.ementa || 'Não disponível';
+    const objetivoGeral = basePlan?.objetivoGeral || 'Não disponível';
+    const objetivosEspecificos = basePlan?.objetivosEspecificos ? basePlan.objetivosEspecificos.split('\n').filter(obj => obj.trim()) : ['Não disponíveis'];
 
     // Format weekSchedule for the prompt
+    // Always use diary schedule (weekSchedule already calculated from diary contents)
     const semanas = weekSchedule.map(week => ({
       weekNumber: week.weekNumber,
       startDate: format(week.startDate, 'dd/MM/yyyy', { locale: ptBR }),
@@ -205,12 +249,25 @@ export class TeachingPlanGeneratorService {
         throw new Error('Nenhuma aula encontrada no diário. Sincronize o diário primeiro.');
       }
 
-      // Step 3: Get existing teaching plans (for reference)
-      if (onProgress) onProgress('Buscando planos de ensino existentes...', 30);
-      const existingPlans = await this.teachingPlanRepository.find({
-        where: { diaryId: dto.diaryId },
-        order: { createdAt: 'DESC' },
-      });
+      // Step 3: Get base teaching plan (if specified)
+      let basePlan: TeachingPlan | null = null;
+      if (dto.basePlanId) {
+        if (onProgress) onProgress('Carregando plano base...', 30);
+        basePlan = await this.teachingPlanRepository.findOne({
+          where: { id: dto.basePlanId, diaryId: dto.diaryId },
+        });
+        if (!basePlan) {
+          throw new NotFoundException('Plano base não encontrado');
+        }
+      } else {
+        // If no basePlanId provided, try to find an existing IFMS plan
+        if (onProgress) onProgress('Buscando plano IFMS existente...', 30);
+        const existingPlans = await this.teachingPlanRepository.find({
+          where: { diaryId: dto.diaryId, source: 'ifms' },
+          order: { createdAt: 'DESC' },
+        });
+        basePlan = existingPlans.length > 0 ? existingPlans[0] : null;
+      }
 
       // Step 4: Get LLM provider
       if (onProgress) onProgress('Conectando ao provedor de IA...', 40);
@@ -218,7 +275,7 @@ export class TeachingPlanGeneratorService {
 
       // Step 5: Build prompt
       if (onProgress) onProgress('Preparando contexto para IA...', 50);
-      const prompt = this.buildPrompt(diary, weekSchedule, existingPlans, dto);
+      const prompt = this.buildPrompt(diary, weekSchedule, basePlan, dto);
 
       this.logger.debug('Generated prompt:', prompt);
 

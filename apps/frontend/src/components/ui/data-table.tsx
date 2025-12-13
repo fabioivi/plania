@@ -54,6 +54,11 @@ export function DataTable<TData, TValue>({
       columnFilters,
       globalFilter,
     },
+    initialState: {
+      pagination: {
+        pageSize: 100, // Show all items (no pagination controls exist)
+      },
+    },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -68,13 +73,13 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
     globalFilterFn: (row, columnId, filterValue) => {
       const search = filterValue.toLowerCase()
-      
+
       // Buscar em todos os valores da linha
       const rowValues = Object.values(row.original as object)
-      
+
       return rowValues.some((value) => {
         if (value === null || value === undefined) return false
-        
+
         // Converter para string e buscar
         const stringValue = String(value).toLowerCase()
         return stringValue.includes(search)
@@ -103,9 +108,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}

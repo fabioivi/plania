@@ -69,7 +69,6 @@ export function useSyncDiaries() {
     onSuccess: () => {
       // Invalidate diaries list to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.all })
-      toast.success('Diários sincronizados com sucesso!')
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao sincronizar diários'

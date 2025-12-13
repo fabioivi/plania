@@ -5,7 +5,7 @@ import { GraduationCap, LogOut, Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 
 export function Header() {
   const { user, logout } = useAuth()
@@ -42,22 +42,38 @@ export function Header() {
     </Link>
   )
 
-  const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
-    <>
-      <Link href="/dashboard" className={mobile ? "w-full" : ""}>
-        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Dashboard</Button>
-      </Link>
-      <Link href="/disciplines" className={mobile ? "w-full" : ""}>
-        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Disciplinas</Button>
-      </Link>
-      <Link href="/plans" className={mobile ? "w-full" : ""}>
-        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Planos</Button>
-      </Link>
-      <Link href="/settings" className={mobile ? "w-full" : ""}>
-        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Configurações</Button>
-      </Link>
-    </>
-  )
+  const NavLinks = ({ mobile = false }: { mobile?: boolean }) => {
+    const pathname = usePathname()
+
+    const isActive = (path: string) => {
+      if (path === '/dashboard') return pathname === '/dashboard'
+      return pathname.startsWith(path)
+    }
+
+    const getVariant = (path: string) => isActive(path) ? "secondary" : "ghost"
+    const getClassName = (path: string) => {
+      const baseClass = mobile ? "w-full justify-start" : ""
+      const activeClass = isActive(path) ? "bg-accent/50 font-medium" : ""
+      return `${baseClass} ${activeClass}`
+    }
+
+    return (
+      <>
+        <Link href="/dashboard" className={mobile ? "w-full" : ""}>
+          <Button variant={getVariant('/dashboard')} className={getClassName('/dashboard')}>Dashboard</Button>
+        </Link>
+        <Link href="/disciplines" className={mobile ? "w-full" : ""}>
+          <Button variant={getVariant('/disciplines')} className={getClassName('/disciplines')}>Disciplinas</Button>
+        </Link>
+        <Link href="/plans" className={mobile ? "w-full" : ""}>
+          <Button variant={getVariant('/plans')} className={getClassName('/plans')}>Planos</Button>
+        </Link>
+        <Link href="/settings" className={mobile ? "w-full" : ""}>
+          <Button variant={getVariant('/settings')} className={getClassName('/settings')}>Configurações</Button>
+        </Link>
+      </>
+    )
+  }
 
   const UserMenu = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={`flex items-center gap-2 ${mobile ? "mt-auto pt-4 border-t w-full justify-between" : "ml-4 pl-4 border-l"}`}>

@@ -273,6 +273,8 @@ export class AcademicService {
         diary.aprovado = diaryData.aprovado;
         diary.dataAbertura = dataAbertura;
         diary.dataFechamento = dataFechamento;
+        // Force update timestamp to show accurate last sync time even if data hasn't changed
+        diary.updatedAt = new Date();
       } else {
         // Create new diary
         diary = this.diaryRepository.create({

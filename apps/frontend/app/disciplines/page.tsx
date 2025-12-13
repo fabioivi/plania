@@ -7,7 +7,7 @@ import { BookOpen, Search, Filter, Plus, Download, Upload, RefreshCw, Loader2 } 
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useMemo, useEffect } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { useSyncProgress } from "@/hooks/useSyncProgress"
 import { SyncProgressDisplay } from "@/components/sync"
 import { useSyncState } from "@/hooks/useSyncState"
@@ -95,12 +95,26 @@ export default function DisciplinesPage() {
     }
   }, [progress, complete, syncError, disconnect, reset, queryClient])
 
+  // State for live time updates
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   const formatLastSync = () => {
     if (!lastSync) return 'Nunca'
 
-    const now = new Date()
     const syncTime = new Date(lastSync)
-    const diff = now.getTime() - syncTime.getTime()
+    const diff = currentTime.getTime() - syncTime.getTime()
+
+    // Handle future dates (e.g. clock skew)
+    if (diff < 0) return 'Agora mesmo'
+
     const minutes = Math.floor(diff / (1000 * 60))
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
@@ -110,9 +124,9 @@ export default function DisciplinesPage() {
     } else if (minutes < 60) {
       return `Há ${minutes} minuto${minutes !== 1 ? 's' : ''}`
     } else if (hours < 24) {
-      return `Hoje às ${syncTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-    } else if (days === 1) {
-      return `Ontem às ${syncTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+      return `Há ${hours} hora${hours !== 1 ? 's' : ''}`
+    } else if (days < 7) {
+      return `Há ${days} dia${days !== 1 ? 's' : ''}`
     } else {
       return syncTime.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
     }

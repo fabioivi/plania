@@ -60,6 +60,12 @@ export class Diary {
   @Column({ nullable: true })
   semestre: string;
 
+  @Column({ name: 'data_abertura', type: 'timestamp', nullable: true })
+  dataAbertura: Date; // Data de abertura do diário
+
+  @Column({ name: 'data_fechamento', type: 'timestamp', nullable: true })
+  dataFechamento: Date; // Data de fechamento do diário
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

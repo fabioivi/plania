@@ -21,35 +21,35 @@ export class ScrapingService {
 
   // Configuration constants for delays (in milliseconds)
   private readonly ENABLE_HUMAN_DELAYS = false; // Set to false to disable all delays
-  
+
   // Typing delays
   private readonly TYPING_DELAY_MIN = 30;
   private readonly TYPING_DELAY_MAX = 80;
-  
+
   // Navigation delays
   private readonly PAGE_LOAD_DELAY_MIN = 200;
   private readonly PAGE_LOAD_DELAY_MAX = 500;
-  
+
   // Interaction delays
   private readonly BEFORE_INTERACT_DELAY_MIN = 100;
   private readonly BEFORE_INTERACT_DELAY_MAX = 300;
-  
+
   private readonly BETWEEN_FIELDS_DELAY_MIN = 150;
   private readonly BETWEEN_FIELDS_DELAY_MAX = 400;
-  
+
   private readonly BEFORE_SUBMIT_DELAY_MIN = 200;
   private readonly BEFORE_SUBMIT_DELAY_MAX = 500;
-  
+
   private readonly AFTER_SUBMIT_DELAY_MIN = 1000;
   private readonly AFTER_SUBMIT_DELAY_MAX = 2000;
-  
+
   private readonly BEFORE_CONTENT_SEND_DELAY_MIN = 300;
   private readonly BEFORE_CONTENT_SEND_DELAY_MAX = 800;
 
   constructor(
     private configService: ConfigService,
     private debugService: ScrapingDebugService,
-  ) {}
+  ) { }
 
   /**
    * Generate random delay to simulate human behavior
@@ -83,13 +83,13 @@ export class ScrapingService {
    */
   private async humanType(page: Page, selector: string, text: string): Promise<void> {
     await page.focus(selector);
-    
+
     if (!this.ENABLE_HUMAN_DELAYS) {
       // Type instantly without delays
       await page.fill(selector, text);
       return;
     }
-    
+
     // Type character by character with delays
     for (const char of text) {
       await page.keyboard.type(char);
@@ -127,22 +127,22 @@ export class ScrapingService {
       // Navigate to login page
       const loginUrl = buildIFMSUrl(IFMS_ROUTES.AUTH.LOGIN);
       console.log(`Navigating to: ${loginUrl}`);
-      
-      await page.goto(loginUrl, { 
-        waitUntil: 'domcontentloaded', 
-        timeout: 30000 
+
+      await page.goto(loginUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000
       });
 
       // Wait for form to be visible
-      await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, { 
-        state: 'visible', 
-        timeout: 10000 
+      await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, {
+        state: 'visible',
+        timeout: 10000
       });
 
       // Fill login form with correct field names
       console.log(`Filling username: ${username}`);
       await page.fill(IFMS_SELECTORS.LOGIN.USERNAME, username, { timeout: 5000 });
-      
+
       console.log('Filling password');
       await page.fill(IFMS_SELECTORS.LOGIN.PASSWORD, password, { timeout: 5000 });
 
@@ -152,7 +152,7 @@ export class ScrapingService {
       // Submit form and wait for response
       console.log('Submitting form');
       await page.click(IFMS_SELECTORS.LOGIN.SUBMIT);
-      
+
       // Wait for navigation or error message
       await page.waitForTimeout(3000);
 
@@ -165,12 +165,12 @@ export class ScrapingService {
       if (errorElement) {
         const errorText = await errorElement.textContent();
         console.log(`Error message found: ${errorText}`);
-        
+
         // Check if it's the specific invalid credentials message
         if (errorText && errorText.includes('Login e/ou senha inválido')) {
           throw new Error('Login e/ou senha inválido(s). Verifique suas credenciais.');
         }
-        
+
         throw new Error('Erro ao fazer login. Verifique suas credenciais.');
       }
 
@@ -191,12 +191,12 @@ export class ScrapingService {
 
     } catch (error) {
       console.error('IFMS login test failed:', error);
-      
+
       // Customizar mensagens de erro
       if (error.message.includes('Timeout') || error.message.includes('timeout')) {
         throw new Error('Tempo esgotado ao tentar acessar o sistema acadêmico. Verifique sua conexão ou tente novamente mais tarde.');
       }
-      
+
       if (error.message.includes('navigation')) {
         throw new Error('Erro de navegação. O sistema acadêmico pode estar indisponível no momento.');
       }
@@ -208,9 +208,9 @@ export class ScrapingService {
       if (error.message.includes('Não foi possível verificar')) {
         throw error;
       }
-      
+
       throw new Error(`Erro ao conectar com o sistema acadêmico: ${error.message}`);
-      
+
     } finally {
       await context.close();
     }
@@ -225,15 +225,15 @@ export class ScrapingService {
     password: string,
   ): Promise<void> {
     const loginUrl = buildIFMSUrl(IFMS_ROUTES.AUTH.LOGIN);
-    
-    await page.goto(loginUrl, { 
-      waitUntil: 'domcontentloaded', 
-      timeout: 30000 
+
+    await page.goto(loginUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 30000
     });
 
-    await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, { 
-      state: 'visible', 
-      timeout: 10000 
+    await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, {
+      state: 'visible',
+      timeout: 10000
     });
 
     await page.fill(IFMS_SELECTORS.LOGIN.USERNAME, username, { timeout: 5000 });
@@ -405,10 +405,10 @@ export class ScrapingService {
     try {
       const teachingPlansUrl = buildIFMSUrl(IFMS_ROUTES.TEACHING_PLAN.LIST(diaryId));
       console.log(`Navigating to teaching plans: ${teachingPlansUrl}`);
-      
-      await page.goto(teachingPlansUrl, { 
+
+      await page.goto(teachingPlansUrl, {
         waitUntil: 'domcontentloaded',
-        timeout: 30000 
+        timeout: 30000
       });
 
       await page.waitForTimeout(2000);
@@ -416,25 +416,25 @@ export class ScrapingService {
       // Extract teaching plans from table
       const plans = await page.evaluate(() => {
         const rows = Array.from(document.querySelectorAll('table.table tbody tr'));
-        
+
         return rows.map((row) => {
           const cells = row.querySelectorAll('td');
-          
+
           // Extract plan ID from link
           const linkElement = cells[0]?.querySelector('a');
           const linkText = linkElement?.textContent?.trim() || '';
           const idMatch = linkText.match(/#(\d+)/);
           const externalId = idMatch ? idMatch[1] : '';
-          
+
           // Check if plan is deleted (has <del> tag)
           const isDeleted = cells[0]?.querySelector('del') !== null;
-          
+
           // Get status text
           const statusText = cells[1]?.textContent?.trim() || '';
-          
+
           // Extract professors
           const professores = cells[2]?.textContent?.trim() || '';
-          
+
           return {
             externalId,
             excluido: isDeleted,
@@ -469,13 +469,13 @@ export class ScrapingService {
   ): Promise<{ success: boolean; data?: any; message?: string }> {
     const startTime = Date.now();
     const url = buildIFMSUrl(IFMS_ROUTES.TEACHING_PLAN.VIEW(diaryId, planId));
-    
+
     try {
       console.log(`Navigating to teaching plan details: ${url}`);
-      
-      await page.goto(url, { 
+
+      await page.goto(url, {
         waitUntil: 'domcontentloaded',
-        timeout: 30000 
+        timeout: 30000
       });
 
       await page.waitForTimeout(2000);
@@ -508,21 +508,21 @@ export class ScrapingService {
           const parts = innerHTML.split(/<br\s*\/?>\s*<br\s*\/?>/i);
           let tecnicas: string[] = [];
           let recursos: string[] = [];
-          
+
           for (const part of parts) {
             const cleanPart = part.replace(/<[^>]+>/g, '').trim();
-            
+
             if (cleanPart.includes('Técnicas de Ensino:')) {
               const text = cleanPart.replace('Técnicas de Ensino:', '').trim();
               tecnicas = text.split(',').map(t => t.trim()).filter(t => t.length > 0);
             }
-            
+
             if (cleanPart.includes('Recursos de Ensino:')) {
               const text = cleanPart.replace('Recursos de Ensino:', '').trim();
               recursos = text.split(',').map(r => r.trim()).filter(r => r.length > 0);
             }
           }
-          
+
           const raw = innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
           return { tecnicasEnsino: tecnicas, recursosEnsino: recursos, raw };
         };
@@ -552,12 +552,12 @@ export class ScrapingService {
           const headerRows = diaryHeaderTable.querySelectorAll('tr');
           headerRows.forEach(row => {
             const text = row.textContent || '';
-            
+
             if (text.includes('Classe:')) {
               const cells = row.querySelectorAll('td');
               classeCompleta = cleanText(cells[0]?.textContent);
             }
-            
+
             if (text.includes('Unidade Curricular (Código)')) {
               const cells = row.querySelectorAll('td');
               const ucText = cleanText(cells[1]?.textContent);
@@ -566,7 +566,7 @@ export class ScrapingService {
                 unidadeCurricularCodigo = codeMatch ? codeMatch[1] : null;
               }
             }
-            
+
             if (text.includes('Aulas Normais Criadas')) {
               const cells = row.querySelectorAll('td');
               const aulasText = cleanText(cells[2]?.textContent);
@@ -586,7 +586,7 @@ export class ScrapingService {
         // ============================================
         const identificationTable = allTables[1];
         const idRows = identificationTable?.querySelectorAll('tr') || [];
-        
+
         let campus: string | null = null;
         let anoSemestre: string | null = null;
         let curso: string | null = null;
@@ -601,7 +601,7 @@ export class ScrapingService {
 
         idRows.forEach(row => {
           const text = row.textContent || '';
-          
+
           if (text.includes('CAMPUS:')) {
             const cells = row.querySelectorAll('td');
             const campusText = cells[0]?.textContent?.replace('CAMPUS:', '').trim();
@@ -609,7 +609,7 @@ export class ScrapingService {
             const anoText = cells[1]?.textContent?.replace('ANO/SEMESTRE:', '').trim();
             anoSemestre = cleanText(anoText);
           }
-          
+
           if (text.includes('CURSO:')) {
             const cells = row.querySelectorAll('td');
             const cursoText = cells[0]?.textContent?.replace('CURSO:', '').trim();
@@ -617,36 +617,36 @@ export class ScrapingService {
             const ucText = cells[1]?.textContent?.replace(/UNIDADE CURRICULAR.*:/i, '').trim();
             unidadeCurricular = cleanText(ucText);
           }
-          
+
           if (text.includes('PROFESSOR(ES):')) {
             const cell = row.querySelector('td');
             const profText = cell?.textContent?.replace('PROFESSOR(ES):', '').trim();
             professores = cleanText(profText);
           }
-          
+
           if (text.includes('Carga horária total da UC:')) {
             const cells = row.querySelectorAll('td');
             const chText = cells[0]?.textContent || '';
             const chMatch = chText.match(/Carga horária total da UC:\s*(\d+\.?\d*)/);
             cargaHorariaTotal = chMatch ? parseDecimal(chMatch[1]) : null;
-            
+
             const semanasMatch = chText.match(/Nº de semanas:\s*(\d+)/);
             numSemanas = semanasMatch ? parseInteger(semanasMatch[1]) : null;
-            
+
             const cell2Text = cells[1]?.textContent || '';
             const teoricasMatch = cell2Text.match(/Nº total de aulas teóricas:\s*(\d+)/);
             numAulasTeorica = teoricasMatch ? parseInteger(teoricasMatch[1]) : null;
-            
+
             const praticasMatch = cell2Text.match(/Nº total de aulas práticas:\s*(\d+)/);
             numAulasPraticas = praticasMatch ? parseInteger(praticasMatch[1]) : null;
           }
-          
+
           if (text.includes('STATUS DE APROVAÇÂO')) {
             const cell = row.querySelector('td');
             const statusText = cell?.textContent?.replace(/STATUS DE APROVAÇÂO.*:/i, '').trim();
             status = cleanText(statusText);
           }
-          
+
           if (text.includes('STATUS DO/PARA COORD')) {
             const cell = row.querySelector('td');
             const coordText = cell?.textContent?.replace(/STATUS DO\/PARA COORD.*/i, '').trim();
@@ -681,7 +681,7 @@ export class ScrapingService {
         const avalTable = allTables[5];
         const avalTableInner = avalTable?.querySelector('table.diario');
         const avalRows = avalTableInner?.querySelectorAll('tbody tr') || [];
-        
+
         const avaliacaoAprendizagem = Array.from(avalRows).map(row => {
           const cells = row.querySelectorAll('td');
           return {
@@ -692,7 +692,7 @@ export class ScrapingService {
             valorMaximo: cleanText(cells[4]?.textContent) || '',
           };
         });
-        
+
         // Try to find observações in multiple ways
         let observacoesAvaliacoes: string | null = null;
         const obsElements = avalTable?.querySelectorAll('p');
@@ -714,32 +714,32 @@ export class ScrapingService {
         const refTable = allTables[8];
         const refCell = refTable?.querySelector('tr:nth-child(2) td div.controls');
         const refHtml = refCell?.innerHTML || '';
-        
+
         // Parse references into structured data
         let bibliografiaBasica: string[] = [];
         let bibliografiaComplementar: string[] = [];
-        
+
         if (refHtml) {
           // Split by <br> tags which separate references
           const parts = refHtml.split(/<br\s*\/?>/);
           let isBasica = false;
           let isComplementar = false;
-          
+
           for (const part of parts) {
             const text = part.replace(/<[^>]+>/g, '').trim();
-            
+
             if (/Bibliografia\s+Básica/i.test(text)) {
               isBasica = true;
               isComplementar = false;
               continue;
             }
-            
+
             if (/Bibliografia\s+Complementar/i.test(text)) {
               isBasica = false;
               isComplementar = true;
               continue;
             }
-            
+
             // Valid references start with uppercase letter and have minimum length
             if (text.length > 10 && /^[A-ZÀ-Ú]/.test(text)) {
               if (isBasica) bibliografiaBasica.push(text);
@@ -747,7 +747,7 @@ export class ScrapingService {
             }
           }
         }
-        
+
         const referencias = cleanText(refCell?.textContent);
 
         // ============================================
@@ -755,40 +755,40 @@ export class ScrapingService {
         // ============================================
         const propTable = allTables[9];
         let propTableInner = propTable?.querySelector('table#proposta_trabalho');
-        
+
         // Fallback: try finding by other selectors
         if (!propTableInner) {
           propTableInner = propTable?.querySelector('table.data-table');
         }
-        
+
         if (!propTableInner) {
           warnings.push('Proposta de trabalho: tabela interna não encontrada (table#proposta_trabalho)');
         }
-        
+
         const propRows = propTableInner?.querySelectorAll('tbody tr') || [];
-        
+
         if (propRows.length === 0 && propTable) {
           warnings.push(`Proposta de trabalho: 0 linhas encontradas na tabela`);
         }
-        
+
         const propostaTrabalho = Array.from(propRows).map((row, index) => {
           const cells = row.querySelectorAll('td');
-          
+
           if (cells.length < 6) {
             warnings.push(`Proposta row ${index} has only ${cells.length} cells (expected 6)`);
             return null;
           }
-          
+
           const mes = cleanText(cells[0]?.textContent);
           const periodo = cleanText(cells[1]?.textContent);
           const numAulas = cleanText(cells[2]?.textContent);
           const observacoes = cleanText(cells[3]?.textContent);
           const conteudo = cleanText(cells[4]?.textContent);
-          
+
           // Parse metodologia (complex field)
           const metodologiaCell = cells[5];
           const metodologiaData = parseMetodologia(metodologiaCell?.innerHTML || '');
-          
+
           return {
             mes: mes || '',
             periodo: periodo || '',
@@ -806,7 +806,7 @@ export class ScrapingService {
         // ============================================
         const historicoTable = document.querySelector('#accordion_historico table.diario');
         const historicoRows = historicoTable?.querySelectorAll('tbody tr') || [];
-        
+
         const historico = Array.from(historicoRows).map(row => {
           const cells = row.querySelectorAll('td');
           return {
@@ -863,7 +863,7 @@ export class ScrapingService {
       const extractedFields = Object.keys(planData).filter(k => !k.startsWith('_'));
       const totalFields = 27; // Expected total fields
       const missingFields = extractedFields.filter(f => planData[f] === null || planData[f] === undefined || planData[f] === '');
-      
+
       // Cache scraping result (screenshot disabled by default for performance)
       // To enable screenshot, add: takeScreenshot: true
       await this.debugService.cacheScraping({
@@ -891,7 +891,7 @@ export class ScrapingService {
       };
     } catch (error) {
       console.error(`❌ Get teaching plan details failed for plan ${planId}:`, error);
-      
+
       // Cache failed scraping attempt for analysis (with screenshot for debugging)
       await this.debugService.cacheScraping({
         externalId: planId,
@@ -905,7 +905,7 @@ export class ScrapingService {
         success: false,
         takeScreenshot: true, // Enable screenshot on errors for debugging
       });
-      
+
       return {
         success: false,
         message: error.message,
@@ -928,10 +928,10 @@ export class ScrapingService {
 
       const diariesUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.LIST);
       console.log(`Navigating to diaries: ${diariesUrl}`);
-      
-      await page.goto(diariesUrl, { 
+
+      await page.goto(diariesUrl, {
         waitUntil: 'domcontentloaded',
-        timeout: 30000 
+        timeout: 30000
       });
 
       // Wait for table to load
@@ -940,44 +940,61 @@ export class ScrapingService {
       // Extract diaries data from table
       const diaries = await page.evaluate(() => {
         const rows = Array.from(document.querySelectorAll('table.table tbody tr'));
-        
+
+        // Helper to parse date in format DD/MM/YYYY to ISO string
+        const parseDateBR = (dateStr: string): string | null => {
+          if (!dateStr || dateStr.trim() === '' || dateStr === '-') return null;
+          const parts = dateStr.trim().match(/(\d{2})\/(\d{2})\/(\d{4})/);
+          if (!parts) return null;
+          const [, day, month, year] = parts;
+          return `${year}-${month}-${day}`;
+        };
+
         return rows.map((row) => {
           const cells = row.querySelectorAll('td');
-          
-          // Extract diary ID from link
+
+          // Check if entry is inside <del> tag (closed diary)
+          const isDeleted = cells[0]?.querySelector('del') !== null;
+
+          // Extract diary ID from link in Classe column (cells[0])
           const linkElement = cells[0]?.querySelector('a');
           const href = linkElement?.getAttribute('href') || '';
           const idMatch = href.match(/\/diario\/(\d+)/);
           const externalId = idMatch ? idMatch[1] : '';
-          
-          // Get text content from cells
-          const disciplina = cells[0]?.textContent?.trim() || '';
+
+          // Get disciplina from Classe column (cells[0]) - remove "(FECHADA)" suffix
+          const classeText = cells[0]?.textContent?.trim() || '';
+          const disciplina = classeText.replace(/\s*\(FECHADA\)\s*$/, '').trim();
+
+          // Get curso from Curso column (cells[1])
           const curso = cells[1]?.textContent?.trim() || '';
-          const turma = cells[2]?.textContent?.trim() || '';
-          const periodo = cells[3]?.textContent?.trim() || '';
-          
-          // Extract numbers from status column (Aprovados/Reprovados/Em curso)
-          const statusText = cells[4]?.textContent?.trim() || '';
-          const statusMatch = statusText.match(/(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)/);
-          
-          const aprovados = statusMatch ? parseInt(statusMatch[1]) : 0;
-          const reprovados = statusMatch ? parseInt(statusMatch[2]) : 0;
-          const emCurso = statusMatch ? parseInt(statusMatch[3]) : 0;
-          
-          // Check if diary is approved (has "Aprovado" badge/text)
-          const isApproved = row.querySelector('.badge-success, .label-success') !== null ||
-                            statusText.toLowerCase().includes('aprovado');
-          
+
+          // Check if diary is approved - Plano de Ensino column (cells[2])
+          const planoEnsinoCell = cells[2];
+          const isApproved = planoEnsinoCell?.querySelector('.label-success') !== null ||
+            planoEnsinoCell?.textContent?.toLowerCase().includes('aprovado');
+
+          // Extract opening date (data de abertura) - column 3
+          const dataAberturaText = cells[3]?.textContent?.trim() || '';
+          const dataAbertura = parseDateBR(dataAberturaText);
+
+          // Extract closing date (data de fechamento) - column 4
+          const dataFechamentoText = cells[4]?.textContent?.trim() || '';
+          const dataFechamento = parseDateBR(dataFechamentoText);
+
           return {
             externalId,
             disciplina,
             curso,
-            turma,
-            periodo,
-            aprovados,
-            reprovados,
-            emCurso,
+            turma: '', // Not available in this table
+            periodo: '', // Not available in this table
+            aprovados: 0, // Not available in this table
+            reprovados: 0, // Not available in this table
+            emCurso: 0, // Not available in this table
             aprovado: isApproved,
+            dataAbertura,
+            dataFechamento,
+            excluido: isDeleted,
           };
         }).filter(d => d.externalId); // Filter out rows without ID
       });
@@ -1199,7 +1216,7 @@ export class ScrapingService {
       });
 
       console.log(`✅ Extraídos ${contents.length} conteúdos do diário`);
-      
+
       // Filter out items without dates
       const validContents = contents.filter(item => {
         if (!item.date || item.date.trim() === '') {
@@ -1208,7 +1225,7 @@ export class ScrapingService {
         }
         return true;
       });
-      
+
       // Log de debug: mostrar primeiras datas para verificar formato
       if (validContents.length > 0) {
         console.log('📅 Amostra de datas extraídas:');
@@ -1255,33 +1272,33 @@ export class ScrapingService {
     // Navigate to login page with human-like delay
     const loginUrl = buildIFMSUrl(IFMS_ROUTES.AUTH.LOGIN);
     await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    
+
     // Wait for page to load completely (random delay)
     await this.humanDelay(page, this.PAGE_LOAD_DELAY_MIN, this.PAGE_LOAD_DELAY_MAX);
-    
+
     await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, { state: 'visible', timeout: 10000 });
-    
+
     // Simulate human behavior: small delay before interacting
     await this.humanDelay(page, this.BEFORE_INTERACT_DELAY_MIN, this.BEFORE_INTERACT_DELAY_MAX);
-    
+
     // Type username with human-like speed
     console.log(`⌨️ Digitando usuário...`);
     await this.humanType(page, IFMS_SELECTORS.LOGIN.USERNAME, username);
-    
+
     // Small delay between fields (like a human would do)
     await this.humanDelay(page, this.BETWEEN_FIELDS_DELAY_MIN, this.BETWEEN_FIELDS_DELAY_MAX);
-    
+
     // Type password with human-like speed
     console.log(`⌨️ Digitando senha...`);
     await this.humanType(page, IFMS_SELECTORS.LOGIN.PASSWORD, password);
-    
+
     // Small delay before clicking submit (human hesitation)
     await this.humanDelay(page, this.BEFORE_SUBMIT_DELAY_MIN, this.BEFORE_SUBMIT_DELAY_MAX);
-    
+
     // Click submit button
     console.log(`🖱️ Enviando formulário...`);
     await page.click(IFMS_SELECTORS.LOGIN.SUBMIT);
-    
+
     // Wait for response with random delay
     await this.humanDelay(page, this.AFTER_SUBMIT_DELAY_MIN, this.AFTER_SUBMIT_DELAY_MAX);
 
@@ -1407,7 +1424,7 @@ export class ScrapingService {
             success: result.success,
             message: result.message,
           });
-          
+
           // Notify progress
           if (onProgress) {
             onProgress(current, contents.length, contentId, result.success, result.message || '');
@@ -1420,7 +1437,7 @@ export class ScrapingService {
             success: false,
             message: errorMessage,
           });
-          
+
           // Notify progress with error
           if (onProgress) {
             onProgress(current, contents.length, contentId, false, errorMessage);

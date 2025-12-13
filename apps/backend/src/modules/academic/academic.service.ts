@@ -40,7 +40,7 @@ export class AcademicService {
     private cryptoService: CryptoService,
     private scrapingService: ScrapingService,
     @InjectQueue('auth-queue') private authQueue: Queue,
-  ) {}
+  ) { }
 
   async saveCredential(userId: string, dto: SaveCredentialDto) {
     // Check if credential already exists
@@ -234,23 +234,32 @@ export class AcademicService {
     return credential;
   }
 
-  // Sync diaries from IFMS (only non-approved)
+  // Sync diaries from IFMS (only diaries without closing date and not deleted)
   async syncDiaries(userId: string, diariesData: any[]) {
     const diariesToSave = [];
 
     for (const diaryData of diariesData) {
-      // Skip approved diaries
-      if (diaryData.aprovado) {
+      // Skip deleted diaries (inside <del> tag)
+      if (diaryData.excluido) {
+        continue;
+      }
+
+      // Skip diaries that have a closing date (data de fechamento)
+      if (diaryData.dataFechamento) {
         continue;
       }
 
       // Check if diary already exists
       let diary = await this.diaryRepository.findOne({
-        where: { 
-          userId, 
-          externalId: diaryData.externalId 
+        where: {
+          userId,
+          externalId: diaryData.externalId
         },
       });
+
+      // Parse dates from ISO string to Date objects
+      const dataAbertura = diaryData.dataAbertura ? new Date(diaryData.dataAbertura) : null;
+      const dataFechamento = diaryData.dataFechamento ? new Date(diaryData.dataFechamento) : null;
 
       if (diary) {
         // Update existing diary
@@ -262,6 +271,8 @@ export class AcademicService {
         diary.reprovados = diaryData.reprovados;
         diary.emCurso = diaryData.emCurso;
         diary.aprovado = diaryData.aprovado;
+        diary.dataAbertura = dataAbertura;
+        diary.dataFechamento = dataFechamento;
       } else {
         // Create new diary
         diary = this.diaryRepository.create({
@@ -275,6 +286,8 @@ export class AcademicService {
           reprovados: diaryData.reprovados,
           emCurso: diaryData.emCurso,
           aprovado: diaryData.aprovado,
+          dataAbertura: dataAbertura,
+          dataFechamento: dataFechamento,
         });
       }
 
@@ -311,9 +324,9 @@ export class AcademicService {
     for (const planData of plansData) {
       // Check if plan already exists
       let plan = await this.teachingPlanRepository.findOne({
-        where: { 
-          userId, 
-          externalId: planData.externalId 
+        where: {
+          userId,
+          externalId: planData.externalId
         },
       });
 
@@ -385,16 +398,22 @@ export class AcademicService {
         });
       }
 
+      // Store historico data for later sync (after plan is saved and has id)
+      (plan as any)._historicoData = planData.historico;
       plansToSave.push(plan);
-
-      // Sync history entries if present
-      if (planData.historico && Array.isArray(planData.historico)) {
-        await this.syncTeachingPlanHistory(plan.id, planData.historico);
-      }
     }
 
     if (plansToSave.length > 0) {
-      await this.teachingPlanRepository.save(plansToSave);
+      // Save plans first to get IDs
+      const savedPlans = await this.teachingPlanRepository.save(plansToSave);
+
+      // Now sync history entries (after plans have IDs)
+      for (const plan of savedPlans) {
+        const historicoData = (plan as any)._historicoData;
+        if (historicoData && Array.isArray(historicoData)) {
+          await this.syncTeachingPlanHistory(plan.id, historicoData);
+        }
+      }
     }
 
     return plansToSave.length;
@@ -470,7 +489,7 @@ export class AcademicService {
   // Sync diary content (class content from diary page)
   async syncDiaryContent(userId: string, diaryId: string, contentData: any[]) {
     console.log(`🔄 Sincronizando conteúdo do diário ${diaryId}: ${contentData.length} itens recebidos`);
-    
+
     const contentsToSave: DiaryContent[] = [];
     let skippedCount = 0;
 
@@ -533,7 +552,7 @@ export class AcademicService {
           originalContentId: item.originalContentId,
           originalDate: parsedOriginalDate,
         });
-        
+
         // Double-check date is valid before adding to save list
         if (!content.date || isNaN(content.date.getTime())) {
           console.error(`❌ ERRO: Conteúdo criado com data inválida!`, {
@@ -545,7 +564,7 @@ export class AcademicService {
           skippedCount++;
           continue;
         }
-        
+
         contentsToSave.push(content);
       }
     }
@@ -868,28 +887,28 @@ export class AcademicService {
       if (content.isAntecipation) {
         return true;
       }
-      
+
       // Se for aula normal, verificar se NÃO tem antecipação correspondente
       const hasAnticipation = existingContents.some(
         c => c.isAntecipation && c.originalContentId === content.contentId
       );
-      
+
       // Incluir apenas se NÃO tem antecipação (senão é uma aula cancelada)
       return !hasAnticipation;
     });
 
     // Gerar conteúdo baseado na proposta de trabalho do plano
     const generatedContents = [];
-    
+
     if (teachingPlan.propostaTrabalho && Array.isArray(teachingPlan.propostaTrabalho)) {
       let contentIndex = 0;
-      
+
       for (const proposta of teachingPlan.propostaTrabalho) {
         const numAulas = parseInt(proposta.numAulas) || 0;
-        
+
         for (let i = 0; i < numAulas && contentIndex < contentsForMapping.length; i++) {
           const existingContent = contentsForMapping[contentIndex];
-          
+
           // Criar conteúdo gerado mantendo data/horário/tipo do conteúdo existente
           const generatedContent = {
             id: existingContent.id,
@@ -906,15 +925,15 @@ export class AcademicService {
             content: proposta.conteudo || '',
             observations: proposta.observacoes || '',
           };
-          
+
           generatedContents.push(generatedContent);
-          
+
           // Se esta é uma antecipação, também gerar para a aula cancelada original
           if (existingContent.isAntecipation && existingContent.originalContentId) {
             const originalContent = existingContents.find(
               c => c.contentId === existingContent.originalContentId
             );
-            
+
             if (originalContent) {
               generatedContents.push({
                 id: originalContent.id,
@@ -933,7 +952,7 @@ export class AcademicService {
               });
             }
           }
-          
+
           contentIndex++;
         }
       }
@@ -969,7 +988,7 @@ export class AcademicService {
     }
 
     const savedContents = [];
-    
+
     // Criar um mapa de conteúdos por contentId para facilitar lookup
     const contentsByContentId = new Map<string, any>();
     for (const contentData of contents) {
@@ -997,9 +1016,9 @@ export class AcademicService {
         if (existing.isAntecipation && existing.originalContentId) {
           // Buscar a aula cancelada original
           const originalContent = await this.diaryContentRepository.findOne({
-            where: { 
+            where: {
               diaryId,
-              contentId: existing.originalContentId 
+              contentId: existing.originalContentId
             },
           });
 
@@ -1034,7 +1053,7 @@ export class AcademicService {
     // Rate limiting: Check if user is making requests too frequently
     const now = Date.now();
     const lastRequest = this.lastRequestTime.get(userId);
-    
+
     if (lastRequest) {
       const timeSinceLastRequest = now - lastRequest;
       if (timeSinceLastRequest < this.MIN_REQUEST_INTERVAL) {
@@ -1263,7 +1282,7 @@ export class AcademicService {
       } else {
         failed++;
       }
-      
+
       // Send final progress for this item
       processedCount++;
       if (onProgress) {

@@ -183,655 +183,655 @@ export default function PlanReviewPage() {
 
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-background">
-      <PlanHeader
-        planTitle={plan.unidadeCurricular || 'Plano de Ensino'}
-        planInfo={`${plan.anoSemestre || ''} • ${plan.cargaHorariaTotal || 0}h`}
-        status={plan.source === 'ai' && !plan.sentToIFMS ? 'draft' : 'approved'}
-      />
+      <div className="min-h-screen bg-background">
+        <PlanHeader
+          planTitle={plan.unidadeCurricular || 'Plano de Ensino'}
+          planInfo={`${plan.anoSemestre || ''} • ${plan.cargaHorariaTotal || 0}h`}
+          status={plan.source === 'ai' && !plan.sentToIFMS ? 'draft' : 'approved'}
+        />
 
-      <div className="flex">
-        {/* Main Content */}
-        <main className={`flex-1 container mx-auto py-8 px-4 transition-all ${showAiAssistant ? 'max-w-5xl' : 'max-w-7xl'}`}>
-          {/* Back Button */}
-          <Link href="/dashboard">
-            <Button variant="ghost" className="mb-6 gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar ao Dashboard
-            </Button>
-          </Link>
+        <div className="flex">
+          {/* Main Content */}
+          <main className={`flex-1 container mx-auto py-8 px-4 transition-all ${showAiAssistant ? 'max-w-5xl' : 'max-w-7xl'}`}>
+            {/* Back Button */}
+            <Link href="/dashboard">
+              <Button variant="ghost" className="mb-6 gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar ao Dashboard
+              </Button>
+            </Link>
 
-          {/* Plan Header */}
-          <div className="mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Plano de Ensino</h1>
-                <p className="text-muted-foreground">
-                  Revise e edite o plano gerado pela IA. Use o assistente ao lado para fazer ajustes.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleSaveChanges}
-                  disabled={!hasChanges || saving}
-                  className="gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Salvar Alterações
-                    </>
-                  )}
-                </Button>
-                <Link href="/plans/preview/1">
+            {/* Plan Header */}
+            <div className="mb-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">Plano de Ensino</h1>
+                  <p className="text-muted-foreground">
+                    Revise e edite o plano gerado pela IA. Use o assistente ao lado para fazer ajustes.
+                  </p>
+                </div>
+                <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
+                    onClick={handleSaveChanges}
+                    disabled={!hasChanges || saving}
                     className="gap-2"
                   >
-                    <Eye className="h-4 w-4" />
-                    Visualizar Prévia
-                  </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAiAssistant(!showAiAssistant)}
-                  className="gap-2"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {showAiAssistant ? "Ocultar" : "Mostrar"} Assistente IA
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleFillDiary}
-                  disabled={isFilling || fillSuccess}
-                  className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  {isFilling ? (
-                    <>
-                      <Wand2 className="h-4 w-4 animate-spin" />
-                      Preenchendo...
-                    </>
-                  ) : fillSuccess ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Diário Preenchido!
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4" />
-                      Preencher Diário
-                    </>
-                  )}
-                </Button>
-                {plan?.source === 'ai' && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteClick}
-                    disabled={deleting}
-                    className="gap-2"
-                  >
-                    {deleting ? (
+                    {saving ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Excluindo...
+                        Salvando...
                       </>
                     ) : (
                       <>
-                        <Trash2 className="h-4 w-4" />
-                        Excluir Plano
+                        <Save className="h-4 w-4" />
+                        Salvar Alterações
                       </>
                     )}
                   </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Success Alert */}
-            {fillSuccess && (
-              <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-                  <CheckCircle2 className="h-5 w-5" />
-                  <div>
-                    <p className="font-semibold">Diário preenchido com sucesso!</p>
-                    <p className="text-sm">O conteúdo do plano de ensino foi sincronizado automaticamente com o Sistema Acadêmico IFMS.</p>
-                  </div>
+                  <Link href={`/teaching-plans/${planId}?from=review`}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Visualizar Prévia
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAiAssistant(!showAiAssistant)}
+                    className="gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {showAiAssistant ? "Ocultar" : "Mostrar"} Assistente IA
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleFillDiary}
+                    disabled={isFilling || fillSuccess}
+                    className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    {isFilling ? (
+                      <>
+                        <Wand2 className="h-4 w-4 animate-spin" />
+                        Preenchendo...
+                      </>
+                    ) : fillSuccess ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Diário Preenchido!
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        Preencher Diário
+                      </>
+                    )}
+                  </Button>
+                  {plan?.source === 'ai' && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteClick}
+                      disabled={deleting}
+                      className="gap-2"
+                    >
+                      {deleting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Excluindo...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          Excluir Plano
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Plan Content Tabs */}
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-              <TabsTrigger value="objectives">Objetivos</TabsTrigger>
-              <TabsTrigger value="content">Conteúdo</TabsTrigger>
-              <TabsTrigger value="methodology">Metodologia</TabsTrigger>
-              <TabsTrigger value="evaluation">Avaliação</TabsTrigger>
-            </TabsList>
+              {/* Success Alert */}
+              {fillSuccess && (
+                <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <div>
+                      <p className="font-semibold">Diário preenchido com sucesso!</p>
+                      <p className="text-sm">O conteúdo do plano de ensino foi sincronizado automaticamente com o Sistema Acadêmico IFMS.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    Informações Gerais
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="discipline">Unidade Curricular</Label>
-                      <Input
-                        id="discipline"
-                        value={plan.unidadeCurricular || ''}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="course">Curso</Label>
-                      <Input
-                        id="course"
-                        value={plan.curso || ''}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="campus">Campus</Label>
-                      <Input
-                        id="campus"
-                        value={plan.campus || ''}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="semester">Período</Label>
-                      <Input
-                        id="semester"
-                        value={plan.anoSemestre || ''}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="workload">Carga Horária</Label>
-                      <Input
-                        id="workload"
-                        value={`${plan.cargaHorariaTotal || 0}h`}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="weeks">Número de Semanas</Label>
-                      <Input
-                        id="weeks"
-                        type="number"
-                        value={plan.numSemanas || 0}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="theoretical">Aulas Teóricas</Label>
-                      <Input
-                        id="theoretical"
-                        type="number"
-                        value={numAulasTeorica}
-                        onChange={(e) => {
-                          setNumAulasTeorica(parseInt(e.target.value) || 0)
-                          setHasChanges(true)
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="practical">Aulas Práticas</Label>
-                      <Input
-                        id="practical"
-                        type="number"
-                        value={numAulasPraticas}
-                        onChange={(e) => {
-                          setNumAulasPraticas(parseInt(e.target.value) || 0)
-                          setHasChanges(true)
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Ementa</Label>
-                    <Textarea
-                      id="description"
-                      rows={4}
-                      value={plan.ementa || ''}
-                      disabled
-                      className="bg-muted cursor-not-allowed"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {/* Plan Content Tabs */}
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+                <TabsTrigger value="objectives">Objetivos</TabsTrigger>
+                <TabsTrigger value="content">Conteúdo</TabsTrigger>
+                <TabsTrigger value="methodology">Metodologia</TabsTrigger>
+                <TabsTrigger value="evaluation">Avaliação</TabsTrigger>
+              </TabsList>
 
-            {/* Objectives Tab */}
-            <TabsContent value="objectives" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Objetivos de Aprendizagem
-                  </CardTitle>
-                  <CardDescription>
-                    Competências e habilidades que os alunos devem desenvolver
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Objetivo Geral</Label>
-                    <Textarea
-                      rows={3}
-                      value={objetivoGeral}
-                      onChange={(e) => {
-                        setObjetivoGeral(e.target.value)
-                        setHasChanges(true)
-                      }}
-                      placeholder="Descreva o objetivo geral da disciplina..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Objetivos Específicos</Label>
-                    <Textarea
-                      rows={8}
-                      value={objetivosEspecificos}
-                      onChange={(e) => {
-                        setObjetivosEspecificos(e.target.value)
-                        setHasChanges(true)
-                      }}
-                      placeholder="Liste os objetivos específicos da disciplina..."
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Content Tab */}
-            <TabsContent value="content" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    Detalhamento da Proposta de Trabalho
-                  </CardTitle>
-                  <CardDescription>
-                    Cronograma semanal de aulas com conteúdo e metodologia
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
-                    <>
-                      <div className="rounded-md border overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead className="bg-muted/50">
-                            <tr>
-                              <th className="p-3 text-left font-semibold min-w-[120px]">Mês/Período</th>
-                              <th className="p-3 text-center font-semibold">Nº Aulas</th>
-                              <th className="p-3 text-left font-semibold min-w-[200px]">Conteúdo</th>
-                              <th className="p-3 text-left font-semibold min-w-[150px]">Técnicas de Ensino</th>
-                              <th className="p-3 text-left font-semibold min-w-[150px]">Recursos de Ensino</th>
-                              <th className="p-3 text-left font-semibold">Observações</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {propostaTrabalho.map((item, index) => (
-                              <tr key={index} className="border-t">
-                                <td className="p-3">
-                                  <div className="font-medium">{item.mes}</div>
-                                  <div className="text-xs text-muted-foreground">{item.periodo}</div>
-                                </td>
-                                <td className="p-3 text-center">
-                                  <Badge>{item.numAulas}</Badge>
-                                </td>
-                                <td className="p-3">
-                                  <Textarea
-                                    value={item.conteudo || ''}
-                                    onChange={(e) => handleConteudoChange(index, e.target.value)}
-                                    rows={2}
-                                    className="text-sm min-w-[200px]"
-                                    placeholder="Conteúdo da aula..."
-                                  />
-                                </td>
-                                <td className="p-3">
-                                  {item.tecnicasEnsino && item.tecnicasEnsino.length > 0 ? (
-                                    <div className="flex gap-1.5 flex-wrap">
-                                      {item.tecnicasEnsino.map((tecnica, i) => (
-                                        <Badge
-                                          key={i}
-                                          variant="secondary"
-                                          className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700"
-                                        >
-                                          {tecnica}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground text-xs">-</span>
-                                  )}
-                                </td>
-                                <td className="p-3">
-                                  {item.recursosEnsino && item.recursosEnsino.length > 0 ? (
-                                    <div className="flex gap-1.5 flex-wrap">
-                                      {item.recursosEnsino.map((recurso, i) => (
-                                        <Badge
-                                          key={i}
-                                          variant="secondary"
-                                          className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700"
-                                        >
-                                          {recurso}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground text-xs">-</span>
-                                  )}
-                                </td>
-                                <td className="p-3 text-muted-foreground">{item.observacoes || '-'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Informações Gerais
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="discipline">Unidade Curricular</Label>
+                        <Input
+                          id="discipline"
+                          value={plan.unidadeCurricular || ''}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
                       </div>
-
-                      <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold">Total de Aulas:</span>
-                          <span className="text-sm text-muted-foreground">
-                            Carga horária: {plan.cargaHorariaTotal || 0}h
-                          </span>
-                        </div>
-                        <div className="flex gap-3 items-center">
-                          <Badge variant="secondary" className="text-lg px-4">
-                            {plan.propostaTrabalho.reduce((sum, item) => sum + parseInt(item.numAulas || '0'), 0)} aulas
-                          </Badge>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Nenhuma proposta de trabalho definida ainda.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Methodology Tab */}
-            <TabsContent value="methodology" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Metodologia de Ensino
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
-                    <div className="space-y-2">
-                      <Label>Metodologias Utilizadas</Label>
-                      <div className="rounded-md border p-4 bg-muted/30">
-                        <div className="space-y-2">
-                          {Array.from(
-                            new Set(
-                              plan.propostaTrabalho
-                                .map(item => item.metodologia)
-                                .filter(Boolean)
-                            )
-                          ).map((metodologia, index) => (
-                            <div key={index} className="flex items-start gap-2">
-                              <div className="h-1.5 w-1.5 rounded-full bg-primary mt-2" />
-                              <span>{metodologia}</span>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="course">Curso</Label>
+                        <Input
+                          id="course"
+                          value={plan.curso || ''}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
                       </div>
                     </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Nenhuma metodologia definida ainda.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Evaluation Tab */}
-            <TabsContent value="evaluation" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Sistema de Avaliação
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {plan.avaliacaoAprendizagem && plan.avaliacaoAprendizagem.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Avaliações</Label>
-                      <div className="rounded-md border">
-                        <table className="w-full text-sm">
-                          <thead className="bg-muted/50">
-                            <tr>
-                              <th className="p-3 text-left font-semibold">Etapa</th>
-                              <th className="p-3 text-left font-semibold">Avaliação</th>
-                              <th className="p-3 text-left font-semibold">Instrumentos</th>
-                              <th className="p-3 text-left font-semibold">Data Prevista</th>
-                              <th className="p-3 text-left font-semibold">Valor Máximo</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {plan.avaliacaoAprendizagem.map((avaliacao, index) => (
-                              <tr key={index} className="border-t">
-                                <td className="p-3">{avaliacao.etapa}</td>
-                                <td className="p-3">{avaliacao.avaliacao}</td>
-                                <td className="p-3">{avaliacao.instrumentos}</td>
-                                <td className="p-3">{avaliacao.dataPrevista}</td>
-                                <td className="p-3 text-center">{avaliacao.valorMaximo}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="campus">Campus</Label>
+                        <Input
+                          id="campus"
+                          value={plan.campus || ''}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="semester">Período</Label>
+                        <Input
+                          id="semester"
+                          value={plan.anoSemestre || ''}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="workload">Carga Horária</Label>
+                        <Input
+                          id="workload"
+                          value={`${plan.cargaHorariaTotal || 0}h`}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
                       </div>
                     </div>
-                  )}
-
-                  {plan.observacoesAvaliacoes && (
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="weeks">Número de Semanas</Label>
+                        <Input
+                          id="weeks"
+                          type="number"
+                          value={plan.numSemanas || 0}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="theoretical">Aulas Teóricas</Label>
+                        <Input
+                          id="theoretical"
+                          type="number"
+                          value={numAulasTeorica}
+                          onChange={(e) => {
+                            setNumAulasTeorica(parseInt(e.target.value) || 0)
+                            setHasChanges(true)
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="practical">Aulas Práticas</Label>
+                        <Input
+                          id="practical"
+                          type="number"
+                          value={numAulasPraticas}
+                          onChange={(e) => {
+                            setNumAulasPraticas(parseInt(e.target.value) || 0)
+                            setHasChanges(true)
+                          }}
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label>Observações sobre Avaliações</Label>
+                      <Label htmlFor="description">Ementa</Label>
+                      <Textarea
+                        id="description"
+                        rows={4}
+                        value={plan.ementa || ''}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Objectives Tab */}
+              <TabsContent value="objectives" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Objetivos de Aprendizagem
+                    </CardTitle>
+                    <CardDescription>
+                      Competências e habilidades que os alunos devem desenvolver
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Objetivo Geral</Label>
                       <Textarea
                         rows={3}
-                        value={plan.observacoesAvaliacoes}
+                        value={objetivoGeral}
+                        onChange={(e) => {
+                          setObjetivoGeral(e.target.value)
+                          setHasChanges(true)
+                        }}
+                        placeholder="Descreva o objetivo geral da disciplina..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Objetivos Específicos</Label>
+                      <Textarea
+                        rows={8}
+                        value={objetivosEspecificos}
+                        onChange={(e) => {
+                          setObjetivosEspecificos(e.target.value)
+                          setHasChanges(true)
+                        }}
+                        placeholder="Liste os objetivos específicos da disciplina..."
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Content Tab */}
+              <TabsContent value="content" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5" />
+                      Detalhamento da Proposta de Trabalho
+                    </CardTitle>
+                    <CardDescription>
+                      Cronograma semanal de aulas com conteúdo e metodologia
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
+                      <>
+                        <div className="rounded-md border overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="p-3 text-left font-semibold min-w-[120px]">Mês/Período</th>
+                                <th className="p-3 text-center font-semibold">Nº Aulas</th>
+                                <th className="p-3 text-left font-semibold min-w-[200px]">Conteúdo</th>
+                                <th className="p-3 text-left font-semibold min-w-[150px]">Técnicas de Ensino</th>
+                                <th className="p-3 text-left font-semibold min-w-[150px]">Recursos de Ensino</th>
+                                <th className="p-3 text-left font-semibold">Observações</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {propostaTrabalho.map((item, index) => (
+                                <tr key={index} className="border-t">
+                                  <td className="p-3">
+                                    <div className="font-medium">{item.mes}</div>
+                                    <div className="text-xs text-muted-foreground">{item.periodo}</div>
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    <Badge>{item.numAulas}</Badge>
+                                  </td>
+                                  <td className="p-3">
+                                    <Textarea
+                                      value={item.conteudo || ''}
+                                      onChange={(e) => handleConteudoChange(index, e.target.value)}
+                                      rows={2}
+                                      className="text-sm min-w-[200px]"
+                                      placeholder="Conteúdo da aula..."
+                                    />
+                                  </td>
+                                  <td className="p-3">
+                                    {item.tecnicasEnsino && item.tecnicasEnsino.length > 0 ? (
+                                      <div className="flex gap-1.5 flex-wrap">
+                                        {item.tecnicasEnsino.map((tecnica, i) => (
+                                          <Badge
+                                            key={i}
+                                            variant="secondary"
+                                            className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-700"
+                                          >
+                                            {tecnica}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">-</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3">
+                                    {item.recursosEnsino && item.recursosEnsino.length > 0 ? (
+                                      <div className="flex gap-1.5 flex-wrap">
+                                        {item.recursosEnsino.map((recurso, i) => (
+                                          <Badge
+                                            key={i}
+                                            variant="secondary"
+                                            className="text-xs whitespace-nowrap rounded-full px-2.5 py-0.5 font-medium bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-700"
+                                          >
+                                            {recurso}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">-</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-muted-foreground">{item.observacoes || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-semibold">Total de Aulas:</span>
+                            <span className="text-sm text-muted-foreground">
+                              Carga horária: {plan.cargaHorariaTotal || 0}h
+                            </span>
+                          </div>
+                          <div className="flex gap-3 items-center">
+                            <Badge variant="secondary" className="text-lg px-4">
+                              {plan.propostaTrabalho.reduce((sum, item) => sum + parseInt(item.numAulas || '0'), 0)} aulas
+                            </Badge>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhuma proposta de trabalho definida ainda.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Methodology Tab */}
+              <TabsContent value="methodology" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Metodologia de Ensino
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
+                      <div className="space-y-2">
+                        <Label>Metodologias Utilizadas</Label>
+                        <div className="rounded-md border p-4 bg-muted/30">
+                          <div className="space-y-2">
+                            {Array.from(
+                              new Set(
+                                plan.propostaTrabalho
+                                  .map(item => item.metodologia)
+                                  .filter(Boolean)
+                              )
+                            ).map((metodologia, index) => (
+                              <div key={index} className="flex items-start gap-2">
+                                <div className="h-1.5 w-1.5 rounded-full bg-primary mt-2" />
+                                <span>{metodologia}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhuma metodologia definida ainda.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Evaluation Tab */}
+              <TabsContent value="evaluation" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Sistema de Avaliação
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {plan.avaliacaoAprendizagem && plan.avaliacaoAprendizagem.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Avaliações</Label>
+                        <div className="rounded-md border">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="p-3 text-left font-semibold">Etapa</th>
+                                <th className="p-3 text-left font-semibold">Avaliação</th>
+                                <th className="p-3 text-left font-semibold">Instrumentos</th>
+                                <th className="p-3 text-left font-semibold">Data Prevista</th>
+                                <th className="p-3 text-left font-semibold">Valor Máximo</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {plan.avaliacaoAprendizagem.map((avaliacao, index) => (
+                                <tr key={index} className="border-t">
+                                  <td className="p-3">{avaliacao.etapa}</td>
+                                  <td className="p-3">{avaliacao.avaliacao}</td>
+                                  <td className="p-3">{avaliacao.instrumentos}</td>
+                                  <td className="p-3">{avaliacao.dataPrevista}</td>
+                                  <td className="p-3 text-center">{avaliacao.valorMaximo}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {plan.observacoesAvaliacoes && (
+                      <div className="space-y-2">
+                        <Label>Observações sobre Avaliações</Label>
+                        <Textarea
+                          rows={3}
+                          value={plan.observacoesAvaliacoes}
+                          readOnly
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label>Recuperação da Aprendizagem</Label>
+                      <Textarea
+                        rows={4}
+                        value={plan.recuperacaoAprendizagem || ''}
                         readOnly
                       />
                     </div>
-                  )}
 
-                  <div className="space-y-2">
-                    <Label>Recuperação da Aprendizagem</Label>
-                    <Textarea
-                      rows={4}
-                      value={plan.recuperacaoAprendizagem || ''}
-                      readOnly
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Referências Bibliográficas</Label>
+                      <Textarea
+                        rows={6}
+                        value={plan.referencias || ''}
+                        readOnly
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </main>
 
-                  <div className="space-y-2">
-                    <Label>Referências Bibliográficas</Label>
-                    <Textarea
-                      rows={6}
-                      value={plan.referencias || ''}
-                      readOnly
-                    />
+          {/* AI Assistant Sidebar */}
+          {showAiAssistant && (
+            <aside className="w-96 border-l bg-muted/30 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+              <div className="p-6 space-y-6">
+                {/* Assistant Header */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    </div>
+                    <h3 className="font-semibold">Assistente IA</h3>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </main>
-
-        {/* AI Assistant Sidebar */}
-        {showAiAssistant && (
-          <aside className="w-96 border-l bg-muted/30 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
-            <div className="p-6 space-y-6">
-              {/* Assistant Header */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                  </div>
-                  <h3 className="font-semibold">Assistente IA</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Peça sugestões, melhorias ou reescreva seções do seu plano
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Peça sugestões, melhorias ou reescreva seções do seu plano
-                </p>
-              </div>
 
-              {/* Quick Actions */}
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">
-                  Ações Rápidas
-                </Label>
+                {/* Quick Actions */}
                 <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Wand2 className="h-4 w-4" />
-                    Melhorar objetivos
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Wand2 className="h-4 w-4" />
-                    Sugerir metodologias
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Wand2 className="h-4 w-4" />
-                    Adicionar avaliações
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
-                    <Wand2 className="h-4 w-4" />
-                    Expandir conteúdo
-                  </Button>
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                    Ações Rápidas
+                  </Label>
+                  <div className="space-y-2">
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Wand2 className="h-4 w-4" />
+                      Melhorar objetivos
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Wand2 className="h-4 w-4" />
+                      Sugerir metodologias
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Wand2 className="h-4 w-4" />
+                      Adicionar avaliações
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                      <Wand2 className="h-4 w-4" />
+                      Expandir conteúdo
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Custom Prompt */}
-              <div className="space-y-3">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">
-                  Solicitação Personalizada
-                </Label>
-                <Textarea 
-                  placeholder="Ex: Adicione mais exercícios práticos na unidade 2..."
-                  rows={4}
-                  value={aiPrompt}
-                  onChange={(e) => setAiPrompt(e.target.value)}
-                />
-                <Button className="w-full gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Aplicar com IA
-                </Button>
-              </div>
-
-              {/* Suggestions */}
-              <div className="space-y-3">
-                <Label className="text-xs font-semibold uppercase text-muted-foreground">
-                  Sugestões
-                </Label>
+                {/* Custom Prompt */}
                 <div className="space-y-3">
-                  <Card>
-                    <CardContent className="pt-4 pb-4 space-y-2">
-                      <div className="flex items-start gap-2">
-                        <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5" />
-                        <div className="flex-1 text-sm">
-                          <p className="font-medium mb-1">Incluir metodologias ativas</p>
-                          <p className="text-xs text-muted-foreground">
-                            Considere adicionar aprendizagem baseada em problemas
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          Aplicar
-                        </Button>
-                        <Button size="sm" variant="ghost" className="flex-1">
-                          Ignorar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                    Solicitação Personalizada
+                  </Label>
+                  <Textarea
+                    placeholder="Ex: Adicione mais exercícios práticos na unidade 2..."
+                    rows={4}
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                  />
+                  <Button className="w-full gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Aplicar com IA
+                  </Button>
+                </div>
 
-                  <Card>
-                    <CardContent className="pt-4 pb-4 space-y-2">
-                      <div className="flex items-start gap-2">
-                        <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5" />
-                        <div className="flex-1 text-sm">
-                          <p className="font-medium mb-1">Detalhamento de avaliação</p>
-                          <p className="text-xs text-muted-foreground">
-                            As datas das provas poderiam ser mais específicas
-                          </p>
+                {/* Suggestions */}
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground">
+                    Sugestões
+                  </Label>
+                  <div className="space-y-3">
+                    <Card>
+                      <CardContent className="pt-4 pb-4 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5" />
+                          <div className="flex-1 text-sm">
+                            <p className="font-medium mb-1">Incluir metodologias ativas</p>
+                            <p className="text-xs text-muted-foreground">
+                              Considere adicionar aprendizagem baseada em problemas
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          Aplicar
-                        </Button>
-                        <Button size="sm" variant="ghost" className="flex-1">
-                          Ignorar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" variant="outline" className="flex-1">
+                            Aplicar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="flex-1">
+                            Ignorar
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="pt-4 pb-4 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5" />
+                          <div className="flex-1 text-sm">
+                            <p className="font-medium mb-1">Detalhamento de avaliação</p>
+                            <p className="text-xs text-muted-foreground">
+                              As datas das provas poderiam ser mais específicas
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" variant="outline" className="flex-1">
+                            Aplicar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="flex-1">
+                            Ignorar
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
               </div>
-            </div>
-          </aside>
-        )}
-      </div>
+            </aside>
+          )}
+        </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir este plano de ensino gerado por IA?
-              Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting ? 'Excluindo...' : 'Excluir'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este plano de ensino gerado por IA?
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? 'Excluindo...' : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </ProtectedRoute>
   )
 }

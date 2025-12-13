@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft, Edit, FileText, Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useParams } from "next/navigation"
@@ -26,7 +26,9 @@ import {
 export default function TeachingPlanViewPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const planId = params.id as string
+  const fromReview = searchParams.get('from') === 'review'
 
   // React Query hooks
   const { data: plan, isLoading: loading } = useTeachingPlan(planId)
@@ -154,13 +156,13 @@ export default function TeachingPlanViewPage() {
         <main className="container mx-auto py-8 px-4 max-w-7xl">
           {/* Header */}
           <div className="mb-6">
-            <Link href="/disciplines">
+            <Link href={fromReview ? `/plans/review/${planId}` : "/disciplines"}>
               <Button variant="ghost" className="gap-2 mb-4 print:hidden">
                 <ArrowLeft className="h-4 w-4" />
-                Voltar para Disciplinas
+                {fromReview ? "Voltar para Edição" : "Voltar para Disciplinas"}
               </Button>
             </Link>
-            
+
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold mb-2">
@@ -170,7 +172,7 @@ export default function TeachingPlanViewPage() {
                   {plan.curso} • {plan.campus}
                 </p>
               </div>
-              
+
               <div className="flex gap-2 print:hidden">
                 <Button
                   variant="outline"
@@ -229,10 +231,10 @@ export default function TeachingPlanViewPage() {
 
           {/* Footer Actions */}
           <div className="mt-8 flex justify-between items-center print:hidden">
-            <Link href="/disciplines">
+            <Link href={fromReview ? `/plans/review/${planId}` : "/disciplines"}>
               <Button variant="outline" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Voltar
+                {fromReview ? "Voltar para Edição" : "Voltar"}
               </Button>
             </Link>
             <div className="flex gap-2">

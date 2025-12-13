@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -46,7 +46,17 @@ import {
 export default function PlanReviewPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const planId = params.id as string
+
+  // Get active tab from URL or default to 'overview'
+  const activeTab = searchParams.get('tab') || 'overview'
+
+  const handleTabChange = (value: string) => {
+    const newParams = new URLSearchParams(searchParams.toString())
+    newParams.set('tab', value)
+    router.push(`/plans/review/${planId}?${newParams.toString()}`)
+  }
 
   // Load plan data using React Query
   const { data: plan, isLoading, error } = useTeachingPlan(planId)
@@ -467,7 +477,7 @@ export default function PlanReviewPage() {
             </div>
 
             {/* Plan Content Tabs */}
-            <Tabs defaultValue="overview" className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Visão Geral</TabsTrigger>
                 <TabsTrigger value="objectives">Objetivos</TabsTrigger>

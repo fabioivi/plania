@@ -27,12 +27,11 @@ import {
   Save
 } from "lucide-react"
 import Link from "next/link"
-import { PlanHeader } from "@/components/layout/plan-header"
 import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan } from "@/hooks/api"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Header } from "@/components/layout/header"
 import { toast } from "sonner"
-import { aiService, type ImproveFieldRequest } from "@/services/api/ai.service"
+import { aiService } from "@/services/api/ai.service"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -344,11 +343,7 @@ export default function PlanReviewPage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <PlanHeader
-          planTitle={plan.unidadeCurricular || 'Plano de Ensino'}
-          planInfo={`${plan.anoSemestre || ''} • ${plan.cargaHorariaTotal || 0}h`}
-          status={plan.source === 'ai' && !plan.sentToIFMS ? 'draft' : 'approved'}
-        />
+        <Header />
 
         <div className="flex">
           {/* Main Content */}
@@ -363,20 +358,20 @@ export default function PlanReviewPage() {
 
             {/* Plan Header */}
             <div className="mb-6">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Plano de Ensino</h1>
-                  <p className="text-muted-foreground">
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words">Plano de Ensino</h1>
+                  <p className="text-muted-foreground text-sm md:text-base">
                     Revise e edite o plano gerado pela IA. Use o assistente ao lado para fazer ajustes.
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full lg:w-auto">
                   <Button
                     variant="default"
                     size="sm"
                     onClick={handleSaveChanges}
                     disabled={!hasChanges || saving}
-                    className="gap-2"
+                    className="gap-2 w-full sm:w-auto"
                   >
                     {saving ? (
                       <>
@@ -390,11 +385,11 @@ export default function PlanReviewPage() {
                       </>
                     )}
                   </Button>
-                  <Link href={`/teaching-plans/${planId}?from=review`}>
+                  <Link href={`/teaching-plans/${planId}?from=review`} className="w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-2"
+                      className="gap-2 w-full sm:w-auto"
                     >
                       <Eye className="h-4 w-4" />
                       Visualizar Prévia
@@ -404,7 +399,7 @@ export default function PlanReviewPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowAiAssistant(!showAiAssistant)}
-                    className="gap-2"
+                    className="gap-2 w-full sm:w-auto hidden md:flex"
                   >
                     <Sparkles className="h-4 w-4" />
                     {showAiAssistant ? "Ocultar" : "Mostrar"} Assistente IA
@@ -414,7 +409,7 @@ export default function PlanReviewPage() {
                     size="sm"
                     onClick={handleFillDiary}
                     disabled={isFilling || fillSuccess}
-                    className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full sm:w-auto"
                   >
                     {isFilling ? (
                       <>
@@ -439,7 +434,7 @@ export default function PlanReviewPage() {
                       size="sm"
                       onClick={handleDeleteClick}
                       disabled={deleting}
-                      className="gap-2"
+                      className="gap-2 w-full sm:w-auto"
                     >
                       {deleting ? (
                         <>
@@ -856,7 +851,7 @@ export default function PlanReviewPage() {
 
           {/* AI Assistant Sidebar */}
           {showAiAssistant && (
-            <aside className="w-96 border-l bg-muted/30 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+            <aside className="hidden md:block w-96 border-l bg-muted/30 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
               <div className="p-6 space-y-6">
                 {/* Assistant Header */}
                 <div>

@@ -163,9 +163,9 @@ export default function TeachingPlanViewPage() {
               </Button>
             </Link>
 
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words">
                   {plan.unidadeCurricular || 'Plano de Ensino'}
                 </h1>
                 <p className="text-muted-foreground">
@@ -173,10 +173,10 @@ export default function TeachingPlanViewPage() {
                 </p>
               </div>
 
-              <div className="flex gap-2 print:hidden">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2 print:hidden w-full lg:w-auto">
                 <Button
                   variant="outline"
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto"
                   onClick={handleSync}
                   disabled={syncing}
                 >
@@ -185,7 +185,7 @@ export default function TeachingPlanViewPage() {
                 </Button>
                 <Button
                   variant="default"
-                  className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 w-full sm:w-auto"
                   onClick={handleGenerateDiaryContent}
                   disabled={!plan.diaryId}
                   title={!plan.diaryId ? 'Nenhum diário vinculado' : 'Gerar conteúdo do diário a partir deste plano'}
@@ -194,7 +194,7 @@ export default function TeachingPlanViewPage() {
                   Gerar Conteúdo do Diário
                 </Button>
                 <Button
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto"
                   onClick={handleEditWithAI}
                   disabled={!plan.diaryId}
                   title={!plan.diaryId ? 'Nenhum diário vinculado' : 'Criar nova versão deste plano com IA'}
@@ -205,7 +205,7 @@ export default function TeachingPlanViewPage() {
                 {plan?.source === 'ai' && (
                   <Button
                     variant="destructive"
-                    className="gap-2"
+                    className="gap-2 w-full sm:w-auto"
                     onClick={handleDeleteClick}
                     disabled={deleting}
                   >
@@ -230,16 +230,16 @@ export default function TeachingPlanViewPage() {
           <TeachingPlanView plan={plan} variant="full" showHeader={true} />
 
           {/* Footer Actions */}
-          <div className="mt-8 flex justify-between items-center print:hidden">
-            <Link href={fromReview ? `/plans/review/${planId}` : "/disciplines"}>
-              <Button variant="outline" className="gap-2">
+          <div className="mt-8 flex flex-col md:flex-row justify-between items-center gap-4 print:hidden">
+            <Link href={fromReview ? `/plans/review/${planId}` : "/disciplines"} className="w-full md:w-auto">
+              <Button variant="outline" className="gap-2 w-full md:w-auto">
                 <ArrowLeft className="h-4 w-4" />
                 {fromReview ? "Voltar para Edição" : "Voltar"}
               </Button>
             </Link>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
               <Button
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
                 onClick={handleEditWithAI}
                 disabled={!plan.diaryId}
                 title={!plan.diaryId ? 'Nenhum diário vinculado' : 'Criar nova versão deste plano com IA'}
@@ -250,7 +250,7 @@ export default function TeachingPlanViewPage() {
               {plan?.source === 'ai' && (
                 <Button
                   variant="destructive"
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto"
                   onClick={handleDeleteClick}
                   disabled={deleting}
                 >

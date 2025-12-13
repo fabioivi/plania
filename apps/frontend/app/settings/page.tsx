@@ -368,7 +368,7 @@ export default function SettingsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-background rounded-lg border gap-4">
                   <div className="space-y-1">
                     <h4 className="font-medium">Apagar dados acadêmicos</h4>
                     <p className="text-sm text-muted-foreground">

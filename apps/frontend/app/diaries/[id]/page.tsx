@@ -94,7 +94,7 @@ export default function DiaryContentPage() {
 
     // TODO: Salvar nova ordem no backend usando mutation
     // await academicApi.updateDiaryContentOrder(diaryId, reorderedContents)
-    
+
     toast.success('Ordem atualizada!')
   }
 
@@ -142,7 +142,7 @@ export default function DiaryContentPage() {
       const token = localStorage.getItem('token')
       const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
       console.log('📡 Conectando ao SSE:', url)
-      
+
       const eventSource = new EventSource(url)
 
       eventSource.onmessage = (event) => {
@@ -157,7 +157,7 @@ export default function DiaryContentPage() {
         } else if (data.type === 'complete') {
           console.log('✅ Envio completo:', data)
           eventSource.close()
-          
+
           const items = data.results.map((r: any) => ({
             id: r.contentId,
             name: contentsToSend.find(c => c.contentId === r.contentId)?.date || r.contentId,
@@ -187,7 +187,7 @@ export default function DiaryContentPage() {
         } else if (data.type === 'error') {
           console.error('❌ Erro SSE:', data)
           eventSource.close()
-          
+
           errorUpload(
             'Erro ao enviar conteúdos',
             [{
@@ -197,7 +197,7 @@ export default function DiaryContentPage() {
               message: data.message || 'Erro desconhecido',
             }]
           )
-          
+
           toast.error(data.message || 'Erro ao enviar conteúdos')
         }
       }
@@ -205,7 +205,7 @@ export default function DiaryContentPage() {
       eventSource.onerror = (err) => {
         console.error('❌ Erro no SSE:', err)
         eventSource.close()
-        
+
         errorUpload(
           'Erro ao enviar conteúdos',
           [{
@@ -215,13 +215,13 @@ export default function DiaryContentPage() {
             message: 'Erro ao conectar com o servidor',
           }]
         )
-        
+
         toast.error('Erro ao conectar com o servidor')
       }
     } catch (err: any) {
       console.error('❌ Erro ao enviar conteúdos:', err)
       toast.error(err.response?.data?.message || 'Erro ao enviar conteúdos')
-      
+
       errorUpload(
         'Erro ao enviar conteúdos',
         [{
@@ -241,31 +241,35 @@ export default function DiaryContentPage() {
 
         <main className="container mx-auto py-8 px-4 max-w-6xl">
           {/* Page Header */}
-          <div className="mb-6 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/disciplines')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Button>
-            <div className="flex-1">
-              <h2 className="text-3xl font-bold">Conteúdo do Diário</h2>
-              {diaryInfo && (
-                <p className="text-muted-foreground mt-1">
-                  {diaryInfo.disciplina} • {diaryInfo.turma}
-                </p>
-              )}
+          {/* Page Header */}
+          <div className="mb-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4 w-full lg:w-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/disciplines')}
+                className="gap-2 shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
+              <div className="flex-1">
+                <h2 className="text-2xl md:text-3xl font-bold break-words">Conteúdo do Diário</h2>
+                {diaryInfo && (
+                  <p className="text-muted-foreground mt-1 text-sm md:text-base">
+                    {diaryInfo.disciplina} • {diaryInfo.turma}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleSync}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing'}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 {downloadState?.status === 'syncing' ? (
                   <>
@@ -279,13 +283,13 @@ export default function DiaryContentPage() {
                   </>
                 )}
               </Button>
-              
+
               <Button
                 variant="default"
                 size="sm"
                 onClick={handleSendToSystem}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 {uploadState?.status === 'syncing' ? (
                   <>
@@ -299,13 +303,13 @@ export default function DiaryContentPage() {
                   </>
                 )}
               </Button>
-              
+
               {diaryInfo?.externalId && (
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => window.open(`https://academico.ifms.edu.br/administrativo/professores/diario/${diaryInfo.externalId}/conteudo`, '_blank')}
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Abrir no Sistema IFMS
@@ -317,7 +321,7 @@ export default function DiaryContentPage() {
           {/* Sync Progress Display - Download */}
           {downloadState && (
             <div className="mb-6">
-              <SyncProgressDisplay 
+              <SyncProgressDisplay
                 state={downloadState}
                 isConnected={true}
               />
@@ -327,7 +331,7 @@ export default function DiaryContentPage() {
           {/* Sync Progress Display - Upload */}
           {uploadState && (
             <div className="mb-6">
-              <SyncProgressDisplay 
+              <SyncProgressDisplay
                 state={uploadState}
                 isConnected={true}
               />
@@ -368,7 +372,7 @@ export default function DiaryContentPage() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Ano/Semestre</p>
                     <p className="text-sm mt-1">
-                      {diaryInfo.anoLetivo && diaryInfo.semestre 
+                      {diaryInfo.anoLetivo && diaryInfo.semestre
                         ? `${diaryInfo.anoLetivo}/${diaryInfo.semestre}`
                         : 'N/A'
                       }
@@ -425,7 +429,7 @@ export default function DiaryContentPage() {
                 </div>
               </div>
 
-              <DiaryContentTable 
+              <DiaryContentTable
                 contents={content}
                 onReorder={handleReorder}
               />

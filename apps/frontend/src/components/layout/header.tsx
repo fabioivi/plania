@@ -1,7 +1,8 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { GraduationCap, LogOut, Settings as SettingsIcon } from "lucide-react"
+import { GraduationCap, LogOut, Menu } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
@@ -32,45 +33,78 @@ export function Header() {
     return `Prof. ${capitalizedName}`
   }
 
-  return (
-    <header className="border-b sticky top-0 bg-background z-10">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6 text-primary" />
-          <Link href="/dashboard">
-            <h1 className="text-xl font-bold hover:text-primary transition-colors cursor-pointer">
-              PlanIA
-            </h1>
-          </Link>
+  const Logo = () => (
+    <Link href="/dashboard" className="flex items-center gap-2">
+      <GraduationCap className="h-6 w-6 text-primary" />
+      <h1 className="text-xl font-bold hover:text-primary transition-colors cursor-pointer">
+        PlanIA
+      </h1>
+    </Link>
+  )
+
+  const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
+    <>
+      <Link href="/dashboard" className={mobile ? "w-full" : ""}>
+        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Dashboard</Button>
+      </Link>
+      <Link href="/disciplines" className={mobile ? "w-full" : ""}>
+        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Disciplinas</Button>
+      </Link>
+      <Link href="/plans" className={mobile ? "w-full" : ""}>
+        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Planos</Button>
+      </Link>
+      <Link href="/settings" className={mobile ? "w-full" : ""}>
+        <Button variant="ghost" className={mobile ? "w-full justify-start" : ""}>Configurações</Button>
+      </Link>
+    </>
+  )
+
+  const UserMenu = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className={`flex items-center gap-2 ${mobile ? "mt-auto pt-4 border-t w-full justify-between" : "ml-4 pl-4 border-l"}`}>
+      <div className="flex items-center gap-2">
+        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+          <span className="text-sm font-medium text-primary">
+            {getInitials(user?.name)}
+          </span>
         </div>
-        <nav className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost">Dashboard</Button>
-          </Link>
-          <Link href="/disciplines">
-            <Button variant="ghost">Disciplinas</Button>
-          </Link>
-          <Link href="/plans">
-            <Button variant="ghost">Planos</Button>
-          </Link>
-          <Link href="/settings">
-            <Button variant="ghost">Configurações</Button>
-          </Link>
-          <div className="flex items-center gap-2 ml-4 pl-4 border-l">
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-medium">{formatName(user?.name)}</span>
-              <span className="text-xs text-muted-foreground">{user?.email || "Ciências Exatas"}</span>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-sm font-medium text-primary">
-                {getInitials(user?.name)}
-              </span>
-            </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">{formatName(user?.name)}</span>
+          <span className="text-xs text-muted-foreground">{user?.email || "Ciências Exatas"}</span>
+        </div>
+      </div>
+      <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+
+  return (
+    <header className="border-b sticky top-0 bg-background z-10 w-full">
+      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+        <Logo />
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-4">
+          <NavLinks />
+          <UserMenu />
         </nav>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="flex flex-col gap-4">
+              <div className="mt-4 flex flex-col gap-2">
+                <NavLinks mobile />
+              </div>
+              <UserMenu mobile />
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   )

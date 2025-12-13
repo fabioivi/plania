@@ -3,8 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { BookOpen, Search, Filter, Plus, Download, Upload, RefreshCw, Loader2 } from "lucide-react"
-import Link from "next/link"
+import { BookOpen, Search, Filter, Download, Upload, RefreshCw, Loader2 } from "lucide-react"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useMemo, useEffect, useState } from "react"
@@ -242,20 +241,6 @@ export default function DisciplinesPage() {
                   <DiaryCard key={diary.id} diary={diary} />
                 ))}
 
-                {/* Add Manual Discipline Card */}
-                <Card className="border-dashed bg-muted/20 hover:border-primary/50 transition-colors">
-                  <CardContent className="flex flex-col items-center justify-center h-full py-12">
-                    <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h4 className="font-semibold mb-2">Adicionar Disciplina Manual</h4>
-                    <p className="text-sm text-muted-foreground mb-4 text-center">
-                      Crie uma disciplina que não está no sistema acadêmico
-                    </p>
-                    <Button variant="outline" className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Nova Disciplina
-                    </Button>
-                  </CardContent>
-                </Card>
               </div>
 
               {/* Empty State */}
@@ -280,10 +265,6 @@ export default function DisciplinesPage() {
                             Sincronizar do Sistema
                           </>
                         )}
-                      </Button>
-                      <Button variant="outline" className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Adicionar Manual
                       </Button>
                     </div>
                   </CardContent>

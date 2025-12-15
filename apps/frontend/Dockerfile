@@ -63,7 +63,19 @@ RUN npx turbo run build --filter=plania-design-system && \
     ls -R /app/apps/frontend/.next/standalone/ || echo "Standalone folder not found"
 
 # ============================================
-# Stage 5: Production (Next.js Standalone)
+# Stage 5: Production Dependencies
+# ============================================
+FROM base AS prod-deps
+
+COPY package*.json turbo.json ./
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY apps/frontend/package.json ./apps/frontend/package.json
+
+# Install production dependencies only
+RUN npm install --omit=dev
+
+# ============================================
+# Stage 6: Production (Standard Mode)
 # ============================================
 FROM base AS production
 
@@ -72,18 +84,17 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Copy production dependencies
+COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=nextjs:nodejs /app/apps/frontend/node_modules ./apps/frontend/node_modules
 
-# Copy standalone build
-# Note: In a monorepo, .next/standalone usually contains "apps/frontend/server.js"
-# But based on verification, it seems to be copied to root in this specific setup or dependent on Next.js version
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
-
-# Copy static assets (not included in standalone - must be copied separately)
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static ./apps/frontend/.next/static
-
-# Copy public folder (static assets served by Next.js)
+# Copy build artifacts (standard .next folder)
+COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next ./apps/frontend/.next
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/public ./apps/frontend/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/package.json ./apps/frontend/package.json
+COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/next.config.js ./apps/frontend/next.config.js
+# Copy root package files if needed for references
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
 USER nextjs
 
@@ -93,4 +104,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server.js"]
+
+# Set working directory to the app folder so npm start works correctly
+WORKDIR /app/apps/frontend
+
+CMD ["npm", "start"]

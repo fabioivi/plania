@@ -58,6 +58,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-false}
+      DB_LOGGING: ${DB_LOGGING:-false}
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_USERNAME: ${POSTGRES_USER}

@@ -32,8 +32,8 @@ import { SessionCacheService } from './common/services/session-cache.service';
           password: configService.get('DATABASE_PASSWORD'),
           database: configService.get('DATABASE_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: configService.get('NODE_ENV') === 'development',
-          logging: configService.get('NODE_ENV') === 'development',
+          synchronize: configService.get('NODE_ENV') === 'development' || configService.get('DB_SYNCHRONIZE') === 'true',
+          logging: configService.get('NODE_ENV') === 'development' || configService.get('DB_LOGGING') === 'true',
         };
         console.log('Database Config:', {
           host: dbConfig.host,

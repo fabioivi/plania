@@ -18,7 +18,9 @@
         "PLAYWRIGHT_HEADLESS",
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
         "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH",
-        "IFMS_BASE_URL"
+        "IFMS_BASE_URL",
+        "DB_SYNCHRONIZE",
+        "DB_LOGGING"
     ],
     "tasks": {
         "build": {
@@ -62,6 +64,13 @@
                 ".env.development",
                 ".env"
             ]
+        },
+        "start": {
+            "dependsOn": [
+                "build"
+            ],
+            "persistent": true,
+            "cache": false
         }
     }
 }

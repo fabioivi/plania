@@ -108,11 +108,11 @@ COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=prod-deps --chown=nestjs:nodejs /app/apps/backend/node_modules ./apps/backend/node_modules
 
 # Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
 
 # Check contents for debugging
 RUN echo "=== Checking Production Build Contents ===" && \
-    ls -la /app/dist && \
+    ls -la /app/apps/backend/dist && \
     ls -la /app/node_modules
 
 USER nestjs
@@ -124,4 +124,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main"]
+
+WORKDIR /app/apps/backend
+CMD ["npm", "run", "start:prod"]

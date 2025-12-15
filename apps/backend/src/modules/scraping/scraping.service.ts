@@ -336,7 +336,7 @@ export class ScrapingService {
     const page = await context.newPage();
 
     try {
-      await this.performLogin(page, username, password);
+      await this.ensureLoggedIn(page, username, password);
 
       const diariesUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.LIST);
       await page.goto(diariesUrl, { waitUntil: 'domcontentloaded' });
@@ -1001,7 +1001,7 @@ export class ScrapingService {
     const page = await context.newPage();
 
     try {
-      await this.performLogin(page, username, password);
+      await this.ensureLoggedIn(page, username, password);
 
       const diariesUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.LIST);
       console.log(`Navigating to diaries: ${diariesUrl}`);

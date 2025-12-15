@@ -9,6 +9,7 @@ export interface SyncProgress {
   total?: number;
   diaryName?: string;
   planName?: string;
+  duration?: number;
 }
 
 @Injectable()
@@ -51,7 +52,7 @@ export class SyncEventsService {
       const data = JSON.stringify(progress);
       console.log(`📤 SSE: Enviando evento para ${userId}:`, progress.stage, progress.message);
       client.write(`data: ${data}\n\n`);
-      
+
       // Force flush to ensure data is sent immediately
       if (typeof (client as any).flush === 'function') {
         (client as any).flush();

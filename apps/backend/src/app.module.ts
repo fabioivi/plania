@@ -10,6 +10,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { AIModule } from './modules/ai/ai.module';
 import { CryptoService } from './common/services/crypto.service';
+import { SessionCacheService } from './common/services/session-cache.service';
 
 @Module({
   imports: [
@@ -67,7 +68,7 @@ import { CryptoService } from './common/services/crypto.service';
     SyncModule,
     AIModule,
   ],
-  providers: [CryptoService],
-  exports: [CryptoService],
+  providers: [CryptoService, SessionCacheService],
+  exports: [CryptoService, SessionCacheService],
 })
 export class AppModule { }

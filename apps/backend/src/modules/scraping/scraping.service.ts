@@ -14,6 +14,7 @@ import {
 } from './ifms.selectors.config';
 import { ExtractionUtils } from './extraction.utils';
 import { ScrapingDebugService } from './scraping-debug.service';
+import { SessionCacheService } from '../../common/services/session-cache.service';
 
 @Injectable()
 export class ScrapingService {
@@ -49,6 +50,7 @@ export class ScrapingService {
   constructor(
     private configService: ConfigService,
     private debugService: ScrapingDebugService,
+    private sessionCache: SessionCacheService,
   ) { }
 
   /**
@@ -237,11 +239,14 @@ export class ScrapingService {
     }
   }
 
-  // Simple in-memory session cache: username -> cookies
-  private sessionCache = new Map<string, any[]>();
-
   /**
-   * Ensure the browser is logged in, reusing session if possible
+   * Ensure the browser is logged in, reusing session from Redis cache if possible
+   *
+   * Benefits of Redis-based session cache:
+   * - Sessions persist across server restarts
+   * - Shared cache between multiple worker instances
+   * - Automatic expiration via TTL (1 hour default)
+   * - Thread-safe concurrent access
    */
   async ensureLoggedIn(
     page: Page,
@@ -250,23 +255,33 @@ export class ScrapingService {
   ): Promise<void> {
     const context = page.context();
 
-    // 1. Try to restore session from cache
-    if (this.sessionCache.has(username)) {
-      console.log(`♻️  Reutilizando sessão para ${username}`);
-      const cookies = this.sessionCache.get(username);
-      await context.addCookies(cookies);
+    // 1. Try to restore session from Redis cache
+    const cachedCookies = await this.sessionCache.getSession(username);
+    if (cachedCookies) {
+      console.log(`♻️  Reutilizando sessão do Redis para ${username}`);
+      await context.addCookies(cachedCookies);
 
       // Navigate to a protected page to verify session (e.g. Home/Dashboard)
       // IFMS usually redirects to /administrativo after login
-      await page.goto('https://academico.ifms.edu.br/administrativo', { waitUntil: 'domcontentloaded' });
+      try {
+        await page.goto('https://academico.ifms.edu.br/administrativo', {
+          waitUntil: 'domcontentloaded',
+          timeout: 15000
+        });
 
-      if (isLoggedIn(page.url())) {
-        console.log('✅ Sessão restaurada com sucesso!');
-        return;
+        if (isLoggedIn(page.url())) {
+          console.log('✅ Sessão restaurada com sucesso do Redis!');
+          return;
+        }
+
+        console.log('⚠️ Sessão expirada ou inválida, invalidando cache e realizando novo login...');
+        await this.sessionCache.invalidateSession(username);
+      } catch (error) {
+        console.log(`⚠️ Erro ao verificar sessão (${error.message}), invalidando cache...`);
+        await this.sessionCache.invalidateSession(username);
       }
-      console.log('⚠️ Sessão expirada ou inválida, realizando novo login...');
     } else {
-      console.log(`🔑 Nenhuma sessão em cache para ${username}, realizando login...`);
+      console.log(`🔑 Nenhuma sessão em cache Redis para ${username}, realizando login...`);
     }
 
     // 2. Perform fresh login if needed
@@ -279,9 +294,9 @@ export class ScrapingService {
 
     // Check if we are already logged in (redirected)
     if (isLoggedIn(page.url())) {
-      console.log('✅ Já estava logado (redirect), salvando sessão...');
+      console.log('✅ Já estava logado (redirect), salvando sessão no Redis...');
       const cookies = await context.cookies();
-      this.sessionCache.set(username, cookies);
+      await this.sessionCache.setSession(username, cookies);
       return;
     }
 
@@ -319,10 +334,10 @@ export class ScrapingService {
       throw new Error('Falha no login. Credenciais inválidas (URL Check).');
     }
 
-    console.log('✅ Login realizado com sucesso! Salvando sessão em cache.');
-    // 3. Save new session to cache
+    console.log('✅ Login realizado com sucesso! Salvando sessão no Redis.');
+    // 3. Save new session to Redis cache with 1-hour TTL
     const cookies = await context.cookies();
-    this.sessionCache.set(username, cookies);
+    await this.sessionCache.setSession(username, cookies, 3600);
   }
 
   /**
@@ -1337,62 +1352,26 @@ export class ScrapingService {
    * @returns Success status and message
    */
   /**
-   * Login to IFMS system and return authenticated page (for reuse in bulk operations)
+   * Login to IFMS system using Redis session cache (for reuse in bulk operations)
+   *
+   * DEPRECATED: This method now delegates to ensureLoggedIn() to benefit from Redis cache
+   *
+   * Benefits:
+   * - Reuses existing sessions from Redis cache
+   * - Avoids unnecessary login delays when session is valid
+   * - Automatically handles session expiration
    */
   private async loginToIFMS(
     page: any,
     username: string,
     password: string,
   ): Promise<void> {
-    console.log(`🔐 Realizando login no sistema IFMS...`);
+    console.log(`🔐 Autenticando no sistema IFMS (com cache Redis)...`);
 
-    // Navigate to login page with human-like delay
-    const loginUrl = buildIFMSUrl(IFMS_ROUTES.AUTH.LOGIN);
-    await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    // Delegate to ensureLoggedIn which handles Redis cache
+    await this.ensureLoggedIn(page, username, password);
 
-    // Wait for page to load completely (random delay)
-    await this.humanDelay(page, this.PAGE_LOAD_DELAY_MIN, this.PAGE_LOAD_DELAY_MAX);
-
-    await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, { state: 'visible', timeout: 10000 });
-
-    // Simulate human behavior: small delay before interacting
-    await this.humanDelay(page, this.BEFORE_INTERACT_DELAY_MIN, this.BEFORE_INTERACT_DELAY_MAX);
-
-    // Type username with human-like speed
-    console.log(`⌨️ Digitando usuário...`);
-    await this.humanType(page, IFMS_SELECTORS.LOGIN.USERNAME, username);
-
-    // Small delay between fields (like a human would do)
-    await this.humanDelay(page, this.BETWEEN_FIELDS_DELAY_MIN, this.BETWEEN_FIELDS_DELAY_MAX);
-
-    // Type password with human-like speed
-    console.log(`⌨️ Digitando senha...`);
-    await this.humanType(page, IFMS_SELECTORS.LOGIN.PASSWORD, password);
-
-    // Small delay before clicking submit (human hesitation)
-    await this.humanDelay(page, this.BEFORE_SUBMIT_DELAY_MIN, this.BEFORE_SUBMIT_DELAY_MAX);
-
-    // Click submit button
-    console.log(`🖱️ Enviando formulário...`);
-    await page.click(IFMS_SELECTORS.LOGIN.SUBMIT);
-
-    // Wait for response with random delay
-    await this.humanDelay(page, this.AFTER_SUBMIT_DELAY_MIN, this.AFTER_SUBMIT_DELAY_MAX);
-
-    // Check for login errors
-    const errorElement = await page.$(IFMS_SELECTORS.LOGIN.ERROR_MESSAGE);
-    if (errorElement) {
-      const errorText = await errorElement.textContent();
-      throw new Error(`Erro de autenticação: ${errorText}`);
-    }
-
-    // Verify successful login
-    const currentUrl = page.url();
-    if (!isLoggedIn(currentUrl)) {
-      throw new Error('Falha na autenticação com o sistema acadêmico');
-    }
-
-    console.log(`✅ Login realizado com sucesso`);
+    console.log(`✅ Autenticação concluída`);
   }
 
   /**

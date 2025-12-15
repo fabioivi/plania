@@ -1,7 +1,9 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
+import { BrowserContext, Page } from 'playwright';
 import { AcademicService } from '../academic/academic.service';
 import { ScrapingService } from '../scraping/scraping.service';
+import { ScrapingPoolService } from '../scraping/scraping-pool.service';
 import { SyncEventsService } from '../sync/sync-events.service';
 
 @Processor('auth-queue')
@@ -9,6 +11,7 @@ export class AuthQueueProcessor {
   constructor(
     private academicService: AcademicService,
     private scrapingService: ScrapingService,
+    private scrapingPool: ScrapingPoolService,
     private syncEventsService: SyncEventsService,
   ) { }
 
@@ -128,106 +131,54 @@ export class AuthQueueProcessor {
         message: `${syncResult.synced} ${syncResult.synced === 1 ? 'diário encontrado' : 'diários encontrados'}. Buscando planos de ensino...`,
       });
 
-      // Now sync teaching plans for each diary
-      let totalPlans = 0;
+      // ============================================
+      // 🚀 PARALLEL SCRAPING with Browser Pool
+      // ============================================
       const diaries = await this.academicService.getUserDiaries(userId);
+      console.log(`🚀 Iniciando scraping PARALELO de ${diaries.length} diários (máx 5 simultâneos)`);
 
-      // Create a single browser context for all teaching plan scraping
-      const context = await this.scrapingService.createContext();
-      const page = await context.newPage();
+      let totalPlans = 0;
+      let processedItems = 0;
 
-      try {
-        // Login to IFMS
-        // Login to IFMS (with session reuse)
-        await this.scrapingService.ensureLoggedIn(page, credential.username, credential.password);
+      // Estimate total items (will be updated as we discover plans)
+      let totalItems = diaries.length;
 
-        // Scrape teaching plans for each diary
-        let totalPlanItems = 0; // Total de itens a processar (diários + planos)
+      // Create parallel operations for each diary
+      const diaryOperations = diaries.map((diary, index) => async (context: BrowserContext, page: Page) => {
+        const diaryName = (diary as any).unidadeCurricular || `Diário ${diary.externalId}`;
 
-        // Primeiro, conta quantos planos existem no total
-        for (const diary of diaries) {
-          const plansListResult = await this.scrapingService.getAllTeachingPlans(
-            page,
-            diary.externalId,
-          );
-          if (plansListResult.success && plansListResult.data) {
-            totalPlanItems += plansListResult.data.length;
-          }
-        }
+        try {
+          console.log(`📚 [${index + 1}/${diaries.length}] Processando ${diaryName} (paralelo)`);
 
-        console.log(`📊 Total de itens a processar: ${diaries.length} diários + ${totalPlanItems} planos = ${diaries.length + totalPlanItems} itens`);
+          // Login with session cache
+          await this.scrapingService.ensureLoggedIn(page, credential.username, credential.password);
 
-        const totalItems = diaries.length + totalPlanItems;
-        let processedItems = 0;
-
-        for (let i = 0; i < diaries.length; i++) {
-          const diary = diaries[i];
-          const diaryName = (diary as any).unidadeCurricular || `Diário ${diary.externalId}`;
-
-          console.log(`📚 Processando diário ${i + 1}/${diaries.length}: ${diaryName}`);
-
-          // Incrementa progresso ao processar diário
-          processedItems++;
-
-          // Enviar evento: processando diário específico
-          this.syncEventsService.sendEvent(userId, {
-            userId,
-            stage: 'plans',
-            message: `Processando: ${diaryName}`,
-            diaryName,
-            current: processedItems,
-            total: totalItems,
-          });
-
-          // Scrape diary content (conteúdo das aulas)
-          console.log(`📖 Extraindo conteúdo das aulas de: ${diaryName}`);
-          const contentResult = await this.scrapingService.scrapeClassContent(
-            page,
-            diary.externalId,
-          );
+          // Scrape diary content
+          console.log(`📖 Extraindo conteúdo de: ${diaryName}`);
+          const contentResult = await this.scrapingService.scrapeClassContent(page, diary.externalId);
 
           if (contentResult.success && contentResult.data && contentResult.data.length > 0) {
-            // Save content to database
-            await this.academicService.syncDiaryContent(
-              userId,
-              diary.id,
-              contentResult.data,
-            );
-            console.log(`✅ ${contentResult.data.length} conteúdos de aula salvos para ${diaryName}`);
-          } else {
-            console.log(`⚠️ Nenhum conteúdo de aula encontrado para ${diaryName}`);
+            await this.academicService.syncDiaryContent(userId, diary.id, contentResult.data);
+            console.log(`✅ ${contentResult.data.length} conteúdos salvos - ${diaryName}`);
           }
 
-          // Get teaching plans list
-          const plansListResult = await this.scrapingService.getAllTeachingPlans(
-            page,
-            diary.externalId,
-          );
+          // Scrape teaching plans
+          const plansListResult = await this.scrapingService.getAllTeachingPlans(page, diary.externalId);
 
           if (!plansListResult.success || !plansListResult.data) {
-            console.log(`⚠️ Nenhum plano de ensino encontrado para ${diaryName}`);
-            continue;
+            console.log(`⚠️ Sem planos - ${diaryName}`);
+            return { diary, plansScraped: 0 };
           }
 
-          // For each plan, get details and save
           const plans = plansListResult.data;
+          const plansData = [];
+
+          // Scrape each plan's details
           for (let j = 0; j < plans.length; j++) {
             const planSummary = plans[j];
             const planName = `Plano #${planSummary.externalId}`;
 
-            // Incrementa progresso ao processar plano
-            processedItems++;
-
-            // Enviar evento: processando plano específico
-            this.syncEventsService.sendEvent(userId, {
-              userId,
-              stage: 'plans',
-              message: `Extraindo plano de ensino ${j + 1}/${plans.length} de ${diaryName}`,
-              diaryName,
-              planName,
-              current: processedItems,
-              total: totalItems,
-            });
+            console.log(`📄 [${j + 1}/${plans.length}] Extraindo ${planName} de ${diaryName}`);
 
             const planDetailsResult = await this.scrapingService.getTeachingPlanDetails(
               page,
@@ -236,52 +187,69 @@ export class AuthQueueProcessor {
             );
 
             if (planDetailsResult.success && planDetailsResult.data) {
-              // Merge summary and details
-              const fullPlanData = {
+              plansData.push({
                 ...planSummary,
                 ...planDetailsResult.data,
-              };
-
-              // Save to database
-              await this.academicService.syncTeachingPlans(
-                userId,
-                diary.id,
-                diary.externalId,
-                [fullPlanData],
-              );
-
-              totalPlans++;
-              console.log(`✅ Plano de ensino salvo: ${planName}`);
+              });
             }
+
+            // Update progress
+            processedItems++;
+            this.syncEventsService.sendEvent(userId, {
+              userId,
+              stage: 'plans',
+              message: `Processando plano ${j + 1}/${plans.length} de ${diaryName}`,
+              diaryName,
+              planName,
+              current: processedItems,
+              total: totalItems + plans.length, // Update estimate
+            });
           }
+
+          // ✅ BATCH SAVE: Save all plans at once (not one by one)
+          if (plansData.length > 0) {
+            await this.academicService.syncTeachingPlans(
+              userId,
+              diary.id,
+              diary.externalId,
+              plansData, // Save all plans in one operation
+            );
+            console.log(`✅ ${plansData.length} planos salvos - ${diaryName}`);
+          }
+
+          return { diary, plansScraped: plansData.length };
+        } catch (error) {
+          console.error(`❌ Erro ao processar ${diaryName}:`, error.message);
+          return { diary, plansScraped: 0, error: error.message };
         }
+      });
 
-        console.log(`✅ Total de planos de ensino sincronizados: ${totalPlans}`);
+      // Execute all diary operations in parallel (max 5 concurrent)
+      console.log(`⚡ Executando ${diaryOperations.length} operações em paralelo...`);
+      const results = await this.scrapingPool.executeParallel(diaryOperations);
 
-        const durationMs = Date.now() - startTime;
-        const durationSeconds = (durationMs / 1000).toFixed(1);
-        const durationMessage = `Tempo total: ${durationSeconds}s`;
-        console.log(`⏱️ Sincronização finalizada em ${durationSeconds}s`);
+      // Calculate totals
+      totalPlans = results.reduce((sum, r) => sum + r.plansScraped, 0);
 
-        // Enviar evento: concluído
-        this.syncEventsService.sendEvent(userId, {
-          userId,
-          stage: 'completed',
-          message: `Sincronização concluída em ${durationSeconds}s! ${syncResult.synced} ${syncResult.synced === 1 ? 'diário' : 'diários'} e ${totalPlans} ${totalPlans === 1 ? 'plano de ensino' : 'planos de ensino'} sincronizados.`,
-          current: totalItems,
-          total: totalItems,
-          duration: durationMs
-        });
+      const durationMs = Date.now() - startTime;
+      const durationSeconds = (durationMs / 1000).toFixed(1);
+      console.log(`⏱️ Sincronização PARALELA finalizada em ${durationSeconds}s`);
+      console.log(`✅ Total: ${totalPlans} planos de ensino sincronizados`);
 
-        return {
-          success: true,
-          synced: syncResult.synced,
-          plansSynced: totalPlans,
-          message: `${syncResult.synced} diários e ${totalPlans} planos de ensino sincronizados com sucesso`
-        };
-      } finally {
-        await context.close();
-      }
+      // Send completion event
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'completed',
+        message: `Sincronização concluída em ${durationSeconds}s! ${syncResult.synced} ${syncResult.synced === 1 ? 'diário' : 'diários'} e ${totalPlans} ${totalPlans === 1 ? 'plano de ensino' : 'planos de ensino'} sincronizados.`,
+        duration: durationMs
+      });
+
+      return {
+        success: true,
+        synced: syncResult.synced,
+        plansSynced: totalPlans,
+        message: `${syncResult.synced} diários e ${totalPlans} planos sincronizados (paralelo)`
+      };
     } catch (error) {
       console.error('❌ Falha na sincronização de diários:', error);
 

@@ -75,6 +75,7 @@ export class AuthQueueProcessor {
   @Process('sync-diaries')
   async handleSyncDiaries(job: Job) {
     const { userId, credentialId } = job.data;
+    const startTime = Date.now();
 
     try {
       console.log(`🔄 Iniciando sincronização para usuário ${userId}`);
@@ -137,13 +138,8 @@ export class AuthQueueProcessor {
 
       try {
         // Login to IFMS
-        const loginUrl = 'https://academico.ifms.edu.br/administrativo/usuarios/login';
-        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForSelector('#UsuarioLoginForm', { state: 'visible', timeout: 10000 });
-        await page.fill('input[name="data[Usuario][login]"]', credential.username);
-        await page.fill('input[name="data[Usuario][senha]"]', credential.password);
-        await page.click('input[type="submit"].btn-primary');
-        await page.waitForTimeout(3000);
+        // Login to IFMS (with session reuse)
+        await this.scrapingService.ensureLoggedIn(page, credential.username, credential.password);
 
         // Scrape teaching plans for each diary
         let totalPlanItems = 0; // Total de itens a processar (diários + planos)
@@ -262,13 +258,19 @@ export class AuthQueueProcessor {
 
         console.log(`✅ Total de planos de ensino sincronizados: ${totalPlans}`);
 
+        const durationMs = Date.now() - startTime;
+        const durationSeconds = (durationMs / 1000).toFixed(1);
+        const durationMessage = `Tempo total: ${durationSeconds}s`;
+        console.log(`⏱️ Sincronização finalizada em ${durationSeconds}s`);
+
         // Enviar evento: concluído
         this.syncEventsService.sendEvent(userId, {
           userId,
           stage: 'completed',
-          message: `Sincronização concluída com sucesso! ${syncResult.synced} ${syncResult.synced === 1 ? 'diário' : 'diários'} e ${totalPlans} ${totalPlans === 1 ? 'plano de ensino' : 'planos de ensino'} sincronizados.`,
+          message: `Sincronização concluída em ${durationSeconds}s! ${syncResult.synced} ${syncResult.synced === 1 ? 'diário' : 'diários'} e ${totalPlans} ${totalPlans === 1 ? 'plano de ensino' : 'planos de ensino'} sincronizados.`,
           current: totalItems,
           total: totalItems,
+          duration: durationMs
         });
 
         return {
@@ -328,14 +330,8 @@ export class AuthQueueProcessor {
       const page = await context.newPage();
 
       try {
-        // Login to IFMS
-        const loginUrl = 'https://academico.ifms.edu.br/administrativo/usuarios/login';
-        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForSelector('#UsuarioLoginForm', { state: 'visible', timeout: 10000 });
-        await page.fill('input[name="data[Usuario][login]"]', decryptedCred.username);
-        await page.fill('input[name="data[Usuario][senha]"]', decryptedCred.password);
-        await page.click('input[type="submit"].btn-primary');
-        await page.waitForTimeout(3000);
+        // Login to IFMS (with session reuse)
+        await this.scrapingService.ensureLoggedIn(page, decryptedCred.username, decryptedCred.password);
 
         // Extrai conteúdo do diário
         console.log(`📖 Extraindo conteúdo do diário: ${diary.disciplina}`);
@@ -395,14 +391,8 @@ export class AuthQueueProcessor {
       const page = await context.newPage();
 
       try {
-        // Login to IFMS
-        const loginUrl = 'https://academico.ifms.edu.br/administrativo/usuarios/login';
-        await page.goto(loginUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForSelector('#UsuarioLoginForm', { state: 'visible', timeout: 10000 });
-        await page.fill('input[name="data[Usuario][login]"]', decryptedCred.username);
-        await page.fill('input[name="data[Usuario][senha]"]', decryptedCred.password);
-        await page.click('input[type="submit"].btn-primary');
-        await page.waitForTimeout(3000);
+        // Login to IFMS (with session reuse)
+        await this.scrapingService.ensureLoggedIn(page, decryptedCred.username, decryptedCred.password);
 
         // Extrai dados completos do plano
         console.log(`📚 Extraindo dados do plano: ${plan.unidadeCurricular}`);

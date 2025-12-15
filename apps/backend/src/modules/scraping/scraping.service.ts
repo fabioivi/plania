@@ -120,11 +120,16 @@ export class ScrapingService {
 
   async createContext(): Promise<BrowserContext> {
     const browser = await this.getBrowser();
-    return browser.newContext({
+    const context = await browser.newContext({
       viewport: { width: 1920, height: 1080 },
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     });
+
+    // Block unnecessary resources to speed up loading
+    await context.route('**/*.{png,jpg,jpeg,gif,css,woff,woff2,svg,ico,ttf}', (route) => route.abort());
+
+    return context;
   }
 
   async testIFMSLogin(username: string, password: string): Promise<boolean> {
@@ -162,7 +167,15 @@ export class ScrapingService {
       await page.click(IFMS_SELECTORS.LOGIN.SUBMIT);
 
       // Wait for navigation or error message
-      await page.waitForTimeout(3000);
+      // Removing fixed delay, waiting for load state or error selector
+      try {
+        await Promise.race([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+          page.waitForSelector(IFMS_SELECTORS.LOGIN.ERROR_MESSAGE, { timeout: 10000 })
+        ]);
+      } catch (e) {
+        // Ignore timeout, we'll check URL next
+      }
 
       // Check current URL
       const currentUrl = page.url();
@@ -224,20 +237,53 @@ export class ScrapingService {
     }
   }
 
+  // Simple in-memory session cache: username -> cookies
+  private sessionCache = new Map<string, any[]>();
+
   /**
-   * Helper method to perform login
+   * Ensure the browser is logged in, reusing session if possible
    */
-  private async performLogin(
+  async ensureLoggedIn(
     page: Page,
     username: string,
     password: string,
   ): Promise<void> {
+    const context = page.context();
+
+    // 1. Try to restore session from cache
+    if (this.sessionCache.has(username)) {
+      console.log(`♻️  Reutilizando sessão para ${username}`);
+      const cookies = this.sessionCache.get(username);
+      await context.addCookies(cookies);
+
+      // Navigate to a protected page to verify session (e.g. Home/Dashboard)
+      // IFMS usually redirects to /administrativo after login
+      await page.goto('https://academico.ifms.edu.br/administrativo', { waitUntil: 'domcontentloaded' });
+
+      if (isLoggedIn(page.url())) {
+        console.log('✅ Sessão restaurada com sucesso!');
+        return;
+      }
+      console.log('⚠️ Sessão expirada ou inválida, realizando novo login...');
+    } else {
+      console.log(`🔑 Nenhuma sessão em cache para ${username}, realizando login...`);
+    }
+
+    // 2. Perform fresh login if needed
     const loginUrl = buildIFMSUrl(IFMS_ROUTES.AUTH.LOGIN);
 
     await page.goto(loginUrl, {
       waitUntil: 'domcontentloaded',
       timeout: 30000
     });
+
+    // Check if we are already logged in (redirected)
+    if (isLoggedIn(page.url())) {
+      console.log('✅ Já estava logado (redirect), salvando sessão...');
+      const cookies = await context.cookies();
+      this.sessionCache.set(username, cookies);
+      return;
+    }
 
     await page.waitForSelector(IFMS_SELECTORS.LOGIN.FORM, {
       state: 'visible',
@@ -248,7 +294,15 @@ export class ScrapingService {
     await page.fill(IFMS_SELECTORS.LOGIN.PASSWORD, password, { timeout: 5000 });
 
     await page.click(IFMS_SELECTORS.LOGIN.SUBMIT);
-    await page.waitForTimeout(3000);
+
+    try {
+      await Promise.race([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 10000 }),
+        page.waitForSelector(IFMS_SELECTORS.LOGIN.ERROR_MESSAGE, { timeout: 10000 })
+      ]);
+    } catch (e) {
+      // Ignore timeout
+    }
 
     // Check for error message
     const errorElement = await page.$(IFMS_SELECTORS.LOGIN.ERROR_MESSAGE);
@@ -262,8 +316,13 @@ export class ScrapingService {
 
     const currentUrl = page.url();
     if (!isLoggedIn(currentUrl)) {
-      throw new Error('Falha no login. Credenciais inválidas.');
+      throw new Error('Falha no login. Credenciais inválidas (URL Check).');
     }
+
+    console.log('✅ Login realizado com sucesso! Salvando sessão em cache.');
+    // 3. Save new session to cache
+    const cookies = await context.cookies();
+    this.sessionCache.set(username, cookies);
   }
 
   /**
@@ -282,7 +341,12 @@ export class ScrapingService {
       const diariesUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.LIST);
       await page.goto(diariesUrl, { waitUntil: 'domcontentloaded' });
 
-      await page.waitForTimeout(2000);
+      // Wait for table instead of fixed time
+      try {
+        await page.waitForSelector('table tbody tr', { timeout: 5000 });
+      } catch (e) {
+        // Maybe no diaries, continue
+      }
 
       // Extract diaries data - structure to be adjusted based on actual HTML
       const diaries = await page.evaluate(() => {
@@ -325,12 +389,12 @@ export class ScrapingService {
     const page = await context.newPage();
 
     try {
-      await this.performLogin(page, username, password);
+      await this.ensureLoggedIn(page, username, password);
 
       const contentUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.CONTENT(diaryId));
       await page.goto(contentUrl, { waitUntil: 'domcontentloaded' });
 
-      await page.waitForTimeout(2000);
+      // await page.waitForTimeout(2000); // Removed fixed delay
 
       // Extract content - structure to be adjusted
       const content = await page.evaluate(() => {
@@ -367,12 +431,12 @@ export class ScrapingService {
     const page = await context.newPage();
 
     try {
-      await this.performLogin(page, username, password);
+      await this.ensureLoggedIn(page, username, password);
 
       const avaliacoesUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.AVALIACOES(diaryId));
       await page.goto(avaliacoesUrl, { waitUntil: 'domcontentloaded' });
 
-      await page.waitForTimeout(2000);
+      // await page.waitForTimeout(2000); // Removed fixed delay
 
       // Extract avaliacoes data - structure to be adjusted
       const avaliacoes = await page.evaluate(() => {
@@ -419,7 +483,12 @@ export class ScrapingService {
         timeout: 30000
       });
 
-      await page.waitForTimeout(2000);
+      // await page.waitForTimeout(2000); // Removed fixed delay, waiting for table
+      try {
+        await page.waitForSelector('table.table', { timeout: 5000 });
+      } catch (e) {
+        // Continue
+      }
 
       // Extract teaching plans from table
       const plans = await page.evaluate(() => {
@@ -486,7 +555,7 @@ export class ScrapingService {
         timeout: 30000
       });
 
-      await page.waitForTimeout(2000);
+      //await page.waitForTimeout(2000); // Removed fixed delay
 
       // Extract all data from the teaching plan with robust selectors
       const planData = await page.evaluate(() => {

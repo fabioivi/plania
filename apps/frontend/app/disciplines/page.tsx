@@ -4,18 +4,21 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { BookOpen, Search, Filter, Download, Upload, RefreshCw, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { useMemo, useEffect, useState } from "react"
 import { useSyncProgress } from "@/hooks/useSyncProgress"
 import { SyncProgressDisplay } from "@/components/sync"
 import { useSyncState } from "@/hooks/useSyncState"
-import { useDiaries, useSyncDiaries } from "@/hooks/api"
+import { useDiaries, useSyncDiaries, useCredentials } from "@/hooks/api"
+import { toast } from "sonner"
 import { DiaryCard } from "./DiaryCard"
 import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/api/query-client"
 
 export default function DisciplinesPage() {
+  const router = useRouter()
   const queryClient = useQueryClient()
   // React Query hooks
   const { data: diaries = [], isLoading: loading } = useDiaries()
@@ -36,7 +39,19 @@ export default function DisciplinesPage() {
     return new Date(mostRecent.updatedAt)
   }, [diaries])
 
+  // Check for verified credential to enable/disable sync
+  const { data: credentials = [] } = useCredentials()
+  const hasVerifiedCredential = useMemo(() => {
+    return credentials.some(c => c.system === 'ifms' && c.isVerified)
+  }, [credentials])
+
   const handleSync = async () => {
+    if (!hasVerifiedCredential) {
+      toast.warning('É preciso cadastrar e verificar sua credencial do IFMS antes de utilizar o sistema.')
+      router.push('/settings')
+      return
+    }
+
     try {
       startSync(1, 'Conectando ao servidor...')
 

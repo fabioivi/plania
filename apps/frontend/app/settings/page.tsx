@@ -5,14 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Settings as SettingsIcon, ArrowLeft, Lock, User, Database, Eye, EyeOff, CheckCircle2, XCircle, Loader2, Trash2 } from "lucide-react"
+import { Settings as SettingsIcon, ArrowLeft, Lock, User, Database, Eye, EyeOff, XCircle, Loader2, Trash2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/api/query-client"
 import { LLMConfigSection } from "@/components/settings/LLMConfigSection"
 import { useCredentials, useSaveCredential, useTestCredential, useDeleteCredential } from "@/hooks/api"
 import type { AcademicCredential } from "@/types"
@@ -72,6 +74,7 @@ function DeleteDataButton() {
 
 export default function SettingsPage() {
   // React Query hooks
+  const queryClient = useQueryClient()
   const { data: credentials = [], isLoading: loadingCredential } = useCredentials()
   const { mutate: saveCredential, isPending: isSaving } = useSaveCredential()
   const { mutate: testCredential, isPending: isTesting } = useTestCredential()
@@ -94,6 +97,21 @@ export default function SettingsPage() {
     }
   }, [credential])
 
+  // Poll for verification status
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+
+    if (credential && !credential.isVerified && !credential.lastError) {
+      // If credential exists but is not verified and has no error (likely verifying), poll
+      interval = setInterval(() => {
+        // Query client invalidation will trigger re-fetch
+        queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
+      }, 2000)
+    }
+
+    return () => clearInterval(interval)
+  }, [credential, queryClient])
+
   const handleSave = () => {
     if (!username || !password) {
       toast.error('Preencha todos os campos')
@@ -107,6 +125,7 @@ export default function SettingsPage() {
     }, {
       onSuccess: () => {
         setPassword('') // Limpar senha do formulário
+        toast.info('Credenciais salvas. Verificando acesso...')
       }
     })
   }
@@ -140,14 +159,15 @@ export default function SettingsPage() {
     if (!credential) return 'bg-slate-400'
     if (credential.isVerified) return 'bg-green-500'
     if (credential.lastError) return 'bg-red-500'
-    return 'bg-yellow-500'
+    // If not verified and no error, assume verifying
+    return 'bg-blue-500 animate-pulse'
   }
 
   const getStatusText = () => {
     if (!credential) return 'Não configurado'
-    if (credential.isVerified) return 'Conectado'
+    if (credential.isVerified) return 'Conectado e Verificado'
     if (credential.lastError) return 'Erro na autenticação'
-    return 'Aguardando verificação'
+    return 'Verificando credenciais...'
   }
 
   const formatDate = (dateString: string | null) => {
@@ -184,6 +204,28 @@ export default function SettingsPage() {
             <p className="text-muted-foreground">
               Gerencie suas preferências e integrações
             </p>
+
+            {!credential?.isVerified && (
+              <Alert className="mt-4 border-yellow-200 bg-yellow-50 text-yellow-900">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-yellow-600 animate-pulse" />
+                  <AlertDescription>
+                    <strong>Atenção:</strong> É necessário cadastrar e ativar uma credencial do IFMS para sincronizar seus diários e utilizar o sistema.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+
+            {credential?.isVerified && (
+              <Alert className="mt-4 border-green-200 bg-green-50 text-green-900">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <AlertDescription>
+                    <strong>Tudo certo!</strong> Sua credencial do IFMS está conectada e funcionando corretamente.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -259,6 +301,11 @@ export default function SettingsPage() {
                           value={password}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                           disabled={isSaving || isDeleting}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleSave()
+                            }
+                          }}
                         />
                         <Button
                           variant="ghost"
@@ -280,12 +327,17 @@ export default function SettingsPage() {
                       <Button
                         className="flex-1 bg-blue-600 hover:bg-blue-700"
                         onClick={handleSave}
-                        disabled={isSaving || isTesting || isDeleting}
+                        disabled={isSaving || isTesting || isDeleting || (credential && !credential.isVerified && !credential.lastError && !isSaving)}
                       >
                         {isSaving ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Salvando...
+                          </>
+                        ) : (credential && !credential.isVerified && !credential.lastError) ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Verificando...
                           </>
                         ) : (
                           credential ? 'Atualizar Credenciais' : 'Salvar Credenciais'

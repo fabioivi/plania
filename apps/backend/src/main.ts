@@ -6,26 +6,26 @@ import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Cookie parser middleware (Express já vem com @nestjs/platform-express)
   app.use(cookieParser());
-  
+
   // Enable CORS
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
   });
-  
+
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
   }));
-  
+
   // Global prefix
   app.setGlobalPrefix('api');
-  
+
   // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('PlanIA API')
@@ -49,7 +49,7 @@ async function bootstrap() {
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  
+
   SwaggerModule.setup('api/docs', app, documentFactory, {
     swaggerOptions: {
       persistAuthorization: true,
@@ -60,10 +60,10 @@ async function bootstrap() {
     jsonDocumentUrl: 'api/docs/json',
     yamlDocumentUrl: 'api/docs/yaml',
   });
-  
+
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  
+  await app.listen(port, '0.0.0.0');
+
   console.log(`🚀 Backend running on http://localhost:${port}`);
   console.log(`📚 Swagger Docs: http://localhost:${port}/api/docs`);
   console.log(`📊 Bull Board: http://localhost:${port}/admin/queues`);

@@ -102,9 +102,17 @@ export class ScrapingService {
       const headless =
         this.configService.get<string>('PLAYWRIGHT_HEADLESS') === 'true';
 
+      const executablePath = this.configService.get<string>('PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH');
+
       this.browser = await chromium.launch({
         headless,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: executablePath || undefined,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ],
       });
     }
     return this.browser;

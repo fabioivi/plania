@@ -45,8 +45,10 @@ services:
       target: development
     container_name: plania-backend-dev
     restart: unless-stopped
+    shm_size: '1gb'
     environment:
       NODE_ENV: development
+      NODE_OPTIONS: "--max-old-space-size=2048"
       PORT: 3001
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
@@ -84,7 +86,9 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${BACKEND_PORT:-3001}}
+      WATCHPACK_POLLING: "true"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${BACKEND_PORT:-3001}/api}
+      NODE_OPTIONS: "--max-old-space-size=4096"
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     volumes:

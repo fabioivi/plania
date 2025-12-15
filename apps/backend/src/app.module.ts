@@ -18,24 +18,33 @@ import { CryptoService } from './common/services/crypto.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    
+
     // Database
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DATABASE_HOST'),
-        port: configService.get('DATABASE_PORT'),
-        username: configService.get('DATABASE_USERNAME'),
-        password: configService.get('DATABASE_PASSWORD'),
-        database: configService.get('DATABASE_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development',
-        logging: configService.get('NODE_ENV') === 'development',
-      }),
+      useFactory: (configService: ConfigService) => {
+        const dbConfig = {
+          type: 'postgres' as const,
+          host: configService.get('DATABASE_HOST'),
+          port: configService.get('DATABASE_PORT'),
+          username: configService.get('DATABASE_USERNAME'),
+          password: configService.get('DATABASE_PASSWORD'),
+          database: configService.get('DATABASE_NAME'),
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: configService.get('NODE_ENV') === 'development',
+          logging: configService.get('NODE_ENV') === 'development',
+        };
+        console.log('Database Config:', {
+          host: dbConfig.host,
+          port: dbConfig.port,
+          user: dbConfig.username,
+          db: dbConfig.database
+        });
+        return dbConfig;
+      },
       inject: [ConfigService],
     }),
-    
+
     // Bull (Redis Queue)
     BullModule.forRootAsync({
       imports: [ConfigModule],
@@ -48,7 +57,7 @@ import { CryptoService } from './common/services/crypto.service';
       }),
       inject: [ConfigService],
     }),
-    
+
     // Modules
     AuthModule,
     AcademicModule,
@@ -61,4 +70,4 @@ import { CryptoService } from './common/services/crypto.service';
   providers: [CryptoService],
   exports: [CryptoService],
 })
-export class AppModule {}
+export class AppModule { }

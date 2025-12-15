@@ -15,9 +15,15 @@ export class CryptoService {
 
   constructor(private configService: ConfigService) {
     const key = this.configService.get<string>('ENCRYPTION_KEY');
+    console.log('ENCRYPTION_KEY check:', {
+      exists: !!key,
+      length: key?.length,
+      firstChars: key?.substring(0, 5)
+    });
+
     if (!key || key.length !== 32) {
       throw new Error(
-        'ENCRYPTION_KEY must be exactly 32 characters for AES-256-GCM',
+        `ENCRYPTION_KEY must be exactly 32 characters for AES-256-GCM. Received length: ${key?.length}`,
       );
     }
     this.encryptionKey = Buffer.from(key, 'utf8');

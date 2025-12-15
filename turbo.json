@@ -1,0 +1,67 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalPassThroughEnv": [
+        "NODE_ENV",
+        "DATABASE_HOST",
+        "DATABASE_PORT",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "DATABASE_NAME",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_PASSWORD",
+        "JWT_SECRET",
+        "ENCRYPTION_KEY",
+        "PORT",
+        "FRONTEND_URL",
+        "NEXT_PUBLIC_API_URL",
+        "PLAYWRIGHT_HEADLESS",
+        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD",
+        "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH",
+        "IFMS_BASE_URL"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env.development.local",
+                ".env.local",
+                ".env.development",
+                ".env"
+            ]
+        },
+        "test": {
+            "dependsOn": [
+                "build"
+            ],
+            "inputs": [
+                "src/**/*.tsx",
+                "src/**/*.ts",
+                "test/**/*.ts",
+                "test/**/*.tsx"
+            ]
+        },
+        "lint": {
+            "outputs": []
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true,
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env.development.local",
+                ".env.local",
+                ".env.development",
+                ".env"
+            ]
+        }
+    }
+}

@@ -1,87 +1,44 @@
-# ============================================
-# BUILD ARTIFACTS (não copiar - será gerado)
-# ============================================
+# GIT
+.git
+.gitignore
+
+# DEPENDENCIES
 **/node_modules
+**/.pnpm-store
+
+# BUILD OUTPUTS
 **/dist
 **/build
 **/.next
 **/.turbo
+coverage
+.nyc_output
 
-# ============================================
-# GIT (nunca copiar)
-# ============================================
-.git
-.gitignore
-.gitattributes
-
-# ============================================
-# ENVIRONMENT FILES (segurança)
-# ============================================
+# ENVIRONMENT
 .env
 .env.*
 !.env.example
 
-# ============================================
-# IDE & OS
-# ============================================
+# IDE
 .vscode
 .idea
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
 
-# ============================================
 # LOGS
-# ============================================
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-# ============================================
-# TESTING & COVERAGE
-# ============================================
-coverage
-.nyc_output
-**/*.test.ts
-**/*.test.js
-**/*.spec.ts
-**/*.spec.js
+# DOCKER (exclude self to avoid loops, though context is usually usually fine)
+docker-compose.yml
+docker-compose.prod.yml
+.dockerignore
 
-# ============================================
-# DOCKER FILES (não precisa dentro do container)
-# ============================================
-**/Dockerfile*
-**/docker-compose*.yml
-**/.dockerignore
-
-# ============================================
-# DOCUMENTATION (reduz tamanho)
-# ============================================
-*.md
-!README.md
-
-# ============================================
-# TEMP & BACKUP FILES
-# ============================================
-*.tmp
-*.old
-*.bak
-.claude
-
-# ============================================
-# MISC
-# ============================================
-.turbo
-storage
-apps/backend/storage
-**/scraping-debug/
-
-# ============================================
-# IMPORTANTE: NÃO IGNORAR ESTES ARQUIVOS
-# ============================================
-# package.json - NECESSÁRIO ✅
-# package-lock.json - NECESSÁRIO ✅
-# apps/*/package.json - NECESSÁRIO ✅
+# EXPLICITLY INCLUDE CRITICAL FILES (Whitelist / Exception)
+!package.json
+!package-lock.json
+!turbo.json
+!apps/frontend/package.json
+!apps/backend/package.json

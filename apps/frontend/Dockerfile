@@ -52,10 +52,15 @@ CMD ["npx", "turbo", "run", "dev", "--filter=plania-design-system"]
 FROM base AS builder
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
 COPY . .
 
 # Build Next.js (generates standalone output)
-RUN npx turbo run build --filter=plania-design-system
+RUN npx turbo run build --filter=plania-design-system && \
+    echo "=== Build completed, checking output ===" && \
+    ls -la /app/apps/frontend/.next/ && \
+    echo "=== Standalone Content ===" && \
+    ls -R /app/apps/frontend/.next/standalone/ || echo "Standalone folder not found"
 
 # ============================================
 # Stage 5: Production (Next.js Standalone)
@@ -70,8 +75,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Copy standalone build
+# Note: In a monorepo, .next/standalone usually contains "apps/frontend/server.js"
+# But based on verification, it seems to be copied to root in this specific setup or dependent on Next.js version
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone ./
+
+# Copy static assets (not included in standalone - must be copied separately)
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static ./apps/frontend/.next/static
+
+# Copy public folder (static assets served by Next.js)
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/public ./apps/frontend/public
 
 USER nextjs
@@ -82,6 +93,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
-# In standalone mode, server.js is usually at the root of the standalone output or inside the package structure. 
-# Turbo/Next standalone usually preserves structure: apps/frontend/server.js
-CMD ["node", "apps/frontend/server.js"]
+CMD ["node", "server.js"]

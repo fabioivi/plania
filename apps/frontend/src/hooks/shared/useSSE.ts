@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { SSEMessage } from '@/types'
 
 export interface UseSSEOptions<T = any> {
   url: string
@@ -54,7 +53,7 @@ export function useSSE<T = any>(options: UseSSEOptions<T>): UseSSEReturn<T> {
   const [data, setData] = useState<T | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Event | null>(null)
-  const [readyState, setReadyState] = useState(EventSource.CLOSED)
+  const [readyState, setReadyState] = useState<number>(EventSource.CLOSED)
 
   const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectCountRef = useRef(0)

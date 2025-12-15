@@ -1,36 +1,31 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sparkles, ArrowLeft, ArrowRight, Loader2, CheckCircle2, Space } from "lucide-react"
-import { WorkProposalTable, WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
+import { Sparkles, ArrowLeft, ArrowRight, Loader2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { Header } from "@/components/layout/header"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { GeneratedTeachingPlan } from "@/services/api"
 import { toast } from "sonner"
-import { useDiaries, useTeachingPlans, useTeachingPlan, useSaveAITeachingPlan } from "@/hooks/api"
+import { useDiaries, useTeachingPlan, useSaveAITeachingPlan } from "@/hooks/api"
 
-export default function GeneratePage() {
+function GeneratePageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const diaryId = searchParams.get('diaryId')
   const planId = searchParams.get('planId') // Base plan to use for generation
 
   // React Query hooks
-  const { data: diaries = [], isLoading: loadingDiaries } = useDiaries()
-  const { data: basePlan, isLoading: loadingBasePlan } = useTeachingPlan(planId || undefined)
-  const { mutate: savePlan, isPending: saving } = useSaveAITeachingPlan()
+  const { data: diaries = [] } = useDiaries()
+  const { data: basePlan } = useTeachingPlan(planId || undefined)
+  const { mutate: savePlan } = useSaveAITeachingPlan()
 
   const [step, setStep] = useState<"config" | "generating">("config")
-  const [selectedDiaryId, setSelectedDiaryId] = useState<string>(diaryId || "")
-  const [generatedPlan, setGeneratedPlan] = useState<GeneratedTeachingPlan | null>(null)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [generationMessage, setGenerationMessage] = useState('')
 
@@ -41,16 +36,9 @@ export default function GeneratePage() {
     additionalNotes: ""
   })
 
-  // Get teaching plans for selected diary
-  const { data: existingPlans = [] } = useTeachingPlans(selectedDiaryId || undefined)
-
-  // Find selected diary
-  const selectedDiary = diaries.find(d => d.id === selectedDiaryId)
-
   // Auto-select diary from URL parameter
   useEffect(() => {
     if (diaryId && diaries.length > 0) {
-      setSelectedDiaryId(diaryId)
       setFormData(prev => ({ ...prev, diaryId }))
     }
   }, [diaryId, diaries])
@@ -62,12 +50,6 @@ export default function GeneratePage() {
       toast.success(`Plano "${basePlan.unidadeCurricular}" carregado como base`)
     }
   }, [planId, basePlan])
-
-  // Select diary handler
-  const selectDiary = (diaryId: string) => {
-    setSelectedDiaryId(diaryId)
-    setFormData(prev => ({ ...prev, diaryId }))
-  }
 
   const handleGenerate = async () => {
     if (!formData.diaryId) {
@@ -98,7 +80,6 @@ export default function GeneratePage() {
           } else if (data.type === 'complete') {
             setGenerationProgress(100)
             setGenerationMessage('Salvando plano de ensino...')
-            setGeneratedPlan(data.plan)
             eventSource.close()
 
             // Save the plan and redirect to review page
@@ -114,7 +95,7 @@ export default function GeneratePage() {
                   // Redirect to review page
                   router.push(`/plans/review/${response.plan.id}`)
                 },
-                onError: (error) => {
+                onError: () => {
                   toast.error('Plano gerado mas erro ao salvar')
                   setStep("config")
                 },
@@ -475,5 +456,13 @@ export default function GeneratePage() {
       </main>
     </div>
     </ProtectedRoute>
+  )
+}
+
+export default function GeneratePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div>Loading...</div></div>}>
+      <GeneratePageContent />
+    </Suspense>
   )
 }

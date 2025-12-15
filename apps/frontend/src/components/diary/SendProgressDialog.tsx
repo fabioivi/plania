@@ -30,7 +30,6 @@ export function SendProgressDialog({
   diaryId,
   contents,
   disabled = false,
-  onComplete,
 }: SendProgressDialogProps) {
   const [open, setOpen] = useState(false)
   const [sending, setSending] = useState(false)

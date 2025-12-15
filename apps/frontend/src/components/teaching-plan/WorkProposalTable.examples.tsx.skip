@@ -1,7 +1,12 @@
 // Exemplo de uso do WorkProposalTable na página teaching-plans/[id]/page.tsx
 // Este exemplo mostra como integrar o componente em uma página de visualização
 
+import { useState, useEffect } from "react"
 import { WorkProposalTable, type WeekSchedule } from "@/components/teaching-plan/WorkProposalTable"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar, Wand2 } from "lucide-react"
 
 // Supondo que você tem os dados do plano de ensino
 const plan = {
@@ -37,7 +42,7 @@ const convertToWeekSchedule = (propostaTrabalho: any[]): WeekSchedule[] => {
 }
 
 // Exemplo 1: Página de visualização (sem interações)
-export default function TeachingPlanViewPage() {
+export function TeachingPlanViewPage() {
   return (
     <div>
       {/* ... header e outros conteúdos */}
@@ -72,7 +77,7 @@ export default function TeachingPlanViewPage() {
 }
 
 // Exemplo 2: Página de edição/review (com interações)
-export default function PlanReviewPage() {
+export function PlanReviewPage() {
   const [weeks, setWeeks] = useState<WeekSchedule[]>(
     convertToWeekSchedule(plan.propostaTrabalho)
   )
@@ -117,7 +122,7 @@ export default function PlanReviewPage() {
 }
 
 // Exemplo 3: Integração com API
-export default function TeachingPlanFromAPI() {
+export function TeachingPlanFromAPI() {
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState<any>(null)
 

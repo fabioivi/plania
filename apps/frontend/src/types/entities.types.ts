@@ -77,6 +77,8 @@ export interface TeachingPlanWorkProposal {
   observacoes: string
   conteudo: string
   metodologia: string
+  tecnicasEnsino?: string[]
+  recursosEnsino?: string[]
 }
 
 // Teaching Plan entity

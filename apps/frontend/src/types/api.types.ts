@@ -5,7 +5,6 @@
 
 import type {
   User,
-  AcademicCredential,
   Diary,
   DiaryContent,
   TeachingPlan,

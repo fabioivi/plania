@@ -327,7 +327,7 @@ export default function SettingsPage() {
                       <Button
                         className="flex-1 bg-blue-600 hover:bg-blue-700"
                         onClick={handleSave}
-                        disabled={isSaving || isTesting || isDeleting || (credential && !credential.isVerified && !credential.lastError && !isSaving)}
+                        disabled={!!(isSaving || isTesting || isDeleting || (credential && credential.isVerified !== true && !credential.lastError && !isSaving))}
                       >
                         {isSaving ? (
                           <>

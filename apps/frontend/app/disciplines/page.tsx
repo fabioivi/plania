@@ -22,7 +22,7 @@ export default function DisciplinesPage() {
   const queryClient = useQueryClient()
   // React Query hooks
   const { data: diaries = [], isLoading: loading } = useDiaries()
-  const { mutate: syncDiaries, isPending: isSyncing } = useSyncDiaries()
+  const { mutate: syncDiaries } = useSyncDiaries()
 
   // Sistema de sincronização genérico
   const { state: syncState, startSync, complete, error: syncError, reset } = useSyncState('download')

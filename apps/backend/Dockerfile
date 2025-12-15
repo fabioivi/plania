@@ -60,15 +60,37 @@ CMD ["npx", "turbo", "run", "dev", "--filter=plania-backend"]
 # ============================================
 # Stage 4: Builder
 # ============================================
+# ============================================
+# Stage 4: Builder
+# ============================================
 FROM base AS builder
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY . .
 
-RUN npx turbo run build --filter=plania-backend
+RUN npx turbo run build --filter=plania-backend && \
+    echo "=== Build completed, checking output ===" && \
+    ls -la /app/apps/backend/dist/ && \
+    ls -la /app/apps/backend/dist/src/ || echo "Dist/src folder not found"
 
 # ============================================
-# Stage 5: Production
+# Stage 5: Production Dependencies
+# ============================================
+FROM base AS prod-deps
+
+COPY package*.json turbo.json ./
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY apps/frontend/package.json ./apps/frontend/package.json
+
+# Debug: Check files
+RUN ls -la && ls -la apps/backend
+
+# Use npm install instead of ci to tolerate potential lockfile inconsistencies in this context
+RUN npm install --omit=dev
+
+# ============================================
+# Stage 6: Production
 # ============================================
 FROM base AS production
 
@@ -77,9 +99,21 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+# Copy package files for reference
+COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/package.json ./apps/backend/
+
+# Copy production node_modules
+COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=nestjs:nodejs /app/apps/backend/node_modules ./apps/backend/node_modules
+
+# Copy built application
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/package.json ./package.json
+
+# Check contents for debugging
+RUN echo "=== Checking Production Build Contents ===" && \
+    ls -la /app/dist && \
+    ls -la /app/node_modules
 
 USER nestjs
 

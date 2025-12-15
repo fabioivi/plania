@@ -43,7 +43,7 @@ export function useSyncTeachingPlan() {
 
   return useMutation({
     mutationFn: (planId: string) => academicService.syncSpecificTeachingPlan(planId),
-    onSuccess: (data, planId) => {
+    onSuccess: (_data, planId) => {
       // Invalidate teaching plan queries
       queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.detail(planId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
@@ -116,7 +116,7 @@ export function useUpdateTeachingPlan() {
       )
       return response.data
     },
-    onSuccess: (data, { planId }) => {
+    onSuccess: (_data, { planId }) => {
       // Invalidate teaching plan queries
       queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.detail(planId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
@@ -142,7 +142,7 @@ export function useDeleteTeachingPlan() {
       )
       return response.data
     },
-    onSuccess: (data, planId) => {
+    onSuccess: (_data, planId) => {
       // Invalidate all teaching plan queries
       queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.all })
       queryClient.removeQueries({ queryKey: queryKeys.teachingPlans.detail(planId) })

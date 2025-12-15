@@ -8,9 +8,6 @@ import { toast } from 'sonner'
 import { academicService } from '@/services/api'
 import { queryKeys } from '@/lib/api/query-client'
 import type {
-  Diary,
-  DiaryContent,
-  DiaryWithPlans,
   SaveDiaryContentBulkRequest,
   SendDiaryContentBulkRequest,
 } from '@/types'

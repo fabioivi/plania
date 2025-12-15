@@ -168,8 +168,8 @@ export function formatEvaluationAssessment(
   }
 
   return evaluations
-    .map((eval, index) => {
-      return `${index + 1}. ${eval.avaliacao} - ${eval.instrumentos} (${eval.valorMaximo}pts)`
+    .map((evaluation, index) => {
+      return `${index + 1}. ${evaluation.avaliacao} - ${evaluation.instrumentos} (${evaluation.valorMaximo}pts)`
     })
     .join('\n')
 }

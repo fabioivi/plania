@@ -13,7 +13,10 @@
       "Bash(npm ls:*)",
       "Bash(tar:*)",
       "Bash(npm install:*)",
-      "Bash(docker buildx version)"
+      "Bash(docker buildx version)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(docker compose:*)"
     ]
   }
 }

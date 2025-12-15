@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: plania-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-plania}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - plania-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: plania-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - plania-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (NestJS)
+  backend:
+    # Replace 'fabioivi' with your GitHub username if different
+    image: ghcr.io/fabioivi/plania-backend:latest
+    container_name: plania-backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-false}
+      DB_LOGGING: ${DB_LOGGING:-false}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB:-plania}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      PLAYWRIGHT_HEADLESS: "true"
+      IFMS_BASE_URL: https://academico.ifms.edu.br
+      FRONTEND_URL: ${FRONTEND_URL}
+      # LLM API Keys
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - plania-network
+
+  # Frontend (Next.js)
+  frontend:
+    # Replace 'fabioivi' with your GitHub username if different
+    image: ghcr.io/fabioivi/plania-frontend:latest
+    container_name: plania-frontend
+    restart: always
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      - backend
+    networks:
+      - plania-network
+
+networks:
+  plania-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

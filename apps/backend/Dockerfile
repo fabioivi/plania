@@ -1,11 +1,19 @@
 # syntax=docker/dockerfile:1.4
 
 # ============================================
-# Stage 1: Base
+# Stage 1: Pruner (Isolate App Scope)
+# ============================================
+FROM node:20-alpine AS pruner
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY . .
+# Prune the workspace to only include "plania-backend"
+RUN npx turbo prune plania-backend --docker
+
+# ============================================
+# Stage 2: Base (Shared Runtime)
 # ============================================
 FROM node:20-alpine AS base
-
-# Install system dependencies
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -16,81 +24,43 @@ RUN apk add --no-cache \
     wget \
     dumb-init
 
-# Configure Playwright
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 WORKDIR /app
 
 # ============================================
-# Stage 2: Dependencies
+# Stage 3: Dependencies (Install Pruned Deps)
 # ============================================
 FROM base AS deps
-
-# Install root dependencies
-COPY package*.json turbo.json ./
-COPY apps/backend/package.json ./apps/backend/package.json
-COPY apps/frontend/package.json ./apps/frontend/package.json
-
-# Fallback to npm install if lockfile is missing from context
+# Copy only package.json's from the pruned output
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
 RUN npm install
 
 # ============================================
-# Stage 3: Development
-# ============================================
-FROM base AS development
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/package-lock.json ./package-lock.json
-COPY --from=deps /app/turbo.json ./turbo.json
-
-COPY . .
-
-RUN rm -f apps/backend/.env
-
-ENV NODE_ENV=development
-EXPOSE 3001
-
-ENTRYPOINT ["dumb-init", "--"]
-# Run specifically the backend dev script via turbo
-CMD ["npx", "turbo", "run", "dev", "--filter=plania-backend"]
-
-# ============================================
-# Stage 4: Builder
-# ============================================
-# ============================================
-# Stage 4: Builder
+# Stage 4: Builder (Build the App)
 # ============================================
 FROM base AS builder
-
+WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
-COPY . .
+# Copy the full source code from pruned output
+COPY --from=pruner /app/out/full/ .
 
-RUN npx turbo run build --filter=plania-backend && \
-    echo "=== Build completed, checking output ===" && \
-    ls -la /app/apps/backend/dist/ && \
-    ls -la /app/apps/backend/dist/src/ || echo "Dist/src folder not found"
+RUN npx turbo run build --filter=plania-backend
 
 # ============================================
 # Stage 5: Production Dependencies
 # ============================================
 FROM base AS prod-deps
-
-COPY package*.json turbo.json ./
-COPY apps/backend/package.json ./apps/backend/package.json
-COPY apps/frontend/package.json ./apps/frontend/package.json
-
-# Debug: Check files
-RUN ls -la && ls -la apps/backend
-
-# Use npm install instead of ci to tolerate potential lockfile inconsistencies in this context
+WORKDIR /app
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
+# Install production dependencies only
 RUN npm install --omit=dev
 
 # ============================================
-# Stage 6: Production
+# Stage 6: Production Runner
 # ============================================
 FROM base AS production
 
@@ -99,21 +69,17 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy package files for reference
-COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/package.json ./apps/backend/
-
 # Copy production node_modules
 COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=prod-deps --chown=nestjs:nodejs /app/apps/backend/node_modules ./apps/backend/node_modules
 
-# Copy built application
+# Copy built application and package files
+# Paths are maintained by turbo prune: apps/backend/...
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/package.json ./apps/backend/package.json
+COPY --from=builder --chown=nestjs:nodejs /app/package.json ./package.json
 
-# Check contents for debugging
-RUN echo "=== Checking Production Build Contents ===" && \
-    ls -la /app/apps/backend/dist && \
-    ls -la /app/node_modules
+# Copy additional configs if needed (e.g., nest-cli.json)
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/nest-cli.json ./apps/backend/nest-cli.json
 
 USER nestjs
 

@@ -5,7 +5,7 @@
 
 import axios, { AxiosError } from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 // Create axios instance
 export const apiClient = axios.create({
@@ -46,7 +46,7 @@ apiClient.interceptors.response.use(
 
         // Redirect to login if not already on auth pages
         const isAuthPage = window.location.pathname.includes('/login') ||
-                          window.location.pathname.includes('/register')
+          window.location.pathname.includes('/register')
 
         if (!isAuthPage) {
           window.location.href = '/login'

@@ -47,7 +47,7 @@ export const aiService = {
    */
   getGenerationProgressUrl(diaryId: string): string {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     return `${baseUrl}/ai/teaching-plans/generate-stream/${diaryId}?token=${token}`
   },
 

@@ -58,9 +58,9 @@ export function SendProgressDialog({
     try {
       // Conectar ao SSE endpoint
       const token = localStorage.getItem('token')
-      const url = `${process.env.NEXT_PUBLIC_API_URL || '/api'}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
       console.log('📡 Conectando ao SSE:', url)
-
+      
       const eventSource = new EventSource(url)
 
       eventSource.onmessage = (event) => {
@@ -72,10 +72,10 @@ export function SendProgressDialog({
           // Atualizar progresso em tempo real
           const content = contentsToSend.find(c => c.contentId === data.contentId)
           const contentName = content?.date || data.contentId
-
+          
           // Atualizar progresso e adicionar item
           updateProgress(data.current, `Enviando ${data.current}/${data.total}: ${contentName}`)
-
+          
           // Adicionar item à lista se tiver sucesso/falha
           if (data.success !== undefined) {
             addItem({
@@ -88,7 +88,7 @@ export function SendProgressDialog({
         } else if (data.type === 'complete') {
           console.log('✅ Envio completo:', data)
           eventSource.close()
-
+          
           const items = data.results.map((r: any) => ({
             id: r.contentId,
             name: contentsToSend.find(c => c.contentId === r.contentId)?.date || r.contentId,
@@ -124,7 +124,7 @@ export function SendProgressDialog({
           console.error('❌ Erro SSE:', data)
           eventSource.close()
           setSending(false)
-
+          
           error(
             'Erro ao enviar conteúdos',
             [{
@@ -134,7 +134,7 @@ export function SendProgressDialog({
               message: data.message || 'Erro desconhecido',
             }]
           )
-
+          
           toast.error(data.message || 'Erro ao enviar conteúdos')
         }
       }
@@ -143,7 +143,7 @@ export function SendProgressDialog({
         console.error('❌ Erro no SSE:', err)
         eventSource.close()
         setSending(false)
-
+        
         error(
           'Erro ao enviar conteúdos',
           [{
@@ -153,14 +153,14 @@ export function SendProgressDialog({
             message: 'Erro ao conectar com o servidor',
           }]
         )
-
+        
         toast.error('Erro ao conectar com o servidor')
       }
     } catch (err: any) {
       console.error('❌ Erro ao enviar conteúdos:', err)
       toast.error(err.response?.data?.message || 'Erro ao enviar conteúdos')
       setSending(false)
-
+      
       error(
         'Erro ao enviar conteúdos',
         [{
@@ -249,8 +249,8 @@ export function SendProgressDialog({
             )}
 
             {(sending || syncState) && (
-              <SyncProgressDisplay
-                state={syncState}
+              <SyncProgressDisplay 
+                state={syncState} 
                 isConnected={true}
                 className="mt-4"
               />
@@ -263,8 +263,8 @@ export function SendProgressDialog({
               <AlertDialogCancel disabled={sending}>
                 Cancelar
               </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleSend}
+              <AlertDialogAction 
+                onClick={handleSend} 
                 disabled={sending}
                 className="bg-primary"
               >

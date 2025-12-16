@@ -17,21 +17,21 @@ export function useSyncProgress() {
 
   const connect = useCallback(() => {
     console.log('🔵 useSyncProgress: Iniciando conexão SSE...')
-
+    
     // Disconnect existing connection
     if (eventSourceRef.current) {
       console.log('⚠️ useSyncProgress: Fechando conexão existente')
       eventSourceRef.current.close()
     }
 
-    const baseURL = api.defaults.baseURL || '/api';
+    const baseURL = api.defaults.baseURL || 'http://localhost:3001/api'
     const token = localStorage.getItem('token')
-
+    
     if (!token) {
       console.error('❌ useSyncProgress: Token não encontrado no localStorage')
       return
     }
-
+    
     // Enviar token via query parameter (EventSource não suporta headers customizados)
     const url = `${baseURL}/sync/events?token=${encodeURIComponent(token)}`
 
@@ -59,7 +59,7 @@ export function useSyncProgress() {
       console.error('❌ useSyncProgress: Erro na conexão SSE:', error)
       console.log('ReadyState:', eventSource.readyState)
       setIsConnected(false)
-
+      
       // Não fechar imediatamente, deixar tentar reconectar
       if (eventSource.readyState === EventSource.CLOSED) {
         console.log('🔴 useSyncProgress: Conexão fechada pelo servidor')

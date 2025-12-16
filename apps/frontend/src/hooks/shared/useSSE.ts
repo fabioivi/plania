@@ -171,7 +171,7 @@ export function useSSE<T = any>(options: UseSSEOptions<T>): UseSSEReturn<T> {
  */
 export function useSyncProgressSSE(diaryId: string | undefined) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
   const url = diaryId
     ? `${baseUrl}/sync/events?diaryId=${diaryId}&token=${token}`
     : ''

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # PostgreSQL Database
   postgres:
@@ -11,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - web
+      - plania-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 30s
@@ -26,7 +28,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - web
+      - plania-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
@@ -69,15 +71,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - web
-    labels:
-      - "traefik.enable=true"
-      # API Router (using the same domain but /api path)
-      - "traefik.http.routers.plania-api.rule=Host(`plania.fabiodev.com.br`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.plania-api.tls=true"
-      - "traefik.http.routers.plania-api.tls.certresolver=lets-encrypt"
-      - "traefik.http.services.plania-api.loadbalancer.server.port=3001"
-      - "traefik.docker.network=web"
+      - plania-network
 
   # Frontend (Next.js)
   frontend:
@@ -93,19 +87,11 @@ services:
     depends_on:
       - backend
     networks:
-      - web
-    labels:
-      - "traefik.enable=true"
-      # Frontend Router (catches everything else)
-      - "traefik.http.routers.plania.rule=Host(`plania.fabiodev.com.br`)"
-      - "traefik.http.routers.plania.tls=true"
-      - "traefik.http.routers.plania.tls.certresolver=lets-encrypt"
-      - "traefik.http.services.plania.loadbalancer.server.port=3000"
-      - "traefik.docker.network=web"
+      - plania-network
 
-networks: 
-  web:
-    external: true
+networks:
+  plania-network:
+    driver: bridge
 
 volumes:
   postgres_data:

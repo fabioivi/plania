@@ -78,8 +78,6 @@ services:
       - "traefik.http.routers.plania-backend.tls=true"
       - "traefik.http.routers.plania-backend.tls.certresolver=lets-encrypt"
       - "traefik.http.services.plania-backend.loadbalancer.server.port=3001"
-      - "traefik.http.middlewares.plania-backend-strip-prefix.stripprefix.prefixes=/api"
-      - "traefik.http.routers.plania-backend.middlewares=plania-backend-strip-prefix"
       - "traefik.docker.network=web"
 
   # Frontend (Next.js)

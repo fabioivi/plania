@@ -49,7 +49,14 @@ CMD ["npx", "turbo", "run", "dev", "--filter=plania-design-system"]
 # ============================================
 # Stage 4: Builder
 # ============================================
+
+# ============================================
+# Stage 4: Builder
+# ============================================
 FROM base AS builder
+
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
@@ -77,7 +84,14 @@ RUN npm install --omit=dev
 # ============================================
 # Stage 6: Production (Standard Mode)
 # ============================================
+
+# ============================================
+# Stage 6: Production (Standard Mode)
+# ============================================
 FROM base AS production
+
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs

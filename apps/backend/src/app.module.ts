@@ -9,6 +9,7 @@ import { PlansModule } from './modules/plans/plans.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { AIModule } from './modules/ai/ai.module';
+import { HealthModule } from './modules/health/health.module';
 import { CryptoService } from './common/services/crypto.service';
 import { SessionCacheService } from './common/services/session-cache.service';
 
@@ -67,6 +68,7 @@ import { SessionCacheService } from './common/services/session-cache.service';
     QueueModule,
     SyncModule,
     AIModule,
+    HealthModule,
   ],
   providers: [CryptoService, SessionCacheService],
   exports: [CryptoService, SessionCacheService],

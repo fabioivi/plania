@@ -103,7 +103,7 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: "https://plania.fabiodev.com.br/api"
+        NEXT_PUBLIC_API_URL: "localhost:3001/api"
       target: production
 
     container_name: plania-frontend

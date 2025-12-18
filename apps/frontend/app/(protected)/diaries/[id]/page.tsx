@@ -1,12 +1,24 @@
 'use client'
 
 import { useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, BookOpen, Loader2, FileText, Download, ExternalLink, Upload } from "lucide-react"
-import { Header } from "@/components/layout/header"
+import {
+  BookOpen,
+  Loader2,
+  FileText,
+  Download,
+  ExternalLink,
+  Upload,
+  ChevronLeft,
+  Clock,
+  Users,
+  CheckCircle2,
+} from "lucide-react"
+
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { DiaryContentTable } from "@/components/diary/DiaryContentTable"
 import { SyncProgressDisplay } from "@/components/sync"
@@ -17,7 +29,7 @@ import type { DiaryContent } from "@/types"
 
 export default function DiaryContentPage() {
   const params = useParams()
-  const router = useRouter()
+
   const diaryId = params?.id as string
 
   // React Query hooks
@@ -234,208 +246,241 @@ export default function DiaryContentPage() {
     }
   }
 
+  // Loading State
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <p className="text-slate-500 font-medium animate-pulse">Carregando diário...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Header />
+      <div className="min-h-screen bg-slate-50 pb-20">
 
-        <main className="container mx-auto py-8 px-4 max-w-6xl">
-          {/* Page Header */}
-          {/* Page Header */}
-          <div className="mb-6 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex items-center gap-4 w-full lg:w-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/disciplines')}
-                className="gap-2 shrink-0"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
+        <div className="max-w-6xl mx-auto">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Link href="/disciplines" className="inline-block">
+              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 hover:text-indigo-600 hover:bg-transparent group">
+                <div className="bg-white border border-slate-200 rounded-full p-1 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-colors">
+                  <ChevronLeft className="h-4 w-4" />
+                </div>
+                <span className="font-semibold">Voltar para Disciplinas</span>
               </Button>
-              <div className="flex-1">
-                <h2 className="text-2xl md:text-3xl font-bold break-words">Conteúdo do Diário</h2>
-                {diaryInfo && (
-                  <p className="text-muted-foreground mt-1 text-sm md:text-base">
-                    {diaryInfo.disciplina} • {diaryInfo.turma}
+            </Link>
+          </div>
+
+          {/* Header Action Bar */}
+          <div className="mb-8 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden">
+            <div className="relative z-10 w-full lg:w-auto flex-1">
+              {diaryInfo && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 uppercase tracking-widest text-[10px] font-bold">
+                      {diaryInfo.periodo || 'N/A'}
+                    </Badge>
+                    {diaryInfo.externalId && (
+                      <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 font-mono text-[10px]">
+                        ID: {diaryInfo.externalId}
+                      </Badge>
+                    )}
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2">
+                    {diaryInfo.disciplina}
+                  </h1>
+                  <p className="text-slate-500 font-medium text-lg flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {diaryInfo.turma}
                   </p>
-                )}
-              </div>
+                </>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+            <div className="relative z-10 flex flex-wrap gap-3 w-full lg:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleSync}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing'}
-                className="gap-2 w-full sm:w-auto"
+                className="h-10 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200"
               >
                 {downloadState?.status === 'syncing' ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Baixando...
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4" />
+                    <Download className="h-4 w-4 mr-2" />
                     Baixar do Sistema
-                  </>
-                )}
-              </Button>
-
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleSendToSystem}
-                disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
-                className="gap-2 w-full sm:w-auto"
-              >
-                {uploadState?.status === 'syncing' ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    Enviar para o Sistema
                   </>
                 )}
               </Button>
 
               {diaryInfo?.externalId && (
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
                   onClick={() => window.open(`https://academico.ifms.edu.br/administrativo/professores/diario/${diaryInfo.externalId}/conteudo`, '_blank')}
-                  className="gap-2 w-full sm:w-auto"
+                  className="h-10 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  Abrir no Sistema IFMS
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Abrir no Sistema
                 </Button>
               )}
+
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSendToSystem}
+                disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
+                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200"
+              >
+                {uploadState?.status === 'syncing' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Enviar para o Sistema
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
-          {/* Sync Progress Display - Download */}
-          {downloadState && (
-            <div className="mb-6">
-              <SyncProgressDisplay
-                state={downloadState}
-                isConnected={true}
-              />
+          {/* Sync Progress Display */}
+          {(downloadState || uploadState) && (
+            <div className="mb-6 animate-fade-in">
+              {downloadState && (
+                <SyncProgressDisplay
+                  state={downloadState}
+                  isConnected={true}
+                />
+              )}
+              {uploadState && (
+                <SyncProgressDisplay
+                  state={uploadState}
+                  isConnected={true}
+                />
+              )}
             </div>
           )}
 
-          {/* Sync Progress Display - Upload */}
-          {uploadState && (
-            <div className="mb-6">
-              <SyncProgressDisplay
-                state={uploadState}
-                isConnected={true}
-              />
-            </div>
-          )}
-
-          {/* Diary Info Card */}
+          {/* Stats Grid */}
           {diaryInfo && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Informações do Diário
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">ID do Diário (IFMS)</p>
-                    <p className="text-sm mt-1 font-mono bg-muted px-2 py-1 rounded">{diaryInfo.externalId}</p>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="bg-blue-50 p-2.5 rounded-xl">
+                    <BookOpen className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Curso</p>
-                    <p className="text-sm mt-1">{diaryInfo.curso}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Curso</p>
+                    <p className="font-bold text-slate-700 text-sm truncate max-w-[150px]" title={diaryInfo.curso}>{diaryInfo.curso}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="bg-purple-50 p-2.5 rounded-xl">
+                    <Clock className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Período</p>
-                    <p className="text-sm mt-1">{diaryInfo.periodo || 'N/A'}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Carga Horária</p>
+                    <p className="font-bold text-slate-700">{diaryInfo.cargaHoraria || 'N/A'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="bg-emerald-50 p-2.5 rounded-xl">
+                    <Users className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Carga Horária</p>
-                    <p className="text-sm mt-1">{diaryInfo.cargaHoraria || 'N/A'}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase">Alunos</p>
+                    <p className="font-bold text-slate-700">{diaryInfo.emCurso}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="bg-slate-50 p-2.5 rounded-xl">
+                    <CheckCircle2 className="h-5 w-5 text-slate-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Alunos em Curso</p>
-                    <p className="text-sm mt-1">{diaryInfo.emCurso}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Ano/Semestre</p>
-                    <p className="text-sm mt-1">
-                      {diaryInfo.anoLetivo && diaryInfo.semestre
-                        ? `${diaryInfo.anoLetivo}/${diaryInfo.semestre}`
-                        : 'N/A'
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <Badge variant={diaryInfo.aprovado ? "default" : "secondary"} className="mt-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase">Status</p>
+                    <Badge variant={diaryInfo.aprovado ? "default" : "secondary"} className="mt-0.5">
                       {diaryInfo.aprovado ? "Aprovado" : "Em Andamento"}
                     </Badge>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Loading State */}
-          {loading && (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              <span className="ml-3 text-muted-foreground">Carregando conteúdo...</span>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* Empty State */}
           {!loading && content.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Nenhum conteúdo encontrado</h3>
-                <p className="text-muted-foreground text-center max-w-md">
-                  Este diário ainda não possui conteúdo de aulas registrado. Sincronize novamente para obter os dados mais recentes.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-[2rem] border border-dashed border-slate-200 p-12 text-center">
+              <div className="bg-slate-50 p-4 rounded-full inline-block mb-4">
+                <FileText className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Nenhum conteúdo encontrado</h3>
+              <p className="text-slate-500 max-w-md mx-auto mb-6">
+                Este diário ainda não possui conteúdo de aulas registrado.
+                Use o botão "Baixar do Sistema" para sincronizar.
+              </p>
+              <Button variant="outline" onClick={handleSync} className="font-semibold text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                <Download className="h-4 w-4 mr-2" />
+                Sincronizar Agora
+              </Button>
+            </div>
           )}
 
           {/* Content List */}
           {!loading && content.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-sm text-muted-foreground">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between px-2">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                  Conteúdos de Aula
+                </h3>
+                <div className="text-sm font-medium text-slate-500">
                   {stats ? (
                     <div className="flex gap-4">
-                      <span><strong>{stats.realClasses}</strong> aulas ministradas</span>
+                      <span><strong className="text-slate-900">{stats.realClasses}</strong> aulas</span>
                       {stats.anticipations > 0 && (
-                        <span className="text-green-600">+ <strong>{stats.anticipations}</strong> antecipações</span>
+                        <span className="text-amber-600">+ <strong>{stats.anticipations}</strong> antecipações</span>
                       )}
-                      <span className="text-muted-foreground/70">({stats.total} total)</span>
+                      <span className="text-slate-400">({stats.total} total)</span>
                     </div>
                   ) : (
-                    <span>{content.length} {content.length === 1 ? 'registro' : 'registros'}</span>
+                    <span>{content.length} registros</span>
                   )}
                 </div>
               </div>
 
-              <DiaryContentTable
-                contents={content}
-                onReorder={handleReorder}
-              />
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <DiaryContentTable
+                  contents={content}
+                  onReorder={handleReorder}
+                />
+              </div>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </ProtectedRoute>
   )

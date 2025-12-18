@@ -293,30 +293,48 @@ export function TeachingPlanView({
     return (
       <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
         <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <ClipboardCheck className="h-5 w-5 text-indigo-600" />
+          <div className="bg-indigo-50 p-2 rounded-lg">
+            <ClipboardCheck className="h-5 w-5 text-indigo-600" />
+          </div>
           <h3 className="font-bold text-slate-800 text-lg">Avaliação da Aprendizagem</h3>
         </div>
         <CardContent className="p-6">
-          <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="text-left py-3 px-4 font-bold text-slate-700">Etapa</th>
-                    <th className="text-left py-3 px-4 font-bold text-slate-700">Avaliação</th>
-                    <th className="text-left py-3 px-4 font-bold text-slate-700">Instrumentos</th>
-                    <th className="text-left py-3 px-4 font-bold text-slate-700">Data Prevista</th>
-                    <th className="text-left py-3 px-4 font-bold text-slate-700">Valor Máx.</th>
+                  <tr className="bg-slate-50/50 border-b border-slate-200">
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Etapa</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Avaliação</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Instrumentos</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Nota Máx.</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {plan.avaliacaoAprendizagem.map((avaliacao, index) => (
-                    <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3 px-4 font-medium text-slate-900">{avaliacao.etapa || '-'}</td>
-                      <td className="py-3 px-4 text-slate-600">{avaliacao.avaliacao || '-'}</td>
-                      <td className="py-3 px-4 text-slate-600">{avaliacao.instrumentos || '-'}</td>
-                      <td className="py-3 px-4 text-slate-600">{avaliacao.dataPrevista || '-'}</td>
-                      <td className="py-3 px-4 font-medium text-indigo-600">{avaliacao.valorMaximo || '-'}</td>
+                    <tr key={index} className="hover:bg-slate-50/80 transition-colors bg-white">
+                      <td className="py-4 px-6 font-bold text-slate-700">{avaliacao.etapa || '-'}</td>
+                      <td className="py-4 px-6 text-slate-600 font-medium leading-relaxed max-w-[200px]">{avaliacao.avaliacao || '-'}</td>
+                      <td className="py-4 px-6">
+                        {avaliacao.instrumentos ? (
+                          <div className="flex flex-wrap gap-1">
+                            {avaliacao.instrumentos.split(',').map((instr, i) => (
+                              <Badge key={i} variant="secondary" className="bg-slate-100 text-slate-600 border-slate-200 font-medium rounded-md hover:bg-slate-200 transition-colors">
+                                {instr.trim()}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : <span className="text-slate-300">-</span>}
+                      </td>
+                      <td className="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">{avaliacao.dataPrevista || '-'}</td>
+                      <td className="py-4 px-6">
+                        {avaliacao.valorMaximo ? (
+                          <div className="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg inline-block border border-indigo-100 min-w-[3rem] text-center shadow-sm">
+                            {avaliacao.valorMaximo}
+                          </div>
+                        ) : <span className="text-slate-300">-</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -324,9 +342,14 @@ export function TeachingPlanView({
             </div>
           </div>
           {plan.observacoesAvaliacoes && (
-            <div className="mt-4 p-4 bg-amber-50/50 border border-amber-100/50 rounded-xl">
-              <p className="text-xs font-bold text-amber-700 uppercase mb-2">Observações</p>
-              <p className="text-sm text-amber-900 whitespace-pre-wrap">{plan.observacoesAvaliacoes}</p>
+            <div className="mt-6 p-4 bg-amber-50/40 border border-amber-100/60 rounded-xl flex gap-3">
+              <div className="mt-0.5">
+                <div className="h-2 w-2 rounded-full bg-amber-400"></div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">Observações</p>
+                <p className="text-sm text-amber-900 leading-relaxed font-medium">{plan.observacoesAvaliacoes}</p>
+              </div>
             </div>
           )}
         </CardContent>

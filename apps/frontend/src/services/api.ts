@@ -10,7 +10,7 @@
 
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 console.log('######################DEBUG: NEXT_PUBLIC_API_URL =', process.env.NEXT_PUBLIC_API_URL)
 

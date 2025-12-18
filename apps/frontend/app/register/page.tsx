@@ -1,105 +1,194 @@
-'use client'
+'use client';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/contexts/AuthContext"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { AuthLayout } from "@/components/auth/AuthLayout"
-import { AuthCard } from "@/components/auth/AuthCard"
-import { useRegisterForm } from "@/hooks/forms"
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { BrainCircuit, Mail, Lock, User, School, ArrowLeft, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
-  const { isAuthenticated } = useAuth()
-  const router = useRouter()
-  const { register, onSubmit, isSubmitting, formState: { errors } } = useRegisterForm()
+  const router = useRouter();
+  const { register } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard")
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    school: '',
+    password: ''
+  });
+
+  const onNavigate = (page: string) => {
+    if (page === 'landing') {
+      router.push('/');
+    } else if (page === 'login') {
+      router.push('/login');
+    } else if (page === 'dashboard') {
+      router.push('/dashboard');
     }
-  }, [isAuthenticated, router])
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await register(
+        `${formData.firstName} ${formData.lastName}`,
+        formData.email,
+        formData.password
+      );
+      // The register function in AuthContext handles token storage and state updates.
+      // Redirecting to dashboard is usually handled by a useEffect in auth context or manually here.
+      // Assuming AuthContext automatically updates 'isAuthenticated', we can redirect.
+      onNavigate('dashboard');
+    } catch (err: any) {
+      // Extract error message safely from Axios error or fallback
+      const errorMessage = err.response?.data?.message || err.message || 'Erro ao criar conta. Tente novamente.';
+      setError(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <AuthLayout>
-      <AuthCard
-        title="Create Account"
-        description="Fill in your details to create an account"
-        footer={
-          <p className="text-sm text-muted-foreground text-center w-full">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium hover:underline">
-              Entrar
-            </Link>
-          </p>
-        }
-      >
-        <form onSubmit={onSubmit} className="space-y-4">
-          {/* Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              {...register('name')}
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 -ml-20 -mt-20 w-[500px] h-[500px] bg-purple-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-[500px] h-[500px] bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-slate-100 p-8 relative z-10">
+        <button
+          onClick={() => onNavigate('landing')}
+          className="absolute top-6 left-6 text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        <div className="text-center mb-8 pt-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-4 shadow-lg shadow-indigo-200">
+            <BrainCircuit className="h-7 w-7 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900">Comece Gratuitamente</h2>
+          <p className="text-slate-500 mt-2">Junte-se a milhares de professores inovadores.</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center text-red-600 text-sm">
+            <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Nome</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Maria"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Sobrenome</label>
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                placeholder="Silva"
+                className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                required
+              />
+            </div>
           </div>
 
-          {/* Email Field */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@email.com"
-              {...register('email')}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Email Profissional</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="prof.maria@escola.com"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                required
+              />
+            </div>
           </div>
 
-          {/* Password Field */}
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
-            <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Escola / Instituição</label>
+            <div className="relative">
+              <School className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="text"
+                name="school"
+                value={formData.school}
+                onChange={handleChange}
+                placeholder="Colégio Exemplo"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+              />
+            </div>
           </div>
 
-          {/* Confirm Password Field */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              {...register('confirmPassword')}
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-            )}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Senha</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Mínimo de 8 caracteres"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                required
+              />
+            </div>
           </div>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Creating Account..." : "Create Account"}
+          <div className="flex items-start py-2">
+            <input type="checkbox" id="terms" className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" required />
+            <label htmlFor="terms" className="ml-2 text-sm text-slate-600">
+              Eu concordo com os <a href="#" className="text-indigo-600 font-semibold hover:underline">Termos de Serviço</a> e <a href="#" className="text-indigo-600 font-semibold hover:underline">Política de Privacidade</a>.
+            </label>
+          </div>
+
+          <Button type="submit" className="w-full h-12 rounded-xl text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
+            {isLoading ? 'Criando Conta...' : 'Criar Conta Grátis'}
           </Button>
         </form>
-      </AuthCard>
-    </AuthLayout>
-  )
-}
+
+        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+          <p className="text-slate-600">
+            Já tem uma conta?{' '}
+            <button
+              onClick={() => onNavigate('login')}
+              className="text-indigo-600 font-bold hover:underline"
+            >
+              Fazer login
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};

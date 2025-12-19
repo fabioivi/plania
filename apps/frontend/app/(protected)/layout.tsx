@@ -33,6 +33,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Sidebar
                     isCollapsed={isSidebarCollapsed}
                     toggleSidebar={toggleSidebar}
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    closeMobileMenu={() => setIsMobileMenuOpen(false)}
                 />
 
                 {/* Mobile Overlay */}

@@ -11,7 +11,8 @@ import {
     LogOut,
     BrainCircuit,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    X
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,16 @@ import { cn } from "@/lib/utils";
 interface SidebarProps {
     isCollapsed: boolean;
     toggleSidebar: () => void;
+    isMobileMenuOpen?: boolean;
+    closeMobileMenu?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+    isCollapsed,
+    toggleSidebar,
+    isMobileMenuOpen = false,
+    closeMobileMenu
+}) => {
     const pathname = usePathname();
     const { logout } = useAuth();
 
@@ -36,13 +44,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
     return (
         <aside
             className={cn(
-                "fixed inset-y-0 left-0 z-50 bg-white dark:bg-card border-r border-slate-200 dark:border-border hidden lg:flex flex-col transition-all duration-300",
+                "fixed inset-y-0 left-0 z-50 bg-white dark:bg-card border-r border-slate-200 dark:border-border flex flex-col transition-transform duration-300",
+                // Visibility:
+                // Mobile: Translate based on isMobileMenuOpen
+                // Desktop: Always show (reset translate)
+                isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+                // Width
                 isCollapsed ? "w-20" : "w-64"
             )}
         >
             {/* Brand */}
             <div className={cn(
-                "h-20 flex items-center border-b border-slate-50 dark:border-border transition-all duration-300",
+                "h-20 flex items-center border-b border-slate-50 dark:border-border transition-all duration-300 relative",
                 isCollapsed ? "justify-center px-0" : "px-8"
             )}>
                 <div className="flex items-center space-x-3">
@@ -56,6 +69,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                         Plania
                     </span>
                 </div>
+
+                {/* Mobile Close Button */}
+                <button
+                    onClick={closeMobileMenu}
+                    className="lg:hidden absolute right-4 p-2 text-slate-400 hover:text-slate-600 dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                >
+                    <X className="h-6 w-6" />
+                </button>
             </div>
 
             {/* Navigation */}
@@ -73,6 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                         <Link
                             key={item.href}
                             href={item.href}
+                            onClick={() => isMobileMenuOpen && closeMobileMenu?.()}
                             className={cn(
                                 "flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                                 isActive
@@ -112,7 +134,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
             {/* User Footer */}
             <div className="p-4 border-t border-slate-100 dark:border-border">
                 <button
-                    onClick={logout}
+                    onClick={() => {
+                        logout();
+                        if (isMobileMenuOpen) closeMobileMenu?.();
+                    }}
                     className={cn(
                         "flex items-center space-x-3 px-3 py-3 w-full rounded-xl text-slate-600 dark:text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors group",
                         isCollapsed ? "justify-center" : ""

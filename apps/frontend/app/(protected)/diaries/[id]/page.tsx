@@ -383,7 +383,7 @@ export default function DiaryContentPage() {
                 size="sm"
                 onClick={handleSendToSystem}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
-                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 ml-auto"
+                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800"
               >
                 {uploadState?.status === 'syncing' ? (
                   <>

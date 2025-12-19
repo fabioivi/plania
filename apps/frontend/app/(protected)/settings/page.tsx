@@ -276,7 +276,7 @@ export default function SettingsPage() {
                         value={username}
                         onChange={e => setUsername(e.target.value)}
                         className="pl-10 h-11 bg-slate-50 border-slate-200"
-                        placeholder="Ex: 1234567"
+                        placeholder="Ex: nome.sobrenome"
                         disabled={isSaving || isDeleting}
                       />
                     </div>

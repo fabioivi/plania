@@ -4,7 +4,7 @@ import { useState, Fragment } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Clock, GripVertical, Lock, Edit2 } from "lucide-react"
+import { Clock, GripVertical, Edit2 } from "lucide-react"
 import { DiaryContent } from "@/services/api"
 import { format, parseISO, isSameDay as dateFnsIsSameDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -32,16 +32,16 @@ import { CSS } from '@dnd-kit/utilities'
 export interface DiaryContentTableProps {
   /** Dados do conteúdo do diário */
   contents: DiaryContent[]
-  
+
   /** Callback quando o conteúdo é reordenado (apenas conteúdo muda, data/horário/tipo ficam fixos) */
   onReorder?: (reorderedContents: DiaryContent[]) => void
-  
+
   /** Modo de edição inline */
   editable?: boolean
-  
+
   /** Callback quando o conteúdo é editado */
   onContentChange?: (contentId: string, field: 'content' | 'observations', value: string) => void
-  
+
   /** Classe CSS adicional */
   className?: string
 }
@@ -49,12 +49,12 @@ export interface DiaryContentTableProps {
 /**
  * Conteúdo sortable (apenas o texto do conteúdo)
  */
-function SortableContentCell({ 
-  content, 
-  contentId, 
-  editable, 
-  onEdit 
-}: { 
+function SortableContentCell({
+  content,
+  contentId,
+  editable,
+  onEdit
+}: {
   content: string
   contentId: string
   editable?: boolean
@@ -72,6 +72,8 @@ function SortableContentCell({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    position: 'relative' as React.CSSProperties['position'],
+    zIndex: isDragging ? 999 : 1, // Ensure content is above row backgrounds, active item even higher
   }
 
   return (
@@ -87,7 +89,7 @@ function SortableContentCell({
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </button>
-      
+
       {editable ? (
         <div className="flex-1 max-w-md">
           <Textarea
@@ -119,19 +121,7 @@ const formatDate = (dateStr: string) => {
   }
 }
 
-/**
- * Formata data com dia da semana usando date-fns
- * Exemplo: "segunda-feira, 15/01/2025"
- */
-const formatDateWithWeekday = (dateStr: string) => {
-  try {
-    const date = parseISO(dateStr)
-    return format(date, "EEEE, dd/MM/yyyy", { locale: ptBR })
-  } catch (error) {
-    console.error('Erro ao formatar data com dia da semana:', dateStr, error)
-    return dateStr
-  }
-}
+
 
 /**
  * Compara se duas datas são do mesmo dia usando date-fns
@@ -190,38 +180,75 @@ export function DiaryContentTable({
     })
   )
 
+  // Filtrar itens visíveis (não cancelados) para o drag-and-drop
+  const getVisibleItems = () => {
+    return contents.filter(item => {
+      const hasAnticipation = !item.isAntecipation && contents.some(
+        c => c.isAntecipation && c.originalContentId === item.contentId
+      )
+      return !hasAnticipation
+    })
+  }
+
+  const visibleItems = getVisibleItems()
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
 
     if (over && active.id !== over.id) {
-      setContentTexts((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id)
-        const newIndex = items.findIndex((item) => item.id === over.id)
+      setContentTexts((currentTexts) => {
+        // Encontrar índices nos itens VISÍVEIS
+        const visibleIds = visibleItems.map(i => i.id)
+        const oldVisibleIndex = visibleIds.indexOf(active.id.toString())
+        const newVisibleIndex = visibleIds.indexOf(over.id.toString())
 
-        const reorderedTexts = arrayMove(items, oldIndex, newIndex)
-        
-        // Criar novo array com conteúdos trocados mas mantendo data/horário/tipo originais
-        const newContents = contents.map((original, index) => ({
-          ...original,
-          content: reorderedTexts[index].content
+        if (oldVisibleIndex === -1 || newVisibleIndex === -1) return currentTexts
+
+        // Obter apenas os conteúdos dos itens visíveis
+        const visibleContentTexts = visibleIds.map(id => currentTexts.find(t => t.id === id)!)
+
+        // Reordenar apenas os visíveis
+        const reorderedVisibleTexts = arrayMove(visibleContentTexts, oldVisibleIndex, newVisibleIndex)
+
+        // Criar novo array completo misturando os reordenados com os ocultos (que não mudam)
+        const finalTexts = contents.map(item => {
+          // Se o item é visível, pega o próximo do array reordenado
+          if (visibleIds.includes(item.id)) {
+            // Qual índice visível ele ocupa agora?
+            // NÃO. O slot 'item.id' deve receber o conteúdo que AGORA está na posição correspondente ao item.id nos visíveis?
+            // Se item.id era o 1º visível, agora ele deve receber o conteúdo do 1º visível do array reordenado.
+            const indexInVisible = visibleIds.indexOf(item.id)
+            return {
+              id: item.id, // ID do slot não muda
+              content: reorderedVisibleTexts[indexInVisible].content // Conteúdo muda
+            }
+          }
+
+          // Se oculto, mantém o conteúdo original do state atual
+          return currentTexts.find(t => t.id === item.id)!
+        })
+
+        // Notificar pai com a nova ordem
+        const newContents = contents.map(item => ({
+          ...item,
+          content: finalTexts.find(t => t.id === item.id)?.content || '' // Mapeia pelo ID do slot para pegar o novo conteúdo
         }))
-        
-        // Chamar callback se fornecido
+
         onReorder?.(newContents)
-        
-        return reorderedTexts
+
+        return finalTexts
       })
     }
   }
 
   const handleContentEdit = (contentId: string, newValue: string) => {
     // Atualizar estado local
-    setContentTexts(prev => 
-      prev.map(item => 
+    setContentTexts(prev =>
+      prev.map(item =>
         item.id === contentId ? { ...item, content: newValue } : item
       )
     )
-    
+
     // Chamar callback se fornecido
     onContentChange?.(contentId, 'content', newValue)
   }
@@ -231,14 +258,13 @@ export function DiaryContentTable({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead className="bg-muted/50 sticky top-0 z-10">
-            <tr className="border-b">
-              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
-              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Data</th>
-              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Horário</th>
-              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tipo</th>
-              <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Conteúdo</th>
+            <tr className="border-b border-slate-200">
+              <th className="p-4 pl-6 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-[100px]">Data</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-[140px]">Horário</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-[120px]">Tipo</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Conteúdo</th>
               {editable && (
-                <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Observações</th>
+                <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Observações</th>
               )}
             </tr>
           </thead>
@@ -249,151 +275,109 @@ export function DiaryContentTable({
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={contentTexts.map(item => item.id)}
+                items={visibleItems.map(item => item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {contents.map((item, index) => {
-                  // Verificar se esta aula normal tem uma antecipação correspondente
-                  const hasAnticipation = !item.isAntecipation && contents.some(
-                    c => c.isAntecipation && c.originalContentId === item.contentId
-                  )
-                  
-                  // Verificar se a linha anterior é a antecipação desta aula
-                  const isConnectedToAbove = index > 0 && 
-                    hasAnticipation && 
-                    contents[index - 1].isAntecipation && 
-                    contents[index - 1].originalContentId === item.contentId
-                  
-                  // Verificar se a linha seguinte é a aula original desta antecipação
-                  const isConnectedToBelow = item.isAntecipation && 
-                    index < contents.length - 1 &&
-                    contents[index + 1].contentId === item.originalContentId
-                  
+                {visibleItems.map((item, index) => {
+                  // Mapeamento correto do conteúdo: Buscar pelo índice VISÍVEL
+                  // O slot 'item.id' é o index-ésimo item visível.
+                  // Nós queremos exibir o conteúdo que está na index-ésima posição dos itens visíveis em contentTexts.
+
+                  // Encontrar o conteúdo correspondente a este slot nos textos atuais
+                  // Precisamos garantir que pegamos o texto que foi movido para cá.
+                  // Se contentTexts foi atualizado no handleDragEnd, então contentTexts.find(t => t.id === item.id) retornará o testo associado a este ID.
+                  // Mas no handleDragEnd nós não trocamos os IDs dentro do array, nós trocamos os CONTEÚDOS.
+                  // Vamos verificar minha lógica do handleDragEnd acima.
+                  // Eu retornei: { id: item.id, content: newContent }.
+                  // Então SIM, posso buscar pelo ID.
+                  const currentTextObj = contentTexts.find(t => t.id === item.id)
+
                   // Verificar se a data é diferente da linha anterior (para agrupar por dia)
-                  const isDifferentDay = index === 0 || !isSameDay(contents[index - 1].date, item.date)
-                  const isLastOfDay = index === contents.length - 1 || !isSameDay(contents[index + 1].date, item.date)
-                  
-                  // Contar quantas aulas tem no mesmo dia (excluindo aulas canceladas)
-                  const sameDayContents = contents.filter(c => isSameDay(c.date, item.date))
-                  const sameDayCount = sameDayContents.filter(c => !sameDayContents.some(
-                    anticipation => anticipation.isAntecipation && anticipation.originalContentId === c.contentId
-                  )).length
-                  
-                  // Só mostrar badge se houver pelo menos uma aula não-cancelada
-                  const shouldShowDayBadge = isDifferentDay && sameDayCount > 0
-                  
+                  const isDifferentDay = index === 0 || !isSameDay(visibleItems[index - 1].date, item.date)
+
+                  // Calcular rowSpan (quantas aulas no mesmo dia, considerando apenas visíveis)
+                  const sameDayCount = visibleItems.filter(c => isSameDay(c.date, item.date)).length
+
+                  // Verificar se é o último item do dia para adicionar borda
+                  const isLastOfDay = index === visibleItems.length - 1 || !isSameDay(visibleItems[index + 1].date, item.date)
+
+                  // Formatando data para o calendário visual
+                  const dateObj = parseISO(item.date)
+                  const day = format(dateObj, 'dd')
+                  const month = format(dateObj, 'MMM', { locale: ptBR }).toUpperCase() // JAN, FEV
+                  const weekday = format(dateObj, 'EEE', { locale: ptBR }).replace('.', '').toUpperCase() // SEG, TER
+
                   return (
-                  <Fragment key={item.id}>
-                    {/* Badge da data (só mostrar se houver aulas não-canceladas) */}
-                    {shouldShowDayBadge && (
-                      <tr className="border-0">
-                        <td colSpan={editable ? 6 : 5} className="p-0 pb-1">
-                          <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50 to-transparent border-l-4 border-blue-500 rounded-tl rounded-bl">
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 border-blue-300 text-xs font-semibold">
-                              📅 {formatDateWithWeekday(item.date)} • {sameDayCount} {sameDayCount === 1 ? 'aula' : 'aulas'}
-                            </Badge>
+                    <Fragment key={item.id}>
+
+                      <tr
+                        className={`transition-colors border-0 ${item.isAntecipation ? 'bg-green-50/30' : 'hover:bg-slate-50/40 bg-white'
+                          } ${isLastOfDay ? 'border-b border-slate-100' : ''
+                          } group`}
+                      >
+                        {/* Data e Horário (Calendário Visual com RowSpan) */}
+                        {isDifferentDay && (
+                          <td
+                            className="py-2 pl-6 align-middle border-r border-slate-100/50 bg-slate-50/10"
+                            rowSpan={sameDayCount}
+                          >
+                            <div className="flex flex-col items-center justify-center bg-white border border-slate-200 rounded-lg p-1.5 w-[70px] shadow-sm ring-1 ring-slate-50 mx-auto">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-0.5">{month}</span>
+                              <span className="text-2xl font-black text-slate-700 leading-none mb-0.5">{day}</span>
+                              <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-wide leading-none">{weekday}</span>
+                            </div>
+                          </td>
+                        )}
+
+                        <td className="py-2 px-4 align-top">
+                          <div className="flex items-center gap-2 text-sm text-slate-600 font-medium whitespace-nowrap bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 w-fit">
+                            <Clock className="h-3.5 w-3.5 text-indigo-500 flex-shrink-0" />
+                            <span className="leading-none">{item.timeRange}</span>
                           </div>
                         </td>
-                      </tr>
-                    )}
-                    
-                    <tr 
-                      className={`border-b transition-colors ${
-                        item.isAntecipation ? 'bg-green-50/70' : hasAnticipation ? 'bg-gray-50' : ''
-                      } ${isConnectedToAbove ? 'border-l-4 border-l-green-400 border-t-0' : ''} ${
-                        isConnectedToBelow ? 'border-l-4 border-l-green-400 border-b-0' : ''
-                      } ${hasAnticipation ? 'opacity-60' : ''} ${
-                        shouldShowDayBadge ? 'border-l-[3px] border-l-blue-400/40' : ''
-                      } ${
-                        shouldShowDayBadge && isLastOfDay ? 'mb-2' : ''
-                      } hover:brightness-95 group`}
-                    >
-                    {/* ID do Conteúdo */}
-                    <td className="p-3">
-                      <div className={`flex items-center gap-1 ${isConnectedToAbove ? 'pl-4' : ''}`}>
-                        {isConnectedToAbove && (
-                          <span className="text-green-500 mr-1 font-bold">└─</span>
-                        )}
-                        {item.isAntecipation && (
-                          <span className="text-green-500 mr-1">🔄</span>
-                        )}
-                        <span className="text-xs font-mono text-muted-foreground">{item.contentId}</span>
-                        {item.isAntecipation && (
-                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-400 text-[10px] px-1.5 py-0.5 font-semibold">
-                            Antecipada
-                          </Badge>
-                        )}
-                        {hasAnticipation && (
-                          <Badge variant="outline" className="bg-gray-200 text-gray-600 border-gray-400 text-[10px] px-1.5 py-0.5 no-underline">
-                            Cancelada
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
 
-                    {/* Data (fixo) */}
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-3 w-3 text-muted-foreground" />
-                        <div className="flex items-center gap-1 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{formatDate(item.date)}</span>
-                        </div>
-                      </div>
-                    </td>
+                        {/* Tipo (fixo) */}
+                        <td className="py-2 px-4 align-top">
+                          <div className="flex flex-col gap-1.5">
+                            <Badge variant="outline" className={`${getTypeColor(item.type)} text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md`}>
+                              {getTypeLabel(item.type)}
+                            </Badge>
 
-                    {/* Horário (fixo) */}
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <Lock className="h-3 w-3 text-muted-foreground" />
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{item.timeRange}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Tipo (fixo) */}
-                    <td className="p-3">
-                      <div className="flex flex-col gap-1">
-                        <Badge variant="outline" className={`${getTypeColor(item.type)} text-xs font-medium`}>
-                          {getTypeLabel(item.type)}
-                        </Badge>
-                        {item.isAntecipation && item.originalDate && (
-                          <div className="flex items-center gap-1">
-                            <span className="text-[10px] text-gray-500">Original:</span>
-                            <span className="text-[10px] text-gray-600 font-medium">{formatDate(item.originalDate)}</span>
+                            {item.isAntecipation && item.originalDate && (
+                              <div className="flex flex-col gap-0.5 mt-1 border-t border-green-200 pt-1">
+                                <span className="text-[10px] text-green-600 font-bold uppercase">Original</span>
+                                <span className="text-[10px] text-green-700 font-medium">{formatDate(item.originalDate)}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </td>
+                        </td>
 
-                    {/* Conteúdo (sortable) */}
-                    <td className="p-3">
-                      <SortableContentCell 
-                        content={contentTexts[index]?.content || ''} 
-                        contentId={contentTexts[index]?.id || item.id}
-                        editable={editable}
-                        onEdit={(newValue) => handleContentEdit(item.id, newValue)}
-                      />
-                    </td>
-
-                    {/* Observações (editável apenas em modo edição) */}
-                    {editable && (
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <Edit2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <Textarea
-                            value={item.observations || ''}
-                            onChange={(e) => onContentChange?.(item.id, 'observations', e.target.value)}
-                            className="min-h-[60px] text-sm resize-y"
-                            placeholder="Observações adicionais..."
+                        {/* Conteúdo (sortable) */}
+                        <td className="py-2 px-4 align-top w-full">
+                          <SortableContentCell
+                            content={currentTextObj?.content || item.content || ''}
+                            contentId={item.id}
+                            editable={editable}
+                            onEdit={(newValue) => handleContentEdit(item.id, newValue)}
                           />
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                  </Fragment>
+                        </td>
+
+                        {/* Observações (editável apenas em modo edição) */}
+                        {editable && (
+                          <td className="py-2 px-3">
+                            <div className="flex items-center gap-2">
+                              <Edit2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              <Textarea
+                                value={item.observations || ''}
+                                onChange={(e) => onContentChange?.(item.id, 'observations', e.target.value)}
+                                className="min-h-[60px] text-sm resize-y"
+                                placeholder="Observações adicionais..."
+                              />
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    </Fragment>
                   )
                 })}
               </SortableContext>

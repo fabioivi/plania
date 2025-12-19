@@ -488,7 +488,7 @@ export function TeachingPlanView({
   }
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-[900px] mx-auto">
+    <div className="space-y-8 animate-fade-in w-full">
       {renderPrintHeader()}
       {variant === 'full' && renderStatusCards()}
       {renderIdentification()}

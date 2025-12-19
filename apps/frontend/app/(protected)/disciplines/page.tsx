@@ -126,42 +126,55 @@ export default function DisciplinesPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 min-h-screen pb-20">
+      {/* Top Decoration */}
+      <div className="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-indigo-50/50 to-transparent -z-10 pointer-events-none" />
+
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Minhas Disciplinas</h1>
-          <p className="text-slate-500 mt-2 font-medium">
-            Gerencie e sincronize suas turmas do sistema acadêmico.
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 mb-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide">Ano Letivo {new Date().getFullYear()}</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+            Minhas <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Disciplinas</span>
+          </h1>
+          <p className="text-lg text-slate-500 font-medium max-w-xl leading-relaxed">
+            Gerencie suas turmas, planos de ensino e diários de classe em um só lugar.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex flex-col items-end gap-3">
           {diaries.length > 0 && (
-            <span className="text-sm font-bold text-slate-400">
-              Última atualização: {formatLastSync()}
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-white/50 px-3 py-1 rounded-full border border-slate-100 backdrop-blur-sm">
+              Sincronizado: {formatLastSync()}
             </span>
           )}
           <Button
             onClick={handleSync}
             disabled={syncState?.status === 'syncing'}
-            className="h-12 px-6 rounded-xl bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-100 shadow-sm font-bold"
+            className="h-14 px-8 rounded-2xl bg-white hover:bg-indigo-600 text-indigo-600 hover:text-white border border-indigo-100 hover:border-indigo-600 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 font-bold text-base group"
           >
             {syncState?.status === 'syncing' ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sincronizando...
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sincronizando...
               </>
             ) : (
               <>
-                <RefreshCw className="mr-2 h-4 w-4" /> Sincronizar Tudo
+                <RefreshCw className="mr-2 h-5 w-5 transition-transform group-hover:rotate-180 duration-700" /> Sincronizar Tudo
               </>
             )}
           </Button>
         </div>
       </div>
 
-      {/* Sync State Display */}
+      {/* Sync State Display - Floating Card style */}
       {(syncState || (progress && !syncState)) && (
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm animate-fade-in">
+        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-indigo-100 shadow-xl shadow-indigo-100/50 animate-in fade-in slide-in-from-top-4 duration-500">
           <SyncProgressDisplay
             state={syncState}
             progress={progress}
@@ -170,43 +183,49 @@ export default function DisciplinesPage() {
         </div>
       )}
 
-      {/* Filters and Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+      {/* Filters and Search Toolbar */}
+      <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 flex flex-col md:flex-row gap-2 sticky top-4 z-20 backdrop-blur-xl bg-white/90">
+        <div className="relative flex-1 group">
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 p-1.5 bg-slate-100 rounded-lg group-focus-within:bg-indigo-100 transition-colors">
+            <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+          </div>
           <Input
-            placeholder="Buscar por nome da disciplina ou turma..."
-            className="pl-12 h-12 rounded-xl bg-slate-50 border-slate-200 focus:ring-indigo-500"
+            placeholder="Buscar por nome da disciplina, turma ou curso..."
+            className="pl-14 h-14 rounded-xl border-transparent bg-transparent hover:bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-200 text-base font-medium transition-all"
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="h-12 px-4 rounded-xl border-slate-200">
+          <Button variant="ghost" className="h-14 px-6 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 font-bold">
             <Filter className="mr-2 h-4 w-4" /> Filtros
           </Button>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mb-4" />
-          <p className="text-slate-500 font-medium">Carregando suas disciplinas...</p>
+        <div className="flex flex-col items-center justify-center py-32 animate-pulse">
+          <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          </div>
+          <p className="text-lg text-slate-600 font-bold">Carregando suas disciplinas...</p>
+          <p className="text-slate-400">Isso pode levar alguns segundos.</p>
         </div>
       ) : diaries.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-          <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-            <BookOpen className="h-10 w-10 text-indigo-400" />
+        <div className="text-center py-24 bg-white/50 backdrop-blur-sm rounded-[2.5rem] border border-dashed border-slate-300 hover:border-indigo-300 hover:bg-white transition-all duration-300 group">
+          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-slate-100 group-hover:shadow-indigo-100 group-hover:scale-110 transition-all duration-500">
+            <BookOpen className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors duration-300" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-900 mb-2">Nenhuma disciplina encontrada</h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-8 font-medium">
-            Parece que você ainda não sincronizou seus dados. Conecte-se ao sistema acadêmico para importar suas turmas.
+          <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Comece sua Jornada</h3>
+          <p className="text-slate-500 max-w-lg mx-auto mb-10 font-medium text-lg leading-relaxed">
+            Parece que você ainda não tem disciplinas. Sincronize com o sistema acadêmico para importar suas turmas automaticamente.
           </p>
-          <Button onClick={handleSync} size="lg" className="h-14 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-200">
-            <RefreshCw className="mr-2 h-5 w-5" /> Importar do Sistema Acadêmico
+          <Button onClick={handleSync} size="lg" className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1 transition-all text-lg font-bold">
+            <RefreshCw className="mr-3 h-6 w-6" /> Importar Dados Agora
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 ">
+          {/* Using 3 columns on large screens for better density with the new compact cards */}
           {diaries.map((diary) => (
             <DiaryCard key={diary.id} diary={diary} />
           ))}

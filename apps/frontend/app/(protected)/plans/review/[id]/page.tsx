@@ -29,7 +29,6 @@ import {
 import Link from "next/link"
 import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan } from "@/hooks/api"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { Header } from "@/components/layout/header"
 import { toast } from "sonner"
 import { aiService } from "@/services/api/ai.service"
 import {
@@ -309,8 +308,7 @@ export default function PlanReviewPage() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-background">
-          <Header />
+        <div className="min-h-screen">
           <main className="container mx-auto py-16 px-4">
             <div className="flex flex-col items-center justify-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -326,8 +324,7 @@ export default function PlanReviewPage() {
   if (error || !plan) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-background">
-          <Header />
+        <div className="min-h-screen">
           <main className="container mx-auto py-16 px-4">
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
@@ -352,12 +349,11 @@ export default function PlanReviewPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Header />
+      <div className="min-h-screen">
 
         <div className="flex">
           {/* Main Content */}
-          <main className={`flex-1 container mx-auto py-8 px-4 transition-all ${showAiAssistant ? 'max-w-5xl' : 'max-w-7xl'}`}>
+          <main className={`flex-1 container mx-auto py-4 transition-all ${showAiAssistant ? 'max-w-5xl' : 'max-w-7xl'}`}>
             {/* Back Button */}
             <Link href="/dashboard">
               <Button variant="ghost" className="mb-6 gap-2">

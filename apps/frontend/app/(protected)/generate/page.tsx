@@ -13,6 +13,7 @@ import Link from "next/link"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { toast } from "sonner"
 import { useDiaries, useTeachingPlan, useSaveAITeachingPlan } from "@/hooks/api"
+import { API_BASE_URL } from "@/services/api/client"
 
 function GeneratePageContent() {
   const searchParams = useSearchParams()
@@ -66,7 +67,7 @@ function GeneratePageContent() {
       const token = localStorage.getItem('token')
       const basePlanParam = formData.basePlanId ? `&basePlanId=${formData.basePlanId}` : ''
       const eventSource = new EventSource(
-        `${process.env.NEXT_PUBLIC_API_URL}/ai/teaching-plans/generate/${formData.diaryId}?token=${token}${basePlanParam}`
+        `${API_BASE_URL}/ai/teaching-plans/generate/${formData.diaryId}?token=${token}${basePlanParam}`
       )
 
       eventSource.onmessage = (event) => {
@@ -126,14 +127,14 @@ function GeneratePageContent() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-50 relative pb-20">
+      <div className="relative pb-20">
 
         {/* Background Decorative Elements */}
         <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-indigo-50/50 to-transparent pointer-events-none" />
         <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-blue-100/20 rounded-full blur-3xl pointer-events-none mix-blend-multiply" />
         <div className="absolute top-40 left-0 w-[400px] h-[400px] bg-purple-100/20 rounded-full blur-3xl pointer-events-none mix-blend-multiply" />
 
-        <div className="max-w-2xl mx-auto relative z-10 animate-fade-in">
+        <div className="max-w-3xl mx-auto relative z-10 animate-fade-in pt-8">
 
           {/* Navigation */}
           <div className="mb-8">

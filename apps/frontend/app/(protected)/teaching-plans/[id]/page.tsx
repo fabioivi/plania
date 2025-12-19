@@ -141,7 +141,7 @@ export default function TeachingPlanViewPage() {
           }
         `}</style>
 
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full">
           {/* Header Action Bar */}
           <div className="mb-8 print:hidden">
             <Link href={fromReview ? `/plans/review/${planId}` : "/disciplines"} className="inline-block mb-6">
@@ -168,7 +168,7 @@ export default function TeachingPlanViewPage() {
                 </div>
               </div>
 
-              <div className="relative z-10 flex flex-wrap gap-3 w-full lg:w-auto">
+              <div className="relative z-10 flex flex-wrap gap-2 w-full lg:w-auto justify-end">
                 <Button
                   variant="outline"
                   className="gap-2 border-slate-200 text-slate-700 hover:text-indigo-700 hover:bg-indigo-50 font-semibold rounded-xl"
@@ -181,7 +181,6 @@ export default function TeachingPlanViewPage() {
 
                 <Button variant="outline" className="gap-2 border-slate-200 text-slate-700 font-semibold rounded-xl" onClick={() => window.print()}>
                   <Printer className="h-4 w-4" />
-                  Imprimir
                 </Button>
 
                 <Button
@@ -190,8 +189,19 @@ export default function TeachingPlanViewPage() {
                   disabled={!plan.diaryId}
                 >
                   <Sparkles className="h-4 w-4" />
-                  Editar com IA
+                  Editar IA
                 </Button>
+
+                {/* CTA for generating diary content - moved here */}
+                {plan.diaryId && (
+                  <Button
+                    onClick={handleGenerateDiaryContent}
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-100"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Gerar Aulas
+                  </Button>
+                )}
 
                 {plan?.source === 'ai' && (
                   <Button
@@ -206,25 +216,10 @@ export default function TeachingPlanViewPage() {
                 )}
               </div>
             </div>
-
-            {/* CTA for generating diary content if available */}
-            {plan.diaryId && (
-              <div className="mt-4 flex justify-end">
-                <Button
-                  onClick={handleGenerateDiaryContent}
-                  variant="default"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-100 gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  Gerar Aulas deste Plano
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Teaching Plan View Component */}
           <TeachingPlanView plan={plan} variant="full" showHeader={true} />
-
         </div>
       </div>
 

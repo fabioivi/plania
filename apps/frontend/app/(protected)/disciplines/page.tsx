@@ -127,33 +127,31 @@ export default function DisciplinesPage() {
 
   return (
     <div className="space-y-6 min-h-screen pb-20">
-      {/* Top Decoration */}
-      <div className="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-indigo-50/50 to-transparent -z-10 pointer-events-none" />
+      {/* Top Decoration Removed */}
 
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 mb-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-            </span>
-            <span className="text-xs font-bold text-indigo-700 uppercase tracking-wide">Ano Letivo {new Date().getFullYear()}</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-            Minhas <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Disciplinas</span>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+            Minhas Disciplinas
           </h1>
-          <p className="text-lg text-slate-500 font-medium max-w-xl leading-relaxed">
+          <p className="text-slate-500 mt-2 font-medium">
             Gerencie suas turmas, planos de ensino e diários de classe em um só lugar.
           </p>
+          {diaries.length > 0 && (
+            <div className="flex items-center gap-1.5 pt-2">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Sincronizado: {formatLastSync()}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col items-end gap-3">
-          {diaries.length > 0 && (
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider bg-white/50 px-3 py-1 rounded-full border border-slate-100 backdrop-blur-sm">
-              Sincronizado: {formatLastSync()}
-            </span>
-          )}
           <Button
             onClick={handleSync}
             disabled={syncState?.status === 'syncing'}

@@ -53,38 +53,38 @@ export function SyncProgressDisplay({
     switch (state.status) {
       case 'syncing':
         return {
-          container: "bg-white border-indigo-100 shadow-xl shadow-indigo-100/20",
-          iconBg: "bg-indigo-50 text-indigo-600",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-indigo-600",
+          container: "bg-white dark:bg-card border-indigo-100 dark:border-indigo-900/50 shadow-xl shadow-indigo-100/20 dark:shadow-none",
+          iconBg: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-indigo-600 dark:bg-indigo-500",
           animation: "animate-pulse-subtle"
         }
       case 'completed':
         return {
-          container: "bg-white border-emerald-100 shadow-xl shadow-emerald-100/20",
-          iconBg: "bg-emerald-50 text-emerald-600",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-emerald-500",
+          container: "bg-white dark:bg-card border-emerald-100 dark:border-emerald-900/50 shadow-xl shadow-emerald-100/20 dark:shadow-none",
+          iconBg: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-emerald-500 dark:bg-emerald-500",
           animation: ""
         }
       case 'error':
         return {
-          container: "bg-white border-rose-100 shadow-xl shadow-rose-100/20",
-          iconBg: "bg-rose-50 text-rose-600",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-rose-500",
+          container: "bg-white dark:bg-card border-rose-100 dark:border-rose-900/50 shadow-xl shadow-rose-100/20 dark:shadow-none",
+          iconBg: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-rose-500 dark:bg-rose-500",
           animation: ""
         }
       default:
         return {
-          container: "bg-white border-slate-200 shadow-sm",
-          iconBg: "bg-slate-50 text-slate-500",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-slate-400",
+          container: "bg-white dark:bg-card border-slate-200 dark:border-border shadow-sm dark:shadow-none",
+          iconBg: "bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-slate-400 dark:bg-slate-600",
           animation: ""
         }
     }
@@ -232,38 +232,38 @@ function SyncProgressDisplaySSE({
       case 'diaries':
       case 'plans':
         return {
-          container: "bg-white border-indigo-100 shadow-xl shadow-indigo-100/20",
-          iconBg: "bg-indigo-50 text-indigo-600",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-indigo-600",
+          container: "bg-white dark:bg-card border-indigo-100 dark:border-indigo-900/50 shadow-xl shadow-indigo-100/20 dark:shadow-none",
+          iconBg: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-indigo-600 dark:bg-indigo-500",
           animation: "animate-pulse-subtle"
         }
       case 'completed':
         return {
-          container: "bg-white border-emerald-100 shadow-xl shadow-emerald-100/20",
-          iconBg: "bg-emerald-50 text-emerald-600",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-emerald-500",
+          container: "bg-white dark:bg-card border-emerald-100 dark:border-emerald-900/50 shadow-xl shadow-emerald-100/20 dark:shadow-none",
+          iconBg: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-emerald-500 dark:bg-emerald-500",
           animation: ""
         }
       case 'error':
         return {
-          container: "bg-white border-rose-100 shadow-xl shadow-rose-100/20",
-          iconBg: "bg-rose-50 text-rose-600",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-rose-500",
+          container: "bg-white dark:bg-card border-rose-100 dark:border-rose-900/50 shadow-xl shadow-rose-100/20 dark:shadow-none",
+          iconBg: "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-rose-500 dark:bg-rose-500",
           animation: ""
         }
       default:
         return {
-          container: "bg-white border-slate-200 shadow-sm",
-          iconBg: "bg-slate-50 text-slate-500",
-          title: "text-slate-900",
-          barBg: "bg-slate-100",
-          barFill: "bg-slate-400",
+          container: "bg-white dark:bg-card border-slate-200 dark:border-border shadow-sm dark:shadow-none",
+          iconBg: "bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground",
+          title: "text-slate-900 dark:text-foreground",
+          barBg: "bg-slate-100 dark:bg-slate-800",
+          barFill: "bg-slate-400 dark:bg-slate-600",
           animation: ""
         }
     }

@@ -139,8 +139,8 @@ function GeneratePageContent() {
           {/* Navigation */}
           <div className="mb-8">
             <Link href="/dashboard">
-              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 hover:text-indigo-600 hover:bg-transparent group">
-                <div className="bg-white border border-slate-200 rounded-full p-1 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-colors">
+              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-transparent group">
+                <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-full p-1 group-hover:border-indigo-200 dark:group-hover:border-indigo-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/50 transition-colors">
                   <ChevronLeft className="h-4 w-4" />
                 </div>
                 <span className="font-semibold">Voltar ao Dashboard</span>
@@ -152,28 +152,28 @@ function GeneratePageContent() {
           {step === "config" && (
             <div className="space-y-8">
               <div className="text-center space-y-4">
-                <div className="bg-white p-4 rounded-2xl shadow-sm inline-flex mb-2 ring-1 ring-slate-100">
-                  <BrainCircuit className="h-8 w-8 text-indigo-600" />
+                <div className="bg-white dark:bg-card p-4 rounded-2xl shadow-sm inline-flex mb-2 ring-1 ring-slate-100 dark:ring-border">
+                  <BrainCircuit className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Gerar Plano de Ensino</h1>
-                <p className="text-lg text-slate-500 max-w-md mx-auto leading-relaxed">
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-foreground tracking-tight">Gerar Plano de Ensino</h1>
+                <p className="text-lg text-slate-500 dark:text-muted-foreground max-w-md mx-auto leading-relaxed">
                   Configure os parâmetros e deixe nossa IA criar um plano pedagógico completo e alinhado ao MEC para você.
                 </p>
               </div>
 
-              <Card className="border-0 shadow-xl shadow-indigo-100/50 ring-1 ring-slate-100 bg-white/80 backdrop-blur-sm overflow-hidden">
+              <Card className="border-0 shadow-xl shadow-indigo-100/50 dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white/80 dark:bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-8 space-y-8">
 
                   {/* Base Plan Information */}
                   {basePlan && (
-                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 transition-all hover:bg-emerald-50">
+                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-2xl p-5 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/30">
                       <div className="flex items-start gap-4">
-                        <div className="bg-emerald-100 p-2 rounded-xl shrink-0">
-                          <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                        <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-xl shrink-0">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div className="space-y-1">
-                          <h3 className="font-bold text-emerald-900">Usando Plano Base</h3>
-                          <p className="text-sm text-emerald-700 leading-relaxed">
+                          <h3 className="font-bold text-emerald-900 dark:text-emerald-100">Usando Plano Base</h3>
+                          <p className="text-sm text-emerald-700 dark:text-emerald-300 leading-relaxed">
                             A IA usará <strong>{basePlan.unidadeCurricular}</strong> como referência estrutural para gerar a nova versão.
                           </p>
                         </div>
@@ -182,14 +182,14 @@ function GeneratePageContent() {
                   )}
 
                   {/* AI capabilities info */}
-                  <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5">
+                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-2xl p-5">
                     <div className="flex items-start gap-4">
-                      <div className="bg-indigo-100 p-2 rounded-xl shrink-0">
-                        <Sparkles className="h-5 w-5 text-indigo-600" />
+                      <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-xl shrink-0">
+                        <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="font-bold text-indigo-900">Geração Inteligente</h3>
-                        <p className="text-sm text-indigo-700 leading-relaxed">
+                        <h3 className="font-bold text-indigo-900 dark:text-indigo-100">Geração Inteligente</h3>
+                        <p className="text-sm text-indigo-700 dark:text-indigo-300 leading-relaxed">
                           Objetivos, conteúdo programático e cronograma serão gerados automaticamente com base na ementa da disciplina.
                         </p>
                       </div>
@@ -199,15 +199,15 @@ function GeneratePageContent() {
                   <div className="space-y-6">
                     {/* Methodology */}
                     <div className="space-y-3">
-                      <Label htmlFor="methodology" className="text-base font-bold text-slate-700">Metodologia Preferida</Label>
+                      <Label htmlFor="methodology" className="text-base font-bold text-slate-700 dark:text-foreground">Metodologia Preferida</Label>
                       <Select
                         value={formData.methodology}
                         onValueChange={(value) => setFormData({ ...formData, methodology: value })}
                       >
-                        <SelectTrigger id="methodology" className="h-12 border-slate-200 bg-slate-50/50 focus:ring-indigo-500 rounded-xl">
+                        <SelectTrigger id="methodology" className="h-12 border-slate-200 dark:border-border bg-slate-50/50 dark:bg-secondary/50 focus:ring-indigo-500 rounded-xl">
                           <SelectValue placeholder="Deixar a IA sugerir a melhor metodologia" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-200 shadow-xl">
+                        <SelectContent className="rounded-xl border-slate-200 dark:border-border shadow-xl">
                           <SelectItem value="tradicional">Aulas Expositivas Tradicionais</SelectItem>
                           <SelectItem value="ativa">Metodologias Ativas</SelectItem>
                           <SelectItem value="hibrida">Híbrida (Presencial + EAD)</SelectItem>
@@ -220,12 +220,12 @@ function GeneratePageContent() {
 
                     {/* Additional Notes */}
                     <div className="space-y-3">
-                      <Label htmlFor="notes" className="text-base font-bold text-slate-700">Observações Adicionais</Label>
+                      <Label htmlFor="notes" className="text-base font-bold text-slate-700 dark:text-foreground">Observações Adicionais</Label>
                       <Textarea
                         id="notes"
                         placeholder="Ex: Gostaria de focar em aplicações práticas para o mercado de trabalho, incluir 3 aulas de laboratório..."
                         rows={4}
-                        className="resize-none border-slate-200 bg-slate-50/50 focus:ring-indigo-500 rounded-xl p-4 text-slate-600 placeholder:text-slate-400"
+                        className="resize-none border-slate-200 dark:border-border bg-slate-50/50 dark:bg-secondary/50 focus:ring-indigo-500 rounded-xl p-4 text-slate-600 dark:text-foreground placeholder:text-slate-400"
                         value={formData.additionalNotes}
                         onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
                       />
@@ -237,7 +237,7 @@ function GeneratePageContent() {
                     <Button
                       onClick={handleGenerate}
                       disabled={!formData.diaryId}
-                      className="w-full h-14 text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                      className="w-full h-14 text-lg font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <Wand2 className="h-5 w-5 mr-2" />
                       Gerar Plano Mágico
@@ -253,7 +253,7 @@ function GeneratePageContent() {
           {step === "generating" && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-700 slide-in-from-bottom-10">
               {/* Main Card */}
-              <Card className="w-full border-0 shadow-2xl shadow-indigo-500/20 bg-white/90 backdrop-blur-xl rounded-[2rem] overflow-hidden">
+              <Card className="w-full border-0 shadow-2xl shadow-indigo-500/20 dark:shadow-none bg-white/90 dark:bg-card/90 backdrop-blur-xl rounded-[2rem] overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 animate-gradient" style={{ backgroundSize: '200% auto' }}></div>
 
                 <CardContent className="pt-16 pb-16 px-8">
@@ -274,10 +274,10 @@ function GeneratePageContent() {
 
                     {/* Status Text */}
                     <div className="space-y-3 max-w-md">
-                      <h2 className="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                      <h2 className="text-3xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent">
                         Criando seu Plano
                       </h2>
-                      <p className="text-slate-500 font-medium">
+                      <p className="text-slate-500 dark:text-muted-foreground font-medium">
                         Estamos analisando a ementa e estruturando as aulas com base nas melhores práticas pedagógicas.
                       </p>
                     </div>
@@ -297,9 +297,9 @@ function GeneratePageContent() {
                     </div>
 
                     {/* Real-time Status */}
-                    <div className="bg-slate-50 border border-slate-100 px-6 py-3 rounded-full flex items-center gap-3 animate-pulse">
-                      <Loader2 className="h-4 w-4 text-indigo-600 animate-spin" />
-                      <p className="text-sm font-semibold text-slate-600">{generationMessage}</p>
+                    <div className="bg-slate-50 dark:bg-secondary/50 border border-slate-100 dark:border-border px-6 py-3 rounded-full flex items-center gap-3 animate-pulse">
+                      <Loader2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                      <p className="text-sm font-semibold text-slate-600 dark:text-foreground">{generationMessage}</p>
                     </div>
 
                   </div>
@@ -320,7 +320,7 @@ function GeneratePageContent() {
 
 export default function GeneratePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="h-8 w-8 text-indigo-600 animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-background"><Loader2 className="h-8 w-8 text-indigo-600 animate-spin" /></div>}>
       <GeneratePageContent />
     </Suspense>
   )

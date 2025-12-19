@@ -216,10 +216,10 @@ export default function DisciplinesPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
+          <h1 className="text-3xl font-black text-slate-900 dark:text-foreground tracking-tight leading-tight">
             Minhas Disciplinas
           </h1>
-          <p className="text-slate-500 mt-2 font-medium">
+          <p className="text-slate-500 dark:text-muted-foreground mt-2 font-medium">
             Gerencie suas turmas, planos de ensino e diários de classe em um só lugar.
           </p>
           {diaries.length > 0 && (
@@ -239,7 +239,7 @@ export default function DisciplinesPage() {
           <Button
             onClick={handleSync}
             disabled={syncState?.status === 'syncing'}
-            className="h-14 px-8 rounded-2xl bg-white hover:bg-indigo-600 text-indigo-600 hover:text-white border border-indigo-100 hover:border-indigo-600 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 font-bold text-base group"
+            className="h-14 px-8 rounded-2xl bg-white dark:bg-card hover:bg-indigo-600 dark:hover:bg-indigo-600 text-indigo-600 dark:text-indigo-400 hover:text-white border border-indigo-100 dark:border-indigo-900/50 hover:border-indigo-600 shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-none hover:-translate-y-0.5 transition-all duration-300 font-bold text-base group"
           >
             {syncState?.status === 'syncing' ? (
               <>
@@ -256,7 +256,7 @@ export default function DisciplinesPage() {
 
       {/* Sync State Display - Floating Card style */}
       {(syncState || (progress && !syncState)) && (
-        <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-indigo-100 shadow-xl shadow-indigo-100/50 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="bg-white/80 dark:bg-card/80 backdrop-blur-xl p-6 rounded-3xl border border-indigo-100 dark:border-indigo-900/50 shadow-xl shadow-indigo-100/50 dark:shadow-none animate-in fade-in slide-in-from-top-4 duration-500">
           <SyncProgressDisplay
             state={syncState}
             progress={progress}
@@ -266,16 +266,16 @@ export default function DisciplinesPage() {
       )}
 
       {/* Filters and Search Toolbar */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/50 flex flex-col md:flex-row gap-2 sticky top-4 z-20 backdrop-blur-xl bg-white/90">
+      <div className="bg-white dark:bg-card p-2 rounded-2xl border border-slate-200 dark:border-border shadow-lg shadow-slate-200/50 dark:shadow-none flex flex-col md:flex-row gap-2 sticky top-4 z-20 backdrop-blur-xl bg-white/90 dark:bg-card/90">
         <div className="relative flex-1 group">
-          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 p-1.5 bg-slate-100 rounded-lg group-focus-within:bg-indigo-100 transition-colors">
-            <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 p-1.5 bg-slate-100 dark:bg-secondary rounded-lg group-focus-within:bg-indigo-100 dark:group-focus-within:bg-indigo-900/50 transition-colors">
+            <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors" />
           </div>
           <Input
             placeholder="Buscar por nome da disciplina, turma ou curso..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-14 h-14 rounded-xl border-2 border-transparent bg-transparent hover:bg-slate-50 hover:border-indigo-100 focus-visible:bg-white focus-visible:border-indigo-500 focus-visible:ring-0 text-base font-medium transition-all"
+            className="pl-14 h-14 rounded-xl border-2 border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-secondary/20 hover:border-indigo-100 dark:hover:border-indigo-900/30 focus-visible:bg-white dark:focus-visible:bg-secondary/20 focus-visible:border-indigo-500 focus-visible:ring-0 text-base font-medium transition-all"
           />
         </div>
         <div className="relative">
@@ -286,8 +286,8 @@ export default function DisciplinesPage() {
             className={cn(
               "h-14 px-6 rounded-xl font-bold relative transition-all duration-300",
               isFilterOpen || activeFiltersCount > 0
-                ? "bg-indigo-50 text-indigo-600 ring-2 ring-indigo-100"
-                : "text-slate-600 hover:text-indigo-600 hover:bg-indigo-50"
+                ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-900/50"
+                : "text-slate-600 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
             )}
           >
             <Filter className={cn("mr-2 h-4 w-4 transition-transform duration-300", isFilterOpen ? "rotate-90" : "")} />
@@ -303,10 +303,10 @@ export default function DisciplinesPage() {
           {isFilterOpen && (
             <div
               ref={filterDropdownRef}
-              className="absolute top-full right-0 mt-3 w-[400px] bg-white rounded-3xl shadow-2xl border border-slate-100 z-40 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200 p-6"
+              className="absolute top-full right-0 mt-3 w-[400px] bg-white dark:bg-card rounded-3xl shadow-2xl border border-slate-100 dark:border-border z-40 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200 p-6"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-50">
-                <h3 className="text-lg font-bold text-slate-800">Filtrar Disciplinas</h3>
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-50 dark:border-border">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-foreground">Filtrar Disciplinas</h3>
                 {activeFiltersCount > 0 ? (
                   <Button
                     variant="ghost"
@@ -336,8 +336,8 @@ export default function DisciplinesPage() {
                         className={cn(
                           "group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border",
                           selectedCursos.includes(curso)
-                            ? "bg-indigo-50/50 border-indigo-200 shadow-sm"
-                            : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-200"
+                            ? "bg-indigo-50/50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 shadow-sm"
+                            : "bg-white dark:bg-card border-transparent hover:bg-slate-50 dark:hover:bg-secondary/20 hover:border-slate-200 dark:hover:border-border"
                         )}
                       >
                         <div className={cn(
@@ -350,7 +350,7 @@ export default function DisciplinesPage() {
                         </div>
                         <span className={cn(
                           "flex-1 text-sm font-medium transition-colors select-none",
-                          selectedCursos.includes(curso) ? "text-indigo-900" : "text-slate-600"
+                          selectedCursos.includes(curso) ? "text-indigo-900 dark:text-indigo-300" : "text-slate-600 dark:text-muted-foreground"
                         )}>{curso}</span>
                       </div>
                     ))}
@@ -374,8 +374,8 @@ export default function DisciplinesPage() {
                         className={cn(
                           "group flex items-center gap-2 p-2.5 rounded-xl cursor-pointer transition-all border",
                           selectedPeriodos.includes(periodo)
-                            ? "bg-indigo-50/50 border-indigo-200 shadow-sm"
-                            : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-200"
+                            ? "bg-indigo-50/50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 shadow-sm"
+                            : "bg-white dark:bg-card border-transparent hover:bg-slate-50 dark:hover:bg-secondary/20 hover:border-slate-200 dark:hover:border-border"
                         )}
                       >
                         <div className={cn(
@@ -388,7 +388,7 @@ export default function DisciplinesPage() {
                         </div>
                         <span className={cn(
                           "flex-1 text-sm font-medium transition-colors select-none",
-                          selectedPeriodos.includes(periodo) ? "text-indigo-900" : "text-slate-600"
+                          selectedPeriodos.includes(periodo) ? "text-indigo-900 dark:text-indigo-300" : "text-slate-600 dark:text-muted-foreground"
                         )}>{periodo}</span>
                       </div>
                     ))}
@@ -420,15 +420,15 @@ export default function DisciplinesPage() {
             <p className="text-slate-400">Isso pode levar alguns segundos.</p>
           </div>
         ) : diaries.length === 0 ? (
-          <div className="text-center py-24 bg-white/50 backdrop-blur-sm rounded-[2.5rem] border border-dashed border-slate-300 hover:border-indigo-300 hover:bg-white transition-all duration-300 group">
-            <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-slate-100 group-hover:shadow-indigo-100 group-hover:scale-110 transition-all duration-500">
-              <BookOpen className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors duration-300" />
+          <div className="text-center py-24 bg-white/50 dark:bg-card/50 backdrop-blur-sm rounded-[2.5rem] border border-dashed border-slate-300 dark:border-border hover:border-indigo-300 hover:bg-white dark:hover:bg-card transition-all duration-300 group">
+            <div className="w-24 h-24 bg-white dark:bg-card rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-slate-100 dark:shadow-none bg-slate-50/50 group-hover:shadow-indigo-100 group-hover:scale-110 transition-all duration-500">
+              <BookOpen className="h-10 w-10 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors duration-300" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">Comece sua Jornada</h3>
-            <p className="text-slate-500 max-w-lg mx-auto mb-10 font-medium text-lg leading-relaxed">
+            <h3 className="text-3xl font-black text-slate-900 dark:text-foreground mb-3 tracking-tight">Comece sua Jornada</h3>
+            <p className="text-slate-500 dark:text-muted-foreground max-w-lg mx-auto mb-10 font-medium text-lg leading-relaxed">
               Parece que você ainda não tem disciplinas. Sincronize com o sistema acadêmico para importar suas turmas automaticamente.
             </p>
-            <Button onClick={handleSync} size="lg" className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1 transition-all text-lg font-bold">
+            <Button onClick={handleSync} size="lg" className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-200 dark:shadow-none hover:shadow-indigo-300 dark:hover:shadow-none hover:-translate-y-1 transition-all text-lg font-bold">
               <RefreshCw className="mr-3 h-6 w-6" /> Importar Dados Agora
             </Button>
           </div>
@@ -440,17 +440,17 @@ export default function DisciplinesPage() {
             ))}
             {filteredDiaries.length === 0 && (
               <div className="col-span-full py-16 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100">
-                  <SearchX className="h-10 w-10 text-slate-300" />
+                <div className="w-20 h-20 bg-slate-50 dark:bg-card rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100 dark:border-border">
+                  <SearchX className="h-10 w-10 text-slate-300 dark:text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Nenhum resultado encontrado</h3>
-                <p className="text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-foreground mb-2">Nenhum resultado encontrado</h3>
+                <p className="text-slate-500 dark:text-muted-foreground max-w-md mx-auto mb-8 leading-relaxed">
                   Não conseguimos encontrar nenhuma disciplina com os termos ou filtros atuais. Tente ajustar sua busca.
                 </p>
                 <Button
                   variant="outline"
                   onClick={clearAllFilters}
-                  className="h-12 px-8 rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 font-semibold shadow-sm transition-all hover:shadow-md"
+                  className="h-12 px-8 rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 font-semibold shadow-sm dark:shadow-none transition-all hover:shadow-md dark:hover:shadow-none"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Limpar filtros e busca

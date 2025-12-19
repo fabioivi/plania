@@ -44,12 +44,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[600px] h-[600px] bg-indigo-100 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 dark:bg-purple-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-8 relative z-10">
+      <div className="w-full max-w-md bg-white dark:bg-card rounded-3xl shadow-xl dark:shadow-none border border-slate-100 dark:border-border p-8 relative z-10">
         <button
           onClick={() => onNavigate('landing')}
           className="absolute top-6 left-6 text-slate-400 hover:text-slate-600 transition-colors"
@@ -58,11 +58,11 @@ export default function LoginPage() {
         </button>
 
         <div className="text-center mb-8 pt-4">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-4 shadow-lg shadow-indigo-200">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-4 shadow-lg shadow-indigo-200 dark:shadow-none">
             <BrainCircuit className="h-7 w-7 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Bem-vindo de volta</h2>
-          <p className="text-slate-500 mt-2">Acesse sua conta para continuar planejando.</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-foreground">Bem-vindo de volta</h2>
+          <p className="text-slate-500 dark:text-muted-foreground mt-2">Acesse sua conta para continuar planejando.</p>
         </div>
 
         {error && (
@@ -74,7 +74,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Email</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
@@ -90,8 +90,8 @@ export default function LoginPage() {
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-semibold text-slate-700">Senha</label>
-              <a href="#" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Esqueceu a senha?</a>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-foreground">Senha</label>
+              <a href="#" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium">Esqueceu a senha?</a>
             </div>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
@@ -106,17 +106,17 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-xl text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
+          <Button type="submit" className="w-full h-12 rounded-xl text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
             {isLoading ? 'Entrando...' : 'Entrar no Plania'}
           </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <p className="text-slate-600">
+        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-border text-center">
+          <p className="text-slate-600 dark:text-muted-foreground">
             Não tem uma conta?{' '}
             <button
               onClick={() => onNavigate('signup')}
-              className="text-indigo-600 font-bold hover:underline"
+              className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
             >
               Crie agora
             </button>

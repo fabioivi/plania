@@ -308,7 +308,7 @@ export default function PlanReviewPage() {
   if (isLoading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-transparent dark:bg-background">
           <main className="container mx-auto py-16 px-4">
             <div className="flex flex-col items-center justify-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -324,17 +324,17 @@ export default function PlanReviewPage() {
   if (error || !plan) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-transparent dark:bg-background">
           <main className="container mx-auto py-16 px-4">
-            <Card>
+            <Card className="border-border">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Plano não encontrado</h3>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Plano não encontrado</h3>
                 <p className="text-muted-foreground mb-6">
                   O plano de ensino solicitado não foi encontrado.
                 </p>
                 <Link href="/disciplines">
-                  <Button>
+                  <Button variant="outline">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Voltar para Disciplinas
                   </Button>
@@ -366,7 +366,7 @@ export default function PlanReviewPage() {
             <div className="mb-6">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-4">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words">Plano de Ensino</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words text-slate-900 dark:text-foreground">Plano de Ensino</h1>
                   <p className="text-muted-foreground text-sm md:text-base">
                     Revise e edite o plano gerado pela IA. Use o assistente ao lado para fazer ajustes.
                   </p>
@@ -405,7 +405,7 @@ export default function PlanReviewPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setShowAiAssistant(!showAiAssistant)}
-                    className="gap-2 w-full sm:w-auto hidden md:flex"
+                    className="gap-2 w-full sm:w-auto hidden md:flex border-slate-200 dark:border-border text-slate-700 dark:text-foreground"
                   >
                     <Sparkles className="h-4 w-4" />
                     {showAiAssistant ? "Ocultar" : "Mostrar"} Assistente IA
@@ -499,7 +499,7 @@ export default function PlanReviewPage() {
                           id="discipline"
                           value={plan.unidadeCurricular || ''}
                           disabled
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                         />
                       </div>
                       <div className="space-y-2">
@@ -508,7 +508,7 @@ export default function PlanReviewPage() {
                           id="course"
                           value={plan.curso || ''}
                           disabled
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                         />
                       </div>
                     </div>
@@ -519,7 +519,7 @@ export default function PlanReviewPage() {
                           id="campus"
                           value={plan.campus || ''}
                           disabled
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                         />
                       </div>
                       <div className="space-y-2">
@@ -528,7 +528,7 @@ export default function PlanReviewPage() {
                           id="semester"
                           value={plan.anoSemestre || ''}
                           disabled
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                         />
                       </div>
                       <div className="space-y-2">
@@ -537,7 +537,7 @@ export default function PlanReviewPage() {
                           id="workload"
                           value={`${plan.cargaHorariaTotal || 0}h`}
                           disabled
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                         />
                       </div>
                     </div>
@@ -549,7 +549,7 @@ export default function PlanReviewPage() {
                           type="number"
                           value={plan.numSemanas || 0}
                           disabled
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                         />
                       </div>
                       <div className="space-y-2">
@@ -584,7 +584,7 @@ export default function PlanReviewPage() {
                         rows={4}
                         value={plan.ementa || ''}
                         disabled
-                        className="bg-muted cursor-not-allowed"
+                        className="bg-muted dark:bg-muted/50 cursor-not-allowed border-muted-foreground/20"
                       />
                     </div>
                   </CardContent>
@@ -647,9 +647,9 @@ export default function PlanReviewPage() {
                   <CardContent className="space-y-4">
                     {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
                       <>
-                        <div className="rounded-md border overflow-x-auto">
+                        <div className="rounded-md border border-border overflow-x-auto">
                           <table className="w-full text-sm">
-                            <thead className="bg-muted/50">
+                            <thead className="bg-muted/50 dark:bg-muted/20">
                               <tr>
                                 <th className="p-3 text-left font-semibold min-w-[120px]">Mês/Período</th>
                                 <th className="p-3 text-center font-semibold">Nº Aulas</th>
@@ -661,7 +661,7 @@ export default function PlanReviewPage() {
                             </thead>
                             <tbody>
                               {propostaTrabalho.map((item, index) => (
-                                <tr key={index} className="border-t">
+                                <tr key={index} className="border-t border-border">
                                   <td className="p-3">
                                     <div className="font-medium">{item.mes}</div>
                                     <div className="text-xs text-muted-foreground">{item.periodo}</div>
@@ -719,7 +719,7 @@ export default function PlanReviewPage() {
                           </table>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted/50 rounded-lg">
                           <div className="flex flex-col gap-1">
                             <span className="font-semibold">Total de Aulas:</span>
                             <span className="text-sm text-muted-foreground">
@@ -755,7 +755,7 @@ export default function PlanReviewPage() {
                     {plan.propostaTrabalho && plan.propostaTrabalho.length > 0 ? (
                       <div className="space-y-2">
                         <Label>Metodologias Utilizadas</Label>
-                        <div className="rounded-md border p-4 bg-muted/30">
+                        <div className="rounded-md border border-border p-4 bg-muted/30 dark:bg-muted/10">
                           <div className="space-y-2">
                             {Array.from(
                               new Set(
@@ -794,9 +794,9 @@ export default function PlanReviewPage() {
                     {plan.avaliacaoAprendizagem && plan.avaliacaoAprendizagem.length > 0 && (
                       <div className="space-y-2">
                         <Label>Avaliações</Label>
-                        <div className="rounded-md border">
+                        <div className="rounded-md border border-border">
                           <table className="w-full text-sm">
-                            <thead className="bg-muted/50">
+                            <thead className="bg-muted/50 dark:bg-muted/20">
                               <tr>
                                 <th className="p-3 text-left font-semibold">Etapa</th>
                                 <th className="p-3 text-left font-semibold">Avaliação</th>

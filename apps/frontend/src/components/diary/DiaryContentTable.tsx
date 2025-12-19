@@ -100,7 +100,7 @@ function SortableContentCell({
           />
         </div>
       ) : (
-        <div className="max-w-md text-sm flex-1">
+        <div className="max-w-md text-sm flex-1 text-slate-700 dark:text-foreground">
           {content || <span className="text-muted-foreground italic">Sem conteúdo</span>}
         </div>
       )}
@@ -148,12 +148,14 @@ const getTypeLabel = (type: 'N' | 'A' | 'R') => {
 
 const getTypeColor = (type: 'N' | 'A' | 'R') => {
   switch (type) {
-    case 'N': return 'bg-blue-50 text-blue-700 border-blue-300'
-    case 'A': return 'bg-green-50 text-green-700 border-green-300'
-    case 'R': return 'bg-yellow-50 text-yellow-700 border-yellow-300'
-    default: return 'bg-gray-50 text-gray-700 border-gray-300'
+    case 'N': return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+    case 'A': return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+    case 'R': return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+    default: return 'bg-slate-50 dark:bg-secondary text-slate-700 dark:text-foreground border-slate-200 dark:border-border'
   }
 }
+
+
 
 /**
  * Componente de tabela para conteúdo do diário com drag-and-drop
@@ -257,14 +259,14 @@ export function DiaryContentTable({
     <Card className={`overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-          <thead className="bg-muted/50 sticky top-0 z-10">
-            <tr className="border-b border-slate-200">
-              <th className="p-4 pl-6 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-[100px]">Data</th>
-              <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-[140px]">Horário</th>
-              <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider w-[120px]">Tipo</th>
-              <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Conteúdo</th>
+          <thead className="bg-slate-50 dark:bg-[#121214] sticky top-0 z-10">
+            <tr className="border-b border-slate-200 dark:border-border">
+              <th className="p-4 pl-6 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[100px]">Data</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[140px]">Horário</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[120px]">Tipo</th>
+              <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Conteúdo</th>
               {editable && (
-                <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase tracking-wider">Observações</th>
+                <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Observações</th>
               )}
             </tr>
           </thead>
@@ -311,27 +313,28 @@ export function DiaryContentTable({
                     <Fragment key={item.id}>
 
                       <tr
-                        className={`transition-colors border-0 ${item.isAntecipation ? 'bg-green-50/30' : 'hover:bg-slate-50/40 bg-white'
-                          } ${isLastOfDay ? 'border-b border-slate-100' : ''
-                          } group`}
+                        className={`transition-all duration-300 border-0 
+                          bg-white dark:bg-card 
+                          hover:bg-slate-50 dark:hover:bg-card
+                          ${isLastOfDay ? 'border-b border-slate-100 dark:border-border' : ''} group`}
                       >
                         {/* Data e Horário (Calendário Visual com RowSpan) */}
                         {isDifferentDay && (
                           <td
-                            className="py-2 pl-6 align-middle border-r border-slate-100/50 bg-slate-50/10"
+                            className="py-2 pl-6 align-middle border-r border-slate-100/50 dark:border-border/50 bg-white dark:bg-card"
                             rowSpan={sameDayCount}
                           >
-                            <div className="flex flex-col items-center justify-center bg-white border border-slate-200 rounded-lg p-1.5 w-[70px] shadow-sm ring-1 ring-slate-50 mx-auto">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-0.5">{month}</span>
-                              <span className="text-2xl font-black text-slate-700 leading-none mb-0.5">{day}</span>
-                              <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-wide leading-none">{weekday}</span>
+                            <div className="flex flex-col items-center justify-center bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg p-1.5 w-[70px] shadow-sm dark:shadow-none ring-1 ring-slate-50 dark:ring-border mx-auto group-hover:border-slate-300 dark:group-hover:border-slate-700 transition-colors">
+                              <span className="text-[10px] font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider leading-none mb-0.5">{month}</span>
+                              <span className="text-2xl font-black text-slate-700 dark:text-foreground leading-none mb-0.5">{day}</span>
+                              <span className="text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide leading-none">{weekday}</span>
                             </div>
                           </td>
                         )}
 
                         <td className="py-2 px-4 align-top">
-                          <div className="flex items-center gap-2 text-sm text-slate-600 font-medium whitespace-nowrap bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 w-fit">
-                            <Clock className="h-3.5 w-3.5 text-indigo-500 flex-shrink-0" />
+                          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-foreground font-medium whitespace-nowrap bg-slate-50 dark:bg-secondary/30 px-2.5 py-1.5 rounded-md border border-slate-100 dark:border-border w-fit">
+                            <Clock className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                             <span className="leading-none">{item.timeRange}</span>
                           </div>
                         </td>

@@ -59,12 +59,12 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Decor */}
-      <div className="absolute top-0 left-0 -ml-20 -mt-20 w-[500px] h-[500px] bg-purple-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-[500px] h-[500px] bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute top-0 left-0 -ml-20 -mt-20 w-[500px] h-[500px] bg-purple-100 dark:bg-purple-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-[500px] h-[500px] bg-indigo-100 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
 
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-slate-100 p-8 relative z-10">
+      <div className="w-full max-w-lg bg-white dark:bg-card rounded-3xl shadow-xl dark:shadow-none border border-slate-100 dark:border-border p-8 relative z-10">
         <button
           onClick={() => onNavigate('landing')}
           className="absolute top-6 left-6 text-slate-400 hover:text-slate-600 transition-colors"
@@ -73,11 +73,11 @@ export default function RegisterPage() {
         </button>
 
         <div className="text-center mb-8 pt-4">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-4 shadow-lg shadow-indigo-200">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-600 rounded-xl mb-4 shadow-lg shadow-indigo-200 dark:shadow-none">
             <BrainCircuit className="h-7 w-7 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">Comece Gratuitamente</h2>
-          <p className="text-slate-500 mt-2">Junte-se a milhares de professores inovadores.</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-foreground">Comece Gratuitamente</h2>
+          <p className="text-slate-500 dark:text-muted-foreground mt-2">Junte-se a milhares de professores inovadores.</p>
         </div>
 
         {error && (
@@ -90,7 +90,7 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Nome</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Nome</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
                 <input
@@ -99,27 +99,27 @@ export default function RegisterPage() {
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="Maria"
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
                   required
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Sobrenome</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Sobrenome</label>
               <input
                 type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 placeholder="Silva"
-                className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                className="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Email Profissional</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Email Profissional</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
@@ -128,14 +128,14 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="prof.maria@escola.com"
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Escola / Instituição</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Escola / Instituição</label>
             <div className="relative">
               <School className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
@@ -144,13 +144,13 @@ export default function RegisterPage() {
                 value={formData.school}
                 onChange={handleChange}
                 placeholder="Colégio Exemplo"
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Senha</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Senha</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
@@ -159,7 +159,7 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Mínimo de 8 caracteres"
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 font-medium text-slate-700 outline-none"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
                 required
               />
             </div>
@@ -167,22 +167,22 @@ export default function RegisterPage() {
 
           <div className="flex items-start py-2">
             <input type="checkbox" id="terms" className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" required />
-            <label htmlFor="terms" className="ml-2 text-sm text-slate-600">
-              Eu concordo com os <a href="#" className="text-indigo-600 font-semibold hover:underline">Termos de Serviço</a> e <a href="#" className="text-indigo-600 font-semibold hover:underline">Política de Privacidade</a>.
+            <label htmlFor="terms" className="ml-2 text-sm text-slate-600 dark:text-muted-foreground">
+              Eu concordo com os <a href="#" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Termos de Serviço</a> e <a href="#" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Política de Privacidade</a>.
             </label>
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-xl text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
+          <Button type="submit" className="w-full h-12 rounded-xl text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-70 disabled:cursor-not-allowed" disabled={isLoading}>
             {isLoading ? 'Criando Conta...' : 'Criar Conta Grátis'}
           </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <p className="text-slate-600">
+        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-border text-center">
+          <p className="text-slate-600 dark:text-muted-foreground">
             Já tem uma conta?{' '}
             <button
               onClick={() => onNavigate('login')}
-              className="text-indigo-600 font-bold hover:underline"
+              className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
             >
               Fazer login
             </button>

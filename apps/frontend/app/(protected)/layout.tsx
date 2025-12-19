@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <ProtectedRoute>
-            <div className="min-h-screen bg-slate-50">
+            <div className="min-h-screen bg-slate-50 dark:bg-background">
                 <Sidebar
                     isCollapsed={isSidebarCollapsed}
                     toggleSidebar={toggleSidebar}

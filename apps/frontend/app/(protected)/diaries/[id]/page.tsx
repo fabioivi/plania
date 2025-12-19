@@ -250,10 +250,10 @@ export default function DiaryContentPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-            <p className="text-slate-500 font-medium animate-pulse">Carregando diário...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+            <p className="text-slate-500 dark:text-muted-foreground font-medium animate-pulse">Carregando diário...</p>
           </div>
         </div>
       </ProtectedRoute>
@@ -262,14 +262,14 @@ export default function DiaryContentPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-50 pb-20">
+      <div className="min-h-screen bg-slate-50 dark:bg-background pb-20">
 
         <div className="max-w-6xl mx-auto">
           {/* Back Button */}
           <div className="mb-6">
             <Link href="/disciplines" className="inline-block">
-              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 hover:text-indigo-600 hover:bg-transparent group">
-                <div className="bg-white border border-slate-200 rounded-full p-1 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-colors">
+              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-transparent group">
+                <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-full p-1 group-hover:border-indigo-200 dark:group-hover:border-indigo-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/50 transition-colors">
                   <ChevronLeft className="h-4 w-4" />
                 </div>
                 <span className="font-semibold">Voltar para Disciplinas</span>
@@ -278,24 +278,24 @@ export default function DiaryContentPage() {
           </div>
 
           {/* Header Action Bar */}
-          <div className="mb-8 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden">
+          <div className="mb-8 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 bg-white dark:bg-card p-6 rounded-[2rem] border border-slate-200 dark:border-border shadow-sm dark:shadow-none relative overflow-hidden">
             <div className="relative z-10 w-full lg:w-auto flex-1">
               {diaryInfo && (
                 <>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 uppercase tracking-widest text-[10px] font-bold">
+                    <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border uppercase tracking-widest text-[10px] font-bold">
                       {diaryInfo.periodo || 'N/A'}
                     </Badge>
                     {diaryInfo.externalId && (
-                      <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200 font-mono text-[10px]">
+                      <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border font-mono text-[10px]">
                         ID: {diaryInfo.externalId}
                       </Badge>
                     )}
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2">
+                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-foreground leading-tight mb-2">
                     {diaryInfo.disciplina}
                   </h1>
-                  <p className="text-slate-500 font-medium text-lg flex items-center gap-2">
+                  <p className="text-slate-500 dark:text-muted-foreground font-medium text-lg flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     {diaryInfo.turma}
                   </p>
@@ -309,7 +309,7 @@ export default function DiaryContentPage() {
                 size="sm"
                 onClick={handleSync}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing'}
-                className="h-10 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200"
+                className="h-10 border-slate-200 dark:border-border text-slate-700 dark:text-foreground font-semibold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800"
               >
                 {downloadState?.status === 'syncing' ? (
                   <>
@@ -329,7 +329,7 @@ export default function DiaryContentPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(`https://academico.ifms.edu.br/administrativo/professores/diario/${diaryInfo.externalId}/conteudo`, '_blank')}
-                  className="h-10 border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
+                  className="h-10 border-slate-200 dark:border-border text-slate-700 dark:text-foreground font-semibold rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Abrir no Sistema
@@ -341,7 +341,7 @@ export default function DiaryContentPage() {
                 size="sm"
                 onClick={handleSendToSystem}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
-                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200"
+                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none"
               >
                 {uploadState?.status === 'syncing' ? (
                   <>
@@ -379,50 +379,55 @@ export default function DiaryContentPage() {
           {/* Stats Grid */}
           {diaryInfo && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+              <Card className="border border-slate-200 dark:border-border shadow-sm dark:shadow-none bg-white dark:bg-card overflow-hidden">
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-blue-50 p-2.5 rounded-xl">
-                    <BookOpen className="h-5 w-5 text-blue-600" />
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-2.5 rounded-xl">
+                    <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Curso</p>
-                    <p className="font-bold text-slate-700 text-sm truncate max-w-[150px]" title={diaryInfo.curso}>{diaryInfo.curso}</p>
+                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Curso</p>
+                    <p className="font-bold text-slate-700 dark:text-foreground text-sm truncate max-w-[150px]" title={diaryInfo.curso}>{diaryInfo.curso}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-purple-50 p-2.5 rounded-xl">
-                    <Clock className="h-5 w-5 text-purple-600" />
+                  <div className="bg-purple-50 dark:bg-purple-900/30 p-2.5 rounded-xl">
+                    <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Carga Horária</p>
-                    <p className="font-bold text-slate-700">{diaryInfo.cargaHoraria || 'N/A'}</p>
+                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Carga Horária</p>
+                    <p className="font-bold text-slate-700 dark:text-foreground">{diaryInfo.cargaHoraria || 'N/A'}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-emerald-50 p-2.5 rounded-xl">
-                    <Users className="h-5 w-5 text-emerald-600" />
+                  <div className="bg-emerald-50 dark:bg-emerald-900/30 p-2.5 rounded-xl">
+                    <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Alunos</p>
-                    <p className="font-bold text-slate-700">{diaryInfo.emCurso}</p>
+                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Alunos</p>
+                    <p className="font-bold text-slate-700 dark:text-foreground">{diaryInfo.emCurso}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+              <Card className="border-0 shadow-sm ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-slate-50 p-2.5 rounded-xl">
-                    <CheckCircle2 className="h-5 w-5 text-slate-600" />
+                  <div className="bg-slate-50 dark:bg-secondary p-2.5 rounded-xl">
+                    <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase">Status</p>
-                    <Badge variant={diaryInfo.aprovado ? "default" : "secondary"} className="mt-0.5">
+                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Status</p>
+                    <Badge
+                      className={`mt-0.5 ${diaryInfo.aprovado
+                        ? "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white"
+                        : "bg-slate-100 text-slate-600 dark:bg-secondary dark:text-foreground"
+                        }`}
+                    >
                       {diaryInfo.aprovado ? "Aprovado" : "Em Andamento"}
                     </Badge>
                   </div>
@@ -433,16 +438,16 @@ export default function DiaryContentPage() {
 
           {/* Empty State */}
           {!loading && content.length === 0 && (
-            <div className="bg-white rounded-[2rem] border border-dashed border-slate-200 p-12 text-center">
-              <div className="bg-slate-50 p-4 rounded-full inline-block mb-4">
-                <FileText className="h-8 w-8 text-slate-400" />
+            <div className="bg-white dark:bg-card rounded-[2rem] border border-dashed border-slate-200 dark:border-border p-12 text-center">
+              <div className="bg-slate-50 dark:bg-secondary p-4 rounded-full inline-block mb-4">
+                <FileText className="h-8 w-8 text-slate-400 dark:text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Nenhum conteúdo encontrado</h3>
-              <p className="text-slate-500 max-w-md mx-auto mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-foreground mb-2">Nenhum conteúdo encontrado</h3>
+              <p className="text-slate-500 dark:text-muted-foreground max-w-md mx-auto mb-6">
                 Este diário ainda não possui conteúdo de aulas registrado.
                 Use o botão "Baixar do Sistema" para sincronizar.
               </p>
-              <Button variant="outline" onClick={handleSync} className="font-semibold text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+              <Button variant="outline" onClick={handleSync} className="font-semibold text-indigo-600 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30">
                 <Download className="h-4 w-4 mr-2" />
                 Sincronizar Agora
               </Button>
@@ -453,14 +458,14 @@ export default function DiaryContentPage() {
           {!loading && content.length > 0 && (
             <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-indigo-600" />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-foreground flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   Conteúdos de Aula
                 </h3>
-                <div className="text-sm font-medium text-slate-500">
+                <div className="text-sm font-medium text-slate-500 dark:text-muted-foreground">
                   {stats ? (
                     <div className="flex gap-4">
-                      <span><strong className="text-slate-900">{stats.realClasses}</strong> aulas</span>
+                      <span><strong className="text-slate-900 dark:text-foreground">{stats.realClasses}</strong> aulas</span>
                       {stats.anticipations > 0 && (
                         <span className="text-amber-600">+ <strong>{stats.anticipations}</strong> antecipações</span>
                       )}
@@ -472,7 +477,7 @@ export default function DiaryContentPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border shadow-sm dark:shadow-none overflow-hidden">
                 <DiaryContentTable
                   contents={content}
                   onReorder={handleReorder}

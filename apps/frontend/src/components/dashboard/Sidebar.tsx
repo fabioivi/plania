@@ -36,13 +36,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
     return (
         <aside
             className={cn(
-                "fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 hidden lg:flex flex-col transition-all duration-300",
+                "fixed inset-y-0 left-0 z-50 bg-white dark:bg-card border-r border-slate-200 dark:border-border hidden lg:flex flex-col transition-all duration-300",
                 isCollapsed ? "w-20" : "w-64"
             )}
         >
             {/* Brand */}
             <div className={cn(
-                "h-20 flex items-center border-b border-slate-50 transition-all duration-300",
+                "h-20 flex items-center border-b border-slate-50 dark:border-border transition-all duration-300",
                 isCollapsed ? "justify-center px-0" : "px-8"
             )}>
                 <div className="flex items-center space-x-3">
@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                         <BrainCircuit className="h-5 w-5 text-white" />
                     </div>
                     <span className={cn(
-                        "text-xl font-black text-slate-900 tracking-tighter transition-opacity duration-200 whitespace-nowrap",
+                        "text-xl font-black text-slate-900 dark:text-foreground tracking-tighter transition-opacity duration-200 whitespace-nowrap",
                         isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100"
                     )}>
                         Plania
@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
             {/* Navigation */}
             <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto overflow-x-hidden">
                 <p className={cn(
-                    "px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 transition-opacity duration-200 whitespace-nowrap",
+                    "px-4 text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider mb-4 transition-opacity duration-200 whitespace-nowrap",
                     isCollapsed ? "opacity-0 text-center" : "opacity-100"
                 )}>
                     Menu
@@ -76,15 +76,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                             className={cn(
                                 "flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                                 isActive
-                                    ? "bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100"
-                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                                    ? "bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 shadow-sm shadow-indigo-100 dark:shadow-none"
+                                    : "text-slate-600 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-secondary hover:text-slate-900 dark:hover:text-foreground",
                                 isCollapsed ? "justify-center" : ""
                             )}
                             title={isCollapsed ? item.label : undefined}
                         >
                             <item.icon className={cn(
                                 "h-5 w-5 flex-shrink-0 transition-colors",
-                                isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
+                                isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-muted-foreground group-hover:text-slate-600 dark:group-hover:text-foreground"
                             )} />
                             <span className={cn(
                                 "font-semibold transition-opacity duration-200 whitespace-nowrap",
@@ -103,23 +103,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                     variant="ghost"
                     size="sm"
                     onClick={toggleSidebar}
-                    className="w-full justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                    className="w-full justify-center text-slate-400 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
                 >
                     {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                 </Button>
             </div>
 
             {/* User Footer */}
-            <div className="p-4 border-t border-slate-100">
+            <div className="p-4 border-t border-slate-100 dark:border-border">
                 <button
                     onClick={logout}
                     className={cn(
-                        "flex items-center space-x-3 px-3 py-3 w-full rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group",
+                        "flex items-center space-x-3 px-3 py-3 w-full rounded-xl text-slate-600 dark:text-muted-foreground hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors group",
                         isCollapsed ? "justify-center" : ""
                     )}
                     title={isCollapsed ? "Sair da Conta" : undefined}
                 >
-                    <LogOut className="h-5 w-5 text-slate-400 group-hover:text-red-500 flex-shrink-0" />
+                    <LogOut className="h-5 w-5 text-slate-400 dark:text-muted-foreground group-hover:text-red-500 dark:group-hover:text-red-400 flex-shrink-0" />
                     <span className={cn(
                         "font-semibold transition-all duration-200 whitespace-nowrap",
                         isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100"

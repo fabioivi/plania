@@ -77,7 +77,7 @@ export default function TeachingPlanViewPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
             <p className="text-slate-500 font-medium animate-pulse">Carregando plano de ensino...</p>
@@ -91,13 +91,13 @@ export default function TeachingPlanViewPage() {
   if (!plan) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-slate-50 p-8 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-50 dark:bg-background p-8 flex items-center justify-center">
           <div className="text-center max-w-md">
-            <div className="bg-white p-4 rounded-full inline-block shadow-sm mb-4">
-              <FileText className="h-12 w-12 text-slate-300" />
+            <div className="bg-white dark:bg-card p-4 rounded-full inline-block shadow-sm mb-4">
+              <FileText className="h-12 w-12 text-slate-300 dark:text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Plano não encontrado</h3>
-            <p className="text-slate-500 mb-8">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-foreground mb-2">Plano não encontrado</h3>
+            <p className="text-slate-500 dark:text-muted-foreground mb-8">
               O documento que você está procurando não existe ou foi removido.
             </p>
             <Link href="/disciplines">
@@ -114,7 +114,7 @@ export default function TeachingPlanViewPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-slate-50 pb-20">
+      <div className="min-h-screen bg-slate-50 dark:bg-background pb-20">
 
         {/* Print Styles */}
         <style>{`
@@ -145,24 +145,24 @@ export default function TeachingPlanViewPage() {
           {/* Header Action Bar */}
           <div className="mb-8 print:hidden">
             <Link href={fromReview ? `/plans/review/${planId}` : "/disciplines"} className="inline-block mb-6">
-              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 hover:text-indigo-600 hover:bg-transparent group">
-                <div className="bg-white border border-slate-200 rounded-full p-1 group-hover:border-indigo-200 group-hover:bg-indigo-50 transition-colors">
+              <Button variant="ghost" className="pl-0 gap-2 text-slate-500 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-transparent group">
+                <div className="bg-white dark:bg-card border border-slate-200 dark:border-border rounded-full p-1 group-hover:border-indigo-200 dark:group-hover:border-indigo-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/50 transition-colors">
                   <ChevronLeft className="h-4 w-4" />
                 </div>
                 <span className="font-semibold">{fromReview ? "Voltar para Edição" : "Voltar para Disciplinas"}</span>
               </Button>
             </Link>
 
-            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 bg-white dark:bg-card p-6 rounded-[2rem] border border-slate-200 dark:border-border shadow-sm dark:shadow-none relative overflow-hidden">
               {/* Decorative background blob */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
               <div className="relative z-10 max-w-2xl">
-                <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 leading-tight">
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-foreground mb-2 leading-tight">
                   {plan.unidadeCurricular || 'Plano de Ensino'}
                 </h1>
-                <div className="flex flex-wrap items-center gap-3 text-slate-500 font-medium">
-                  <span className="bg-slate-100 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">{plan.campus}</span>
+                <div className="flex flex-wrap items-center gap-3 text-slate-500 dark:text-muted-foreground font-medium">
+                  <span className="bg-slate-100 dark:bg-secondary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">{plan.campus}</span>
                   <span>•</span>
                   <span>{plan.curso}</span>
                 </div>
@@ -171,7 +171,7 @@ export default function TeachingPlanViewPage() {
               <div className="relative z-10 flex flex-wrap gap-2 w-full lg:w-auto justify-end">
                 <Button
                   variant="outline"
-                  className="gap-2 border-slate-200 text-slate-700 hover:text-indigo-700 hover:bg-indigo-50 font-semibold rounded-xl"
+                  className="gap-2 border-slate-200 dark:border-border text-slate-700 dark:text-foreground hover:text-indigo-700 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 font-semibold rounded-xl"
                   onClick={handleSync}
                   disabled={syncing}
                 >
@@ -179,12 +179,12 @@ export default function TeachingPlanViewPage() {
                   {syncing ? 'Sincronizando...' : 'Atualizar'}
                 </Button>
 
-                <Button variant="outline" className="gap-2 border-slate-200 text-slate-700 font-semibold rounded-xl" onClick={() => window.print()}>
+                <Button variant="outline" className="gap-2 border-slate-200 dark:border-border text-slate-700 dark:text-foreground font-semibold rounded-xl" onClick={() => window.print()}>
                   <Printer className="h-4 w-4" />
                 </Button>
 
                 <Button
-                  className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200"
+                  className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none"
                   onClick={handleEditWithAI}
                   disabled={!plan.diaryId}
                 >
@@ -196,7 +196,7 @@ export default function TeachingPlanViewPage() {
                 {plan.diaryId && (
                   <Button
                     onClick={handleGenerateDiaryContent}
-                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-100"
+                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-100 dark:shadow-none"
                   >
                     <FileText className="h-4 w-4" />
                     Gerar Aulas

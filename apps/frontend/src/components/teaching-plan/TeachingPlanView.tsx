@@ -78,12 +78,12 @@ export function TeachingPlanView({
 }: TeachingPlanViewProps) {
 
   const renderIdentification = () => (
-    <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-      <div className="bg-indigo-50/50 p-4 border-b border-indigo-100/50 flex items-center gap-3">
-        <div className="bg-indigo-100 p-2 rounded-lg">
-          <FileText className="h-5 w-5 text-indigo-600" />
+    <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+      <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 border-b border-indigo-100/50 dark:border-indigo-900/50 flex items-center gap-3">
+        <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
+          <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
         </div>
-        <h3 className="font-bold text-slate-800 text-lg">Identificação</h3>
+        <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Identificação</h3>
       </div>
       <CardContent className="p-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -91,67 +91,67 @@ export function TeachingPlanView({
             <div className="space-y-1">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Campus</p>
               <div className="flex items-center gap-2">
-                <School className="h-4 w-4 text-slate-400" />
-                <p className="font-semibold text-slate-900">{plan.campus}</p>
+                <School className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
+                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.campus}</p>
               </div>
             </div>
           )}
           {plan.anoSemestre && (
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ano/Semestre</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Ano/Semestre</p>
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-400" />
-                <p className="font-semibold text-slate-900">{plan.anoSemestre}</p>
+                <Calendar className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
+                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.anoSemestre}</p>
               </div>
             </div>
           )}
           {plan.curso && (
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Curso</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Curso</p>
               <div className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-slate-400" />
-                <p className="font-semibold text-slate-900">{plan.curso}</p>
+                <GraduationCap className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
+                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.curso}</p>
               </div>
             </div>
           )}
           {plan.unidadeCurricular && (
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Unidade Curricular</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Unidade Curricular</p>
               <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-slate-400" />
-                <p className="font-semibold text-slate-900">{plan.unidadeCurricular}</p>
+                <BookOpen className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
+                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.unidadeCurricular}</p>
               </div>
             </div>
           )}
           {plan.professores && (
             <div className="md:col-span-2 space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Professor(es)</p>
+              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Professor(es)</p>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-slate-400" />
-                <p className="font-medium text-slate-900 bg-slate-50 px-3 py-1 rounded-md inline-block">{plan.professores}</p>
+                <Users className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
+                <p className="font-medium text-slate-900 dark:text-foreground bg-slate-50 dark:bg-secondary/50 px-3 py-1 rounded-md inline-block">{plan.professores}</p>
               </div>
             </div>
           )}
         </div>
 
         {(plan.cargaHorariaTotal || plan.numAulasTeorica || plan.numAulasPraticas) && (
-          <div className="grid grid-cols-3 gap-4 pt-6 mt-2 border-t border-slate-100">
+          <div className="grid grid-cols-3 gap-4 pt-6 mt-2 border-t border-slate-100 dark:border-border">
             {plan.cargaHorariaTotal !== undefined && (
-              <div className="space-y-1 text-center bg-slate-50 rounded-xl p-3">
-                <p className="text-xs font-medium text-slate-500">Carga Total</p>
-                <p className="font-bold text-xl text-indigo-600">{plan.cargaHorariaTotal}h</p>
+              <div className="space-y-1 text-center bg-slate-50 dark:bg-secondary/30 rounded-xl p-3">
+                <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">Carga Total</p>
+                <p className="font-bold text-xl text-indigo-600 dark:text-indigo-400">{plan.cargaHorariaTotal}h</p>
               </div>
             )}
             {plan.numAulasTeorica !== undefined && (
-              <div className="space-y-1 text-center bg-slate-50 rounded-xl p-3">
-                <p className="text-xs font-medium text-slate-500">Teóricas</p>
-                <p className="font-bold text-xl text-slate-700">{plan.numAulasTeorica}</p>
+              <div className="space-y-1 text-center bg-slate-50 dark:bg-secondary/30 rounded-xl p-3">
+                <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">Teóricas</p>
+                <p className="font-bold text-xl text-slate-700 dark:text-foreground">{plan.numAulasTeorica}</p>
               </div>
             )}
             {plan.numAulasPraticas !== undefined && (
-              <div className="space-y-1 text-center bg-slate-50 rounded-xl p-3">
-                <p className="text-xs font-medium text-slate-500">Práticas</p>
-                <p className="font-bold text-xl text-slate-700">{plan.numAulasPraticas}</p>
+              <div className="space-y-1 text-center bg-slate-50 dark:bg-secondary/30 rounded-xl p-3">
+                <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">Práticas</p>
+                <p className="font-bold text-xl text-slate-700 dark:text-foreground">{plan.numAulasPraticas}</p>
               </div>
             )}
           </div>
@@ -162,52 +162,52 @@ export function TeachingPlanView({
 
   const renderStatusCards = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-      <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
         <CardContent className="p-4 flex items-center gap-4">
           <div className="bg-blue-50 p-2.5 rounded-xl">
             <Calendar className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase">Período</p>
-            <p className="font-bold text-slate-700">{plan.anoSemestre || 'N/A'}</p>
+            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Período</p>
+            <p className="font-bold text-slate-700 dark:text-foreground">{plan.anoSemestre || 'N/A'}</p>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
         <CardContent className="p-4 flex items-center gap-4">
           <div className="bg-purple-50 p-2.5 rounded-xl">
             <Clock className="h-5 w-5 text-purple-600" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase">Carga Horária</p>
-            <p className="font-bold text-slate-700">{plan.cargaHorariaTotal || 0}h</p>
+            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Carga Horária</p>
+            <p className="font-bold text-slate-700 dark:text-foreground">{plan.cargaHorariaTotal || 0}h</p>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
         <CardContent className="p-4 flex items-center gap-4">
           <div className="bg-emerald-50 p-2.5 rounded-xl">
             <Layers className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase">Aulas</p>
-            <p className="font-bold text-slate-700">
+            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Aulas</p>
+            <p className="font-bold text-slate-700 dark:text-foreground">
               {(plan.numAulasTeorica || 0) + (plan.numAulasPraticas || 0)}
             </p>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-sm ring-1 ring-slate-100 bg-white">
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
         <CardContent className="p-4 flex items-center gap-4">
           <div className="bg-slate-50 p-2.5 rounded-xl">
             <Target className="h-5 w-5 text-slate-600" />
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase">Status</p>
-            <Badge variant="secondary" className="mt-0.5 bg-slate-100 text-slate-600 hover:bg-slate-200">{plan.status || 'Ativo'}</Badge>
+            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Status</p>
+            <Badge variant="secondary" className="mt-0.5 bg-slate-100 dark:bg-secondary text-slate-600 dark:text-foreground hover:bg-slate-200 dark:hover:bg-secondary/80">{plan.status || 'Ativo'}</Badge>
           </div>
         </CardContent>
       </Card>
@@ -218,13 +218,13 @@ export function TeachingPlanView({
     if (!plan.ementa) return null
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <BookOpen className="h-5 w-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-lg">Ementa</h3>
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
+          <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Ementa</h3>
         </div>
         <CardContent className="p-6">
-          <p className="text-sm md:text-base text-slate-600 whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">
             {plan.ementa}
           </p>
         </CardContent>
@@ -236,30 +236,30 @@ export function TeachingPlanView({
     if (!plan.objetivoGeral && !plan.objetivosEspecificos) return null
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <Target className="h-5 w-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-lg">Objetivos</h3>
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
+          <Target className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Objetivos</h3>
         </div>
         <CardContent className="p-6 space-y-8">
           {plan.objetivoGeral && (
-            <div className="bg-indigo-50/30 p-4 rounded-xl border border-indigo-50">
-              <h4 className="flex items-center gap-2 font-bold text-indigo-900 mb-3">
+            <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-50 dark:border-indigo-900/20">
+              <h4 className="flex items-center gap-2 font-bold text-indigo-900 dark:text-indigo-300 mb-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
                 Objetivo Geral
               </h4>
-              <p className="text-sm md:text-base text-slate-700 whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                 {plan.objetivoGeral}
               </p>
             </div>
           )}
           {plan.objetivosEspecificos && (
             <div className="pl-2">
-              <h4 className="flex items-center gap-2 font-bold text-slate-800 mb-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+              <h4 className="flex items-center gap-2 font-bold text-slate-800 dark:text-foreground mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></span>
                 Objetivos Específicos
               </h4>
-              <p className="text-sm md:text-base text-slate-600 whitespace-pre-wrap leading-relaxed border-l-2 border-slate-100 pl-4">
+              <p className="text-sm md:text-base text-slate-600 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed border-l-2 border-slate-100 dark:border-border pl-4">
                 {plan.objetivosEspecificos}
               </p>
             </div>
@@ -273,13 +273,13 @@ export function TeachingPlanView({
     if (!plan.metodologia) return null
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <Users className="h-5 w-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-lg">Metodologia</h3>
+      <Card className="border-0 shadow-sm ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
+          <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Metodologia</h3>
         </div>
         <CardContent className="p-6">
-          <p className="text-sm md:text-base text-slate-600 whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">
             {plan.metodologia}
           </p>
         </CardContent>
@@ -291,43 +291,43 @@ export function TeachingPlanView({
     if (!plan.avaliacaoAprendizagem || plan.avaliacaoAprendizagem.length === 0) return null
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <div className="bg-indigo-50 p-2 rounded-lg">
-            <ClipboardCheck className="h-5 w-5 text-indigo-600" />
+      <Card className="border-0 shadow-sm ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
+          <div className="bg-indigo-50 dark:bg-indigo-900/50 p-2 rounded-lg">
+            <ClipboardCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <h3 className="font-bold text-slate-800 text-lg">Avaliação da Aprendizagem</h3>
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Avaliação da Aprendizagem</h3>
         </div>
         <CardContent className="p-6">
-          <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-border shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-200">
-                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Etapa</th>
-                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Avaliação</th>
-                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Instrumentos</th>
-                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Data</th>
-                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 uppercase tracking-wider">Nota Máx.</th>
+                  <tr className="bg-slate-50/50 dark:bg-secondary/20 border-b border-slate-200 dark:border-border">
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Etapa</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Avaliação</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Instrumentos</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Data</th>
+                    <th className="text-left py-4 px-6 text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Nota Máx.</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-border">
                   {plan.avaliacaoAprendizagem.map((avaliacao, index) => (
-                    <tr key={index} className="hover:bg-slate-50/80 transition-colors bg-white">
-                      <td className="py-4 px-6 font-bold text-slate-700">{avaliacao.etapa || '-'}</td>
-                      <td className="py-4 px-6 text-slate-600 font-medium leading-relaxed max-w-[200px]">{avaliacao.avaliacao || '-'}</td>
+                    <tr key={index} className="hover:bg-slate-50/80 dark:hover:bg-secondary/10 transition-colors bg-white dark:bg-card">
+                      <td className="py-4 px-6 font-bold text-slate-700 dark:text-foreground">{avaliacao.etapa || '-'}</td>
+                      <td className="py-4 px-6 text-slate-600 dark:text-muted-foreground font-medium leading-relaxed max-w-[200px]">{avaliacao.avaliacao || '-'}</td>
                       <td className="py-4 px-6">
                         {avaliacao.instrumentos ? (
                           <div className="flex flex-wrap gap-1">
                             {avaliacao.instrumentos.split(',').map((instr, i) => (
-                              <Badge key={i} variant="secondary" className="bg-slate-100 text-slate-600 border-slate-200 font-medium rounded-md hover:bg-slate-200 transition-colors">
+                              <Badge key={i} variant="secondary" className="bg-slate-100 dark:bg-secondary text-slate-600 dark:text-muted-foreground border-slate-200 dark:border-border font-medium rounded-md hover:bg-slate-200 dark:hover:bg-secondary/80 transition-colors">
                                 {instr.trim()}
                               </Badge>
                             ))}
                           </div>
                         ) : <span className="text-slate-300">-</span>}
                       </td>
-                      <td className="py-4 px-6 text-slate-500 font-medium whitespace-nowrap">{avaliacao.dataPrevista || '-'}</td>
+                      <td className="py-4 px-6 text-slate-500 dark:text-muted-foreground font-medium whitespace-nowrap">{avaliacao.dataPrevista || '-'}</td>
                       <td className="py-4 px-6">
                         {avaliacao.valorMaximo ? (
                           <div className="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg inline-block border border-indigo-100 min-w-[3rem] text-center shadow-sm">
@@ -361,13 +361,13 @@ export function TeachingPlanView({
     if (!plan.recuperacaoAprendizagem) return null
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <GraduationCap className="h-5 w-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-lg">Recuperação da Aprendizagem</h3>
+      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
+          <GraduationCap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Recuperação da Aprendizagem</h3>
         </div>
         <CardContent className="p-6">
-          <p className="text-sm md:text-base text-slate-600 whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm md:text-base text-slate-600 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">
             {plan.recuperacaoAprendizagem}
           </p>
         </CardContent>
@@ -397,13 +397,13 @@ export function TeachingPlanView({
     const totalAulas = weekScheduleData.reduce((sum, week) => sum + week.classes, 0)
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center justify-between gap-3">
+      <Card className="border border-slate-200 dark:border-border shadow-sm dark:shadow-none bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Calendar className="h-5 w-5 text-indigo-600" />
-            <h3 className="font-bold text-slate-800 text-lg">Cronograma</h3>
+            <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Cronograma</h3>
           </div>
-          <Badge variant="secondary" className="bg-white border border-slate-200 text-slate-700 font-mono">
+          <Badge variant="secondary" className="bg-white dark:bg-secondary border border-slate-200 dark:border-border text-slate-700 dark:text-foreground font-mono">
             {totalAulas} Aulas
           </Badge>
         </div>
@@ -426,18 +426,18 @@ export function TeachingPlanView({
     if (!hasBasica && !hasComplementar && !hasReferencias) return null
 
     return (
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50/80 p-4 border-b border-slate-100 flex items-center gap-3">
-          <BookMarked className="h-5 w-5 text-indigo-600" />
-          <h3 className="font-bold text-slate-800 text-lg">Referências Bibliográficas</h3>
+      <Card className="border-0 shadow-sm ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
+        <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
+          <BookMarked className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Referências Bibliográficas</h3>
         </div>
         <CardContent className="p-6 space-y-6">
           {hasBasica && (
             <div className="space-y-3">
-              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">Bibliografia Básica</h4>
+              <h4 className="font-bold text-slate-900 dark:text-foreground text-sm uppercase tracking-wide border-b border-slate-100 dark:border-border pb-2">Bibliografia Básica</h4>
               <ol className="space-y-3 ml-4">
                 {plan.bibliografiaBasica!.map((ref, index) => (
-                  <li key={index} className="text-sm text-slate-600 leading-relaxed pl-2 border-l-2 border-indigo-100">
+                  <li key={index} className="text-sm text-slate-600 dark:text-muted-foreground leading-relaxed pl-2 border-l-2 border-indigo-100 dark:border-indigo-900/50">
                     {ref}
                   </li>
                 ))}
@@ -447,10 +447,10 @@ export function TeachingPlanView({
 
           {hasComplementar && (
             <div className="space-y-3">
-              <h4 className="font-bold text-slate-900 text-sm uppercase tracking-wide border-b border-slate-100 pb-2">Bibliografia Complementar</h4>
+              <h4 className="font-bold text-slate-900 dark:text-foreground text-sm uppercase tracking-wide border-b border-slate-100 dark:border-border pb-2">Bibliografia Complementar</h4>
               <ol className="space-y-3 ml-4">
                 {plan.bibliografiaComplementar!.map((ref, index) => (
-                  <li key={index} className="text-sm text-slate-600 leading-relaxed pl-2 border-l-2 border-slate-200">
+                  <li key={index} className="text-sm text-slate-600 dark:text-muted-foreground leading-relaxed pl-2 border-l-2 border-slate-200 dark:border-border">
                     {ref}
                   </li>
                 ))}

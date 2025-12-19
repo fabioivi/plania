@@ -88,14 +88,14 @@ export function WorkProposalTable({
   // Coluna de período (mês + período)
   columns.push({
     id: "period",
-    header: () => <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Período</span>,
+    header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Período</span>,
     accessorFn: (row) => `${row.month} ${row.period}`,
     cell: ({ row }) => {
       const monthFull = row.original.month.split(" - ")[1] || row.original.month
       return (
         <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-slate-700">{monthFull}</span>
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{row.original.period}</span>
+          <span className="font-bold text-slate-700 dark:text-foreground">{monthFull}</span>
+          <span className="text-xs font-medium text-slate-400 dark:text-muted-foreground uppercase tracking-wide">{row.original.period}</span>
         </div>
       )
     },
@@ -105,9 +105,9 @@ export function WorkProposalTable({
   // Coluna de número de aulas
   columns.push({
     accessorKey: "classes",
-    header: () => <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aulas</span>,
+    header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Aulas</span>,
     cell: ({ row }) => (
-      <div className="font-bold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-md inline-block border border-slate-100 min-w-[2.5rem] text-center">
+      <div className="font-bold text-slate-600 dark:text-foreground bg-slate-50 dark:bg-secondary/30 px-2.5 py-1 rounded-md inline-block border border-slate-100 dark:border-border min-w-[2.5rem] text-center">
         {row.getValue("classes")}
       </div>
     ),
@@ -117,9 +117,9 @@ export function WorkProposalTable({
   // Coluna de conteúdo
   columns.push({
     accessorKey: "content",
-    header: () => <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Conteúdo Programático</span>,
+    header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Conteúdo Programático</span>,
     cell: ({ row }) => (
-      <div className="max-w-[350px] text-sm text-slate-600 leading-relaxed font-medium">
+      <div className="max-w-[350px] text-sm text-slate-600 dark:text-muted-foreground leading-relaxed font-medium">
         {row.getValue("content")}
       </div>
     ),
@@ -129,7 +129,7 @@ export function WorkProposalTable({
   // Coluna de técnicas de ensino (badges azuis)
   columns.push({
     accessorKey: "teachingTechniques",
-    header: () => <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Técnicas</span>,
+    header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Técnicas</span>,
     cell: ({ row }) => {
       const techniques = (row.getValue("teachingTechniques") as string).split(", ")
       return (
@@ -138,7 +138,7 @@ export function WorkProposalTable({
             <Badge
               key={index}
               variant="secondary"
-              className="text-[10px] font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 transition-colors"
+              className="text-[10px] font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
             >
               {technique}
             </Badge>
@@ -152,10 +152,10 @@ export function WorkProposalTable({
   // Coluna de recursos de ensino (badges verdes) - apenas se existir
   columns.push({
     accessorKey: "teachingResources",
-    header: () => <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recursos</span>,
+    header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Recursos</span>,
     cell: ({ row }) => {
       const resources = row.getValue("teachingResources") as string
-      if (!resources) return <span className="text-slate-300 text-xs">-</span>
+      if (!resources) return <span className="text-slate-300 dark:text-muted-foreground text-xs">-</span>
 
       const resourceList = resources.split(", ")
       return (
@@ -164,7 +164,7 @@ export function WorkProposalTable({
             <Badge
               key={index}
               variant="secondary"
-              className="text-[10px] font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-100 transition-colors"
+              className="text-[10px] font-semibold uppercase tracking-wide rounded-md px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
             >
               {resource}
             </Badge>
@@ -178,11 +178,11 @@ export function WorkProposalTable({
   // Coluna de observações
   columns.push({
     accessorKey: "observations",
-    header: () => <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Obs.</span>,
+    header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Obs.</span>,
     cell: ({ row }) => {
       const obs = row.getValue("observations") as string
       return obs ? (
-        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-100 px-2 py-1 rounded-md max-w-[150px]">
+        <div className="text-xs text-amber-900 dark:text-amber-100 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 px-2 py-1 rounded-md max-w-[150px]">
           {obs}
         </div>
       ) : (

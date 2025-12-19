@@ -9,11 +9,12 @@ import { cn } from "@/lib/utils";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [isMounted, setIsMounted] = useState(false);
+
+    // Note: Removed isMounted check to allow instant render (SSR/Hydration)
+    // This may cause a small layout shift on sidebar state but prevents white screen.
 
     // Initialize state from local storage on mount to avoid hydration mismatch
     useEffect(() => {
-        setIsMounted(true);
         const stored = localStorage.getItem('sidebar-collapsed');
         if (stored === 'true') {
             setIsSidebarCollapsed(true);
@@ -24,11 +25,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const newState = !isSidebarCollapsed;
         setIsSidebarCollapsed(newState);
         localStorage.setItem('sidebar-collapsed', String(newState));
-    }
-
-    // Prevent layout shift during hydration by rendering default until mounted
-    if (!isMounted) {
-        return null; // Or a loading skeleton if preferred
     }
 
     return (

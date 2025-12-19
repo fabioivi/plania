@@ -4,10 +4,9 @@ import { useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+
 import { Badge } from "@/components/ui/badge"
 import {
-  BookOpen,
   Loader2,
   FileText,
   Download,
@@ -15,8 +14,7 @@ import {
   Upload,
   ChevronLeft,
   Clock,
-  Users,
-  CheckCircle2,
+  GraduationCap,
 } from "lucide-react"
 
 import { ProtectedRoute } from "@/components/ProtectedRoute"
@@ -278,32 +276,86 @@ export default function DiaryContentPage() {
           </div>
 
           {/* Header Action Bar */}
-          <div className="mb-8 flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 bg-white dark:bg-card p-6 rounded-[2rem] border border-slate-200 dark:border-border shadow-sm dark:shadow-none relative overflow-hidden">
-            <div className="relative z-10 w-full lg:w-auto flex-1">
+          <div className="mb-8 flex flex-col gap-6 bg-white dark:bg-card p-6 rounded-[2rem] border border-slate-200 dark:border-border shadow-sm dark:shadow-none relative overflow-hidden">
+            <div className="relative z-10 w-full">
               {diaryInfo && (
                 <>
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border uppercase tracking-widest text-[10px] font-bold">
-                      {diaryInfo.periodo || 'N/A'}
-                    </Badge>
-                    {diaryInfo.externalId && (
-                      <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border font-mono text-[10px]">
-                        ID: {diaryInfo.externalId}
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {diaryInfo.periodo && (
+                      <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border uppercase tracking-widest text-[10px] font-bold">
+                        {diaryInfo.periodo}
                       </Badge>
                     )}
+                    {diaryInfo.externalId && (
+                      <a
+                        href={`https://academico.ifms.edu.br/administrativo/professores/diario/${diaryInfo.externalId}/conteudo`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group/link"
+                        title="Abrir no Sistema IFMS"
+                      >
+                        <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border font-mono text-[10px] group-hover/link:bg-blue-50 dark:group-hover/link:bg-blue-900/20 group-hover/link:text-blue-600 dark:group-hover/link:text-blue-400 group-hover/link:border-blue-200 dark:group-hover/link:border-blue-800 transition-colors cursor-pointer flex items-center gap-1">
+                          ID: {diaryInfo.externalId}
+                          <ExternalLink className="h-3 w-3" />
+                        </Badge>
+                      </a>
+                    )}
+                    {diaryInfo.turma && (
+                      <Badge variant="outline" className="bg-slate-50 dark:bg-secondary text-slate-500 dark:text-muted-foreground border-slate-200 dark:border-border font-mono text-[10px]">
+                        Turma: {diaryInfo.turma}
+                      </Badge>
+                    )}
+                    <Badge
+                      className={`uppercase tracking-widest text-[10px] font-bold border-0 ${diaryInfo.aprovado
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-emerald-200"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-200"
+                        }`}
+                    >
+                      {diaryInfo.aprovado ? "Aprovado" : "Em Andamento"}
+                    </Badge>
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-foreground leading-tight mb-2">
-                    {diaryInfo.disciplina}
-                  </h1>
-                  <p className="text-slate-500 dark:text-muted-foreground font-medium text-lg flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    {diaryInfo.turma}
-                  </p>
+
+                  {(() => {
+                    const text = diaryInfo.disciplina || '';
+                    let name = text;
+
+                    if (text.includes(' - ')) {
+                      name = text.split(' - ').slice(1).join(' - ');
+                    }
+
+                    return (
+                      <div className="mb-3">
+                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-foreground leading-tight">
+                          {name}
+                        </h1>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                    {diaryInfo.curso && (
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-slate-400" />
+                        <span className="truncate max-w-[200px] md:max-w-md" title={diaryInfo.curso}>{diaryInfo.curso}</span>
+                      </div>
+                    )}
+                    {diaryInfo.cargaHorariaRelogio && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-slate-400" />
+                        <span title="Carga Horária Relógio">{Number(diaryInfo.cargaHorariaRelogio).toFixed(2)}h</span>
+                        {diaryInfo.cargaHorariaAulas && (
+                          <span className="text-slate-400 dark:text-muted-foreground text-xs font-medium" title="Carga Horária Aulas">
+                            ({diaryInfo.cargaHorariaAulas} aulas)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
 
-            <div className="relative z-10 flex flex-wrap gap-3 w-full lg:w-auto">
+            <div className="relative z-10 flex flex-wrap gap-3 w-full">
               <Button
                 variant="outline"
                 size="sm"
@@ -324,24 +376,14 @@ export default function DiaryContentPage() {
                 )}
               </Button>
 
-              {diaryInfo?.externalId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(`https://academico.ifms.edu.br/administrativo/professores/diario/${diaryInfo.externalId}/conteudo`, '_blank')}
-                  className="h-10 border-slate-200 dark:border-border text-slate-700 dark:text-foreground font-semibold rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-700 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Abrir no Sistema
-                </Button>
-              )}
+
 
               <Button
                 variant="default"
                 size="sm"
                 onClick={handleSendToSystem}
                 disabled={downloadState?.status === 'syncing' || uploadState?.status === 'syncing' || loading || content.length === 0}
-                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none"
+                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 ml-auto"
               >
                 {uploadState?.status === 'syncing' ? (
                   <>
@@ -373,66 +415,6 @@ export default function DiaryContentPage() {
                   isConnected={true}
                 />
               )}
-            </div>
-          )}
-
-          {/* Stats Grid */}
-          {diaryInfo && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <Card className="border border-slate-200 dark:border-border shadow-sm dark:shadow-none bg-white dark:bg-card overflow-hidden">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900/30 p-2.5 rounded-xl">
-                    <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Curso</p>
-                    <p className="font-bold text-slate-700 dark:text-foreground text-sm truncate max-w-[150px]" title={diaryInfo.curso}>{diaryInfo.curso}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-purple-50 dark:bg-purple-900/30 p-2.5 rounded-xl">
-                    <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Carga Horária</p>
-                    <p className="font-bold text-slate-700 dark:text-foreground">{diaryInfo.cargaHoraria || 'N/A'}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-emerald-50 dark:bg-emerald-900/30 p-2.5 rounded-xl">
-                    <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Alunos</p>
-                    <p className="font-bold text-slate-700 dark:text-foreground">{diaryInfo.emCurso}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-sm ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="bg-slate-50 dark:bg-secondary p-2.5 rounded-xl">
-                    <CheckCircle2 className="h-5 w-5 text-slate-600 dark:text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Status</p>
-                    <Badge
-                      className={`mt-0.5 ${diaryInfo.aprovado
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:text-white"
-                        : "bg-slate-100 text-slate-600 dark:bg-secondary dark:text-foreground"
-                        }`}
-                    >
-                      {diaryInfo.aprovado ? "Aprovado" : "Em Andamento"}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           )}
 

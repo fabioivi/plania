@@ -30,7 +30,8 @@ export interface Diary {
   curso: string
   turma: string
   periodo: string | null
-  cargaHoraria: string | null
+  cargaHorariaRelogio: number | null
+  cargaHorariaAulas: number | null
   modalidade: string | null
   aprovados: number
   reprovados: number

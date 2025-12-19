@@ -33,7 +33,7 @@ import { SessionCacheService } from './common/services/session-cache.service';
           password: configService.get('DATABASE_PASSWORD'),
           database: configService.get('DATABASE_NAME'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
-          synchronize: configService.get('NODE_ENV') === 'development' || configService.get('DB_SYNCHRONIZE') === 'true',
+          synchronize: true, // FORCED: Garantir sync do novo esquema
           logging: configService.get('NODE_ENV') === 'development' || configService.get('DB_LOGGING') === 'true',
         };
         console.log('Database Config:', {

@@ -14,7 +14,6 @@ import {
   Clock,
   Plus,
   TrendingUp,
-  Calendar
 } from 'lucide-react';
 
 export default function DashboardPage() {

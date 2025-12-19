@@ -158,7 +158,10 @@ export class AuthQueueProcessor {
           const contentResult = await this.scrapingService.scrapeClassContent(page, diary.externalId);
 
           if (contentResult.success && contentResult.data && contentResult.data.length > 0) {
-            await this.academicService.syncDiaryContent(userId, diary.id, contentResult.data);
+            await this.academicService.syncDiaryContent(userId, diary.id, {
+              content: contentResult.data,
+              metadata: contentResult.metadata
+            });
             console.log(`✅ ${contentResult.data.length} conteúdos salvos - ${diaryName}`);
           }
 
@@ -315,7 +318,10 @@ export class AuthQueueProcessor {
         console.log(`📦 Dados extraídos: ${contentsResult.data.length} itens`);
 
         // Salva no banco
-        const result = await this.academicService.syncDiaryContent(userId, diary.id, contentsResult.data);
+        const result = await this.academicService.syncDiaryContent(userId, diary.id, {
+          content: contentsResult.data,
+          metadata: contentsResult.metadata
+        });
         console.log(`✅ Conteúdo do diário ${diary.disciplina} sincronizado: ${result.synced} salvos, ${result.realClasses} aulas, ${result.anticipations} antecipações, ${result.skipped} ignorados`);
 
         return { success: true, diary, ...result };

@@ -409,19 +409,77 @@ export class ScrapingService {
       const contentUrl = buildIFMSUrl(IFMS_ROUTES.DIARY.CONTENT(diaryId));
       await page.goto(contentUrl, { waitUntil: 'domcontentloaded' });
 
-      // await page.waitForTimeout(2000); // Removed fixed delay
-
       // Extract content - structure to be adjusted
-      const content = await page.evaluate(() => {
+      // Also extract metadata from the header table
+      const result = await page.evaluate(() => {
+        // Parse Header Table
+        const headerTable = document.querySelector('table.diario');
+        let metadata = null;
+
+        if (headerTable) {
+          const cells = headerTable.querySelectorAll('td');
+          // Format expected:
+          // <tr>
+          //   <th>Classe:</th> <td>...</td>
+          //   <th>Unidade Curricular...:</th> <td>NAME (CODE) - HOURS</td>
+          //   <th>Turma:</th> <td>CODE</td>
+          // </tr>
+
+          // Based on the user provided snippet, we need to find the correct cells
+          // We'll iterate to be safe or use specific indices if stable.
+          // Looking at the snippet, it's all in one TR?
+          // The snippet shows 3 pairs of th/td in one tr.
+
+          let disciplinaText = '';
+          let turmaText = '';
+
+          const headers = headerTable.querySelectorAll('th');
+          headers.forEach((th, index) => {
+            const text = th.textContent?.trim() || '';
+            if (text.includes('Unidade Curricular')) {
+              // The next sibling or key-value pair logic
+              // In the snippet, it matches <th>...</th><td>...</td> sequence.
+              // `cells` might not map linearly if we just queryAll('td').
+              // It's safer to traverse.
+              const td = th.nextElementSibling as HTMLElement;
+              if (td && td.tagName === 'TD') {
+                disciplinaText = td.textContent?.trim() || '';
+              }
+            }
+            if (text.includes('Turma:')) {
+              const td = th.nextElementSibling as HTMLElement;
+              if (td && td.tagName === 'TD') {
+                turmaText = td.textContent?.trim() || '';
+              }
+            }
+          });
+
+          if (disciplinaText) {
+            // Parse "GERÊNCIA ... (CODE) - 60.00h"
+            // Regex to capture: Name (Code) - Hours
+            const match = disciplinaText.match(/^(.*)\s+\((.*)\)\s+-\s+(.*)$/);
+            if (match) {
+              const name = match[1].trim();
+              const code = match[2].trim();
+              metadata = {
+                name,
+                code,
+                turma: turmaText
+              };
+            }
+          }
+        }
+
         return {
           title: document.querySelector('h1, h2')?.textContent?.trim(),
           description: document.querySelector('.description, .content')?.textContent?.trim(),
+          metadata
         };
       });
 
       return {
         success: true,
-        data: content,
+        data: result, // result contains { title, description, metadata }
       };
     } catch (error) {
       console.error('Get diary content failed:', error);
@@ -1117,6 +1175,7 @@ export class ScrapingService {
   ): Promise<{
     success: boolean;
     data?: any[];
+    metadata?: any;
     message?: string;
   }> {
     try {
@@ -1141,11 +1200,53 @@ export class ScrapingService {
         };
       }
 
-      // Extract all content rows
-      const contents = await page.evaluate(() => {
-        const rows = Array.from(
-          document.querySelectorAll('table.diario tbody tr'),
-        );
+      // Extract all content rows AND metadata
+      const result = await page.evaluate(() => {
+        // 1. Extract Metadata from Header Table
+        const headerTable = document.querySelector('table.diario');
+        let metadata = null;
+
+        if (headerTable) {
+          let disciplinaText = '';
+          let turmaText = '';
+
+          const headers = headerTable.querySelectorAll('th');
+          headers.forEach((th) => {
+            const text = th.textContent?.trim() || '';
+            if (text.includes('Unidade Curricular')) {
+              const td = th.nextElementSibling as HTMLElement;
+              if (td && td.tagName === 'TD') {
+                disciplinaText = td.textContent?.trim() || '';
+              }
+            }
+            if (text.includes('Turma:')) {
+              const td = th.nextElementSibling as HTMLElement;
+              if (td && td.tagName === 'TD') {
+                turmaText = td.textContent?.trim() || '';
+              }
+            }
+          });
+
+          if (disciplinaText) {
+            // Parse "GERÊNCIA ... (CODE) - 60.00h"
+            const match = disciplinaText.match(/^(.*)\s+\((.*)\)\s+-\s+(.*)$/);
+            if (match) {
+              const clockHoursStr = match[3].replace('h', '').trim();
+              const clockHours = parseFloat(clockHoursStr);
+              const classHours = !isNaN(clockHours) ? Math.round((clockHours * 60) / 45) : 0;
+
+              metadata = {
+                name: match[1].trim(),
+                code: match[2].trim(),
+                cargaHorariaRelogio: clockHours,
+                cargaHorariaAulas: classHours,
+                turma: turmaText
+              };
+            }
+          }
+        }
+
+        const rows = Array.from(document.querySelectorAll('table.diario tbody tr'));
         const results: any[] = [];
         let skipNext = false;
 
@@ -1304,13 +1405,13 @@ export class ScrapingService {
           }
         }
 
-        return results;
+        return { contents: results, metadata };
       });
 
-      console.log(`✅ Extraídos ${contents.length} conteúdos do diário`);
+      console.log(`✅ Extraídos ${result.contents.length} conteúdos do diário`);
 
       // Filter out items without dates
-      const validContents = contents.filter(item => {
+      const validContents = result.contents.filter((item: any) => {
         if (!item.date || item.date.trim() === '') {
           console.warn(`⚠️ Item sem data ignorado: contentId=${item.contentId}`);
           return false;
@@ -1318,22 +1419,16 @@ export class ScrapingService {
         return true;
       });
 
-      // Log de debug: mostrar primeiras datas para verificar formato
-      if (validContents.length > 0) {
-        console.log('📅 Amostra de datas extraídas:');
-        validContents.slice(0, 3).forEach((item, idx) => {
-          console.log(`  [${idx + 1}] date="${item.date}" | timeRange="${item.timeRange}" | type="${item.type}"`);
-        });
-      }
-
-      if (validContents.length < contents.length) {
-        console.log(`⚠️ ${contents.length - validContents.length} item(s) ignorado(s) por falta de data`);
+      if (validContents.length < result.contents.length) {
+        console.log(`⚠️ ${result.contents.length - validContents.length} item(s) ignorado(s) por falta de data`);
       }
 
       return {
         success: true,
         data: validContents,
+        metadata: result.metadata
       };
+
     } catch (error) {
       console.error('❌ Erro ao extrair conteúdo do diário:', error);
       return {
@@ -1343,14 +1438,6 @@ export class ScrapingService {
     }
   }
 
-  /**
-   * Send diary content to IFMS academic system
-   * @param username - IFMS username
-   * @param password - IFMS password
-   * @param contentId - Content ID from the diary (e.g., "1234567")
-   * @param content - Content text to save (use empty string to erase)
-   * @returns Success status and message
-   */
   /**
    * Login to IFMS system using Redis session cache (for reuse in bulk operations)
    *

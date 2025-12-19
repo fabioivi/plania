@@ -489,8 +489,35 @@ export class AcademicService {
   }
 
   // Sync diary content (class content from diary page)
-  async syncDiaryContent(userId: string, diaryId: string, contentData: any[]) {
+  async syncDiaryContent(userId: string, diaryId: string, payload: { content: any[], metadata?: any }) {
+    const { content: contentData, metadata } = payload;
+
     console.log(`🔄 Sincronizando conteúdo do diário ${diaryId}: ${contentData.length} itens recebidos`);
+
+    // Update Diary Metadata if available
+    if (metadata) {
+      try {
+        const diary = await this.diaryRepository.findOne({ where: { id: diaryId, userId } });
+        if (diary) {
+          console.log(`📝 Atualizando metadados do diário ${diaryId} com base no conteúdo scrapeado`);
+          if (metadata.code && metadata.name) {
+            diary.disciplina = `${metadata.code} - ${metadata.name}`;
+          }
+          if (metadata.turma) {
+            diary.turma = metadata.turma;
+          }
+          if (metadata.cargaHorariaRelogio) {
+            diary.cargaHorariaRelogio = metadata.cargaHorariaRelogio;
+          }
+          if (metadata.cargaHorariaAulas) {
+            diary.cargaHorariaAulas = metadata.cargaHorariaAulas;
+          }
+          await this.diaryRepository.save(diary);
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar metadados do diário:', error);
+      }
+    }
 
     const contentsToSave: DiaryContent[] = [];
     let skippedCount = 0;
@@ -715,7 +742,7 @@ export class AcademicService {
       anoSemestre: basePlan?.anoSemestre || (diary.anoLetivo ? `${diary.anoLetivo}${diary.semestre ? `.${diary.semestre}` : ''}` : null),
       curso: basePlan?.curso || diary.curso,
       unidadeCurricular: basePlan?.unidadeCurricular || diary.disciplina,
-      cargaHorariaTotal: basePlan?.cargaHorariaTotal || (diary.cargaHoraria ? parseFloat(diary.cargaHoraria) : null),
+      cargaHorariaTotal: basePlan?.cargaHorariaTotal || (diary.cargaHorariaRelogio || null),
 
       // Copy static fields from base plan (ementa, referencias)
       ementa: basePlan?.ementa || null,

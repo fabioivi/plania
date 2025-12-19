@@ -36,25 +36,31 @@ export function DiaryCard({ diary }: DiaryCardProps) {
         <div className="mb-6">
           <h3 className="text-xl font-black text-slate-800 dark:text-foreground mb-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
             {(() => {
-              const parts = diary.disciplina.split(' - ');
-              const code = parts.length > 1 ? parts[0] : null;
-              const name = parts.length > 1 ? parts.slice(1).join(' - ') : diary.disciplina;
+              // Função simplificada para apenas extrair o nome (removendo código como solicitado)
+              const text = diary.disciplina || '';
+              const name = text.includes(' - ') ? text.split(' - ').slice(1).join(' - ') : text;
 
               return (
                 <div className="flex flex-col gap-1">
-                  {code && (
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mb-0.5">
-                      {code}
-                    </span>
-                  )}
-                  <span className="line-clamp-2">{name}</span>
+                  <span className="line-clamp-2" title={name}>{name}</span>
                 </div>
               );
             })()}
           </h3>
-          <div className="flex items-center text-slate-500 dark:text-muted-foreground font-medium text-sm">
-            <GraduationCap className="w-4 h-4 mr-2 text-slate-400 dark:text-muted-foreground" />
-            {diary.curso}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center text-slate-500 dark:text-muted-foreground font-medium text-sm">
+              <GraduationCap className="w-4 h-4 mr-2 text-slate-400 dark:text-muted-foreground" />
+              {diary.curso}
+            </div>
+            {diary.cargaHorariaRelogio && (
+              <div className="flex items-center text-slate-500 dark:text-muted-foreground font-medium text-xs">
+                <Clock className="w-3.5 h-3.5 mr-2 text-slate-400 dark:text-muted-foreground" />
+                <span>{Number(diary.cargaHorariaRelogio).toFixed(2)}h</span>
+                {diary.cargaHorariaAulas && (
+                  <span className="ml-1 text-slate-400">({diary.cargaHorariaAulas} aulas)</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -36,8 +36,11 @@ export class Diary {
   @Column({ nullable: true })
   periodo: string;
 
-  @Column({ name: 'carga_horaria', nullable: true })
-  cargaHoraria: string;
+  @Column({ name: 'carga_horaria_relogio', type: 'decimal', precision: 5, scale: 2, nullable: true })
+  cargaHorariaRelogio: number;
+
+  @Column({ name: 'carga_horaria_aulas', type: 'int', nullable: true })
+  cargaHorariaAulas: number;
 
   @Column({ nullable: true })
   modalidade: string;

@@ -58,7 +58,7 @@ export class TeachingPlanGeneratorService {
     private readonly diaryContentRepository: Repository<DiaryContent>,
     @InjectRepository(TeachingPlan)
     private readonly teachingPlanRepository: Repository<TeachingPlan>,
-  ) {}
+  ) { }
 
   /**
    * Group diary classes by week
@@ -176,7 +176,7 @@ export class TeachingPlanGeneratorService {
     const professores = diary.user?.name || 'Não informado';
 
     // Carga horária: mantém como número (não concatena com " horas")
-    const cargaHorariaTotal = diary.cargaHoraria ||
+    const cargaHorariaTotal = diary.cargaHorariaRelogio ||
       weekSchedule.reduce((sum, week) => sum + week.totalHours, 0);
 
     // Get total aulas from base plan (theoretical + practical)
@@ -304,7 +304,7 @@ Sempre responda em português do Brasil.
 
       // Step 7: Parse response (Gemini garante JSON válido com schema)
       if (onProgress) onProgress('Processando resposta...', 90);
-      
+
       // Robust JSON extraction/parsing: providers sometimes return markdown
       // fences, streaming prefixes ("data: ...") or small wrappers. Try to
       // normalize before JSON.parse and log helpful diagnostics on failure.
@@ -379,15 +379,15 @@ Sempre responda em português do Brasil.
           recuperacaoAprrendizagem: '',
           propostaTrabalho: Array.isArray(p.proposta_de_trabalho_semanal)
             ? p.proposta_de_trabalho_semanal.map((w: any) => ({
-                semana: w.semana,
-                datas: w.periodo,
-                tema: w.conteudo_programatico ?? w.tema ?? '',
-                conteudo: w.conteudo_programatico ?? w.tema ?? '',
-                atividades: '',
-                tecnicasEnsino: w.tecnicas_de_ensino ?? [],
-                recursosEnsino: w.recursos_didaticos ?? [],
-                numAulas: w.aulas_previstas ?? w.numAulas ?? 0,
-              }))
+              semana: w.semana,
+              datas: w.periodo,
+              tema: w.conteudo_programatico ?? w.tema ?? '',
+              conteudo: w.conteudo_programatico ?? w.tema ?? '',
+              atividades: '',
+              tecnicasEnsino: w.tecnicas_de_ensino ?? [],
+              recursosEnsino: w.recursos_didaticos ?? [],
+              numAulas: w.aulas_previstas ?? w.numAulas ?? 0,
+            }))
             : [],
         };
 

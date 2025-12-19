@@ -261,8 +261,12 @@ export default function SettingsPage() {
                   <div>
                     <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider mb-1">Status da Conexão</p>
                     <div className="flex items-center gap-2">
-                      <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor()}`}></div>
-                      <span className="font-bold text-slate-700 dark:text-foreground">{getStatusText()}</span>
+                      {isTesting || (!credential?.isVerified && !credential?.lastError) ? (
+                        <Loader2 className="h-3 w-3 text-indigo-600 animate-spin" />
+                      ) : (
+                        <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor()}`}></div>
+                      )}
+                      <span className="font-bold text-slate-700 dark:text-foreground">{isTesting ? 'Validando...' : getStatusText()}</span>
                     </div>
                   </div>
                   <div className="text-right hidden sm:block">

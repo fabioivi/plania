@@ -35,7 +35,22 @@ export function DiaryCard({ diary }: DiaryCardProps) {
         {/* Title & Info */}
         <div className="mb-6">
           <h3 className="text-xl font-black text-slate-800 dark:text-foreground mb-2 leading-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-            {diary.disciplina}
+            {(() => {
+              const parts = diary.disciplina.split(' - ');
+              const code = parts.length > 1 ? parts[0] : null;
+              const name = parts.length > 1 ? parts.slice(1).join(' - ') : diary.disciplina;
+
+              return (
+                <div className="flex flex-col gap-1">
+                  {code && (
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mb-0.5">
+                      {code}
+                    </span>
+                  )}
+                  <span className="line-clamp-2">{name}</span>
+                </div>
+              );
+            })()}
           </h3>
           <div className="flex items-center text-slate-500 dark:text-muted-foreground font-medium text-sm">
             <GraduationCap className="w-4 h-4 mr-2 text-slate-400 dark:text-muted-foreground" />

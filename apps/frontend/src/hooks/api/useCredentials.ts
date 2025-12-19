@@ -30,11 +30,15 @@ export function useSaveCredential() {
     onSuccess: () => {
       // Invalidate credentials list to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
-      toast.success('Credenciais salvas com sucesso!')
+      toast.success('Credenciais salvas', {
+        description: 'Suas credenciais foram armazenadas com sucesso.'
+      })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao salvar credenciais'
-      toast.error(message)
+      toast.error('Erro ao salvar', {
+        description: message
+      })
     },
   })
 }
@@ -52,14 +56,20 @@ export function useTestCredential() {
       queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
 
       if (data.isVerified) {
-        toast.success('✅ Credenciais verificadas com sucesso!')
+        toast.success('Acesso confirmado', {
+          description: 'Suas credenciais foram verificadas com sucesso.',
+        })
       } else {
-        toast.error(data.lastError || '❌ Falha na autenticação. Verifique suas credenciais.')
+        toast.error('Falha na autenticação', {
+          description: data.lastError || 'Verifique se seu usuário e senha estão corretos.',
+        })
       }
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao testar credenciais'
-      toast.error(message)
+      toast.error('Erro de conexão', {
+        description: message
+      })
     },
   })
 }
@@ -75,11 +85,15 @@ export function useDeleteCredential() {
     onSuccess: () => {
       // Invalidate credentials list to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
-      toast.success('Credenciais removidas com sucesso!')
+      toast.success('Credencial removida', {
+        description: 'A credencial foi excluída do sistema.'
+      })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao remover credenciais'
-      toast.error(message)
+      toast.error('Erro ao remover', {
+        description: message
+      })
     },
   })
 }
@@ -96,11 +110,15 @@ export function useDeleteAllData() {
       // Invalidate everything related to academic data
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.all })
       queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all }) // Maybe not credentials, but good to be safe if status changes
-      toast.success('Todos os dados foram excluídos com sucesso!')
+      toast.success('Dados excluídos', {
+        description: 'Todos os diários e planos foram removidos com sucesso.'
+      })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao excluir dados'
-      toast.error(message)
+      toast.error('Erro na exclusão', {
+        description: message
+      })
     },
   })
 }

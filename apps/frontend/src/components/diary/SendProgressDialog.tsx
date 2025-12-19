@@ -47,7 +47,7 @@ export function SendProgressDialog({
     const contentIds = contentsToSend.map(c => c.contentId)
 
     if (contentIds.length === 0) {
-      toast.error('Nenhum conteúdo para enviar')
+      toast.error('Nada para enviar', { description: 'Selecione ou gere conteúdos primeiro.' })
       return
     }
 
@@ -60,7 +60,7 @@ export function SendProgressDialog({
       const token = localStorage.getItem('token')
       const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
       console.log('📡 Conectando ao SSE:', url)
-      
+
       const eventSource = new EventSource(url)
 
       eventSource.onmessage = (event) => {
@@ -72,10 +72,10 @@ export function SendProgressDialog({
           // Atualizar progresso em tempo real
           const content = contentsToSend.find(c => c.contentId === data.contentId)
           const contentName = content?.date || data.contentId
-          
+
           // Atualizar progresso e adicionar item
           updateProgress(data.current, `Enviando ${data.current}/${data.total}: ${contentName}`)
-          
+
           // Adicionar item à lista se tiver sucesso/falha
           if (data.success !== undefined) {
             addItem({
@@ -88,7 +88,7 @@ export function SendProgressDialog({
         } else if (data.type === 'complete') {
           console.log('✅ Envio completo:', data)
           eventSource.close()
-          
+
           const items = data.results.map((r: any) => ({
             id: r.contentId,
             name: contentsToSend.find(c => c.contentId === r.contentId)?.date || r.contentId,
@@ -104,11 +104,15 @@ export function SendProgressDialog({
           )
 
           if (data.succeeded > 0) {
-            toast.success(`${data.succeeded} conteúdo(s) enviado(s) com sucesso!`)
+            toast.success('Envio concluído', {
+              description: `${data.succeeded} conteúdo(s) foram enviados com sucesso!`
+            })
           }
 
           if (data.failed > 0) {
-            toast.error(`${data.failed} conteúdo(s) falharam`)
+            toast.error('Falha no envio', {
+              description: `${data.failed} conteúdo(s) falharam ao enviar.`
+            })
           }
 
           setSending(false)
@@ -124,7 +128,7 @@ export function SendProgressDialog({
           console.error('❌ Erro SSE:', data)
           eventSource.close()
           setSending(false)
-          
+
           error(
             'Erro ao enviar conteúdos',
             [{
@@ -134,8 +138,8 @@ export function SendProgressDialog({
               message: data.message || 'Erro desconhecido',
             }]
           )
-          
-          toast.error(data.message || 'Erro ao enviar conteúdos')
+
+          toast.error('Erro de processamento', { description: data.message || 'Erro ao enviar conteúdos' })
         }
       }
 
@@ -143,7 +147,7 @@ export function SendProgressDialog({
         console.error('❌ Erro no SSE:', err)
         eventSource.close()
         setSending(false)
-        
+
         error(
           'Erro ao enviar conteúdos',
           [{
@@ -153,14 +157,16 @@ export function SendProgressDialog({
             message: 'Erro ao conectar com o servidor',
           }]
         )
-        
-        toast.error('Erro ao conectar com o servidor')
+
+        toast.error('Erro de conexão', { description: 'Falha ao conectar com o servidor para envio.' })
       }
     } catch (err: any) {
       console.error('❌ Erro ao enviar conteúdos:', err)
-      toast.error(err.response?.data?.message || 'Erro ao enviar conteúdos')
+      toast.error('Erro inesperado', {
+        description: err.response?.data?.message || 'Ocorreu um erro ao iniciar o envio.'
+      })
       setSending(false)
-      
+
       error(
         'Erro ao enviar conteúdos',
         [{
@@ -249,8 +255,8 @@ export function SendProgressDialog({
             )}
 
             {(sending || syncState) && (
-              <SyncProgressDisplay 
-                state={syncState} 
+              <SyncProgressDisplay
+                state={syncState}
                 isConnected={true}
                 className="mt-4"
               />
@@ -263,8 +269,8 @@ export function SendProgressDialog({
               <AlertDialogCancel disabled={sending}>
                 Cancelar
               </AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleSend} 
+              <AlertDialogAction
+                onClick={handleSend}
                 disabled={sending}
                 className="bg-primary"
               >

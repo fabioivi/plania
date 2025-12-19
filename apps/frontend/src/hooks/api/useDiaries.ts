@@ -69,7 +69,7 @@ export function useSyncDiaries() {
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao sincronizar diários'
-      toast.error(message)
+      toast.error('Falha na sincronização', { description: message })
     },
   })
 }
@@ -86,11 +86,11 @@ export function useSyncSpecificDiary() {
       // Invalidate specific diary queries
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.detail(diaryId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.content(diaryId) })
-      toast.success(`${data.synced} conteúdos sincronizados!`)
+      toast.success('Sincronização concluída', { description: `${data.synced} conteúdos sincronizados!` })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao sincronizar diário'
-      toast.error(message)
+      toast.error('Falha na sincronização', { description: message })
     },
   })
 }
@@ -113,11 +113,11 @@ export function useGenerateDiaryContentFromPlan() {
     onSuccess: (data, { diaryId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.content(diaryId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.stats(diaryId) })
-      toast.success(`${data.generatedCount} conteúdos gerados!`)
+      toast.success('Planejamento gerado', { description: `${data.generatedCount} conteúdos foram criados com IA.` })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao gerar conteúdos'
-      toast.error(message)
+      toast.error('Erro na geração', { description: message })
     },
   })
 }
@@ -139,11 +139,11 @@ export function useSaveDiaryContentBulk() {
     onSuccess: (data, { diaryId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.content(diaryId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.diaries.stats(diaryId) })
-      toast.success(`${data.savedCount} conteúdos salvos!`)
+      toast.success('Modificações salvas', { description: `${data.savedCount} conteúdos atualizados com sucesso.` })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao salvar conteúdos'
-      toast.error(message)
+      toast.error('Erro ao salvar', { description: message })
     },
   })
 }
@@ -161,11 +161,11 @@ export function useSendDiaryContentToSystem() {
       contentId: string
     }) => academicService.sendDiaryContentToSystem(diaryId, contentId),
     onSuccess: () => {
-      toast.success('Conteúdo enviado com sucesso!')
+      toast.success('Conteúdo enviado', { description: 'O diário foi atualizado no sistema acadêmico.' })
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao enviar conteúdo'
-      toast.error(message)
+      toast.error('Erro de envio', { description: message })
     },
   })
 }
@@ -185,7 +185,7 @@ export function useSendDiaryContentBulkToSystem() {
     }) => academicService.sendDiaryContentBulkToSystem(diaryId, data),
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Erro ao enviar conteúdos'
-      toast.error(message)
+      toast.error('Erro no envio em massa', { description: message })
     },
   })
 }

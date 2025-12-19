@@ -131,7 +131,10 @@ export default function DisciplinesPage() {
 
   const handleSync = async () => {
     if (!hasVerifiedCredential) {
-      toast.warning('É preciso cadastrar e verificar sua credencial do IFMS antes de utilizar o sistema.')
+      toast.warning('Credencial não configurada', {
+        description: 'É preciso cadastrar e verificar sua credencial do IFMS antes de realizar sincronizações.',
+        duration: 5000,
+      })
       router.push('/settings')
       return
     }
@@ -420,16 +423,16 @@ export default function DisciplinesPage() {
             <p className="text-slate-400">Isso pode levar alguns segundos.</p>
           </div>
         ) : diaries.length === 0 ? (
-          <div className="text-center py-24 bg-white/50 dark:bg-card/50 backdrop-blur-sm rounded-[2.5rem] border border-dashed border-slate-300 dark:border-border hover:border-indigo-300 hover:bg-white dark:hover:bg-card transition-all duration-300 group">
-            <div className="w-24 h-24 bg-white dark:bg-card rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-slate-100 dark:shadow-none bg-slate-50/50 group-hover:shadow-indigo-100 group-hover:scale-110 transition-all duration-500">
-              <BookOpen className="h-10 w-10 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors duration-300" />
+          <div className="text-center py-10 bg-white/50 dark:bg-card/50 backdrop-blur-sm rounded-3xl border border-dashed border-slate-300 dark:border-border hover:border-indigo-300 hover:bg-white dark:hover:bg-card transition-all duration-300 group">
+            <div className="w-16 h-16 bg-white dark:bg-card rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-slate-100 dark:shadow-none bg-slate-50/50 group-hover:shadow-indigo-100 group-hover:scale-110 transition-all duration-500">
+              <BookOpen className="h-8 w-8 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors duration-300" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-foreground mb-3 tracking-tight">Comece sua Jornada</h3>
-            <p className="text-slate-500 dark:text-muted-foreground max-w-lg mx-auto mb-10 font-medium text-lg leading-relaxed">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-foreground mb-2 tracking-tight">Comece sua Jornada</h3>
+            <p className="text-slate-500 dark:text-muted-foreground max-w-lg mx-auto mb-6 font-medium text-base leading-relaxed">
               Parece que você ainda não tem disciplinas. Sincronize com o sistema acadêmico para importar suas turmas automaticamente.
             </p>
-            <Button onClick={handleSync} size="lg" className="h-16 px-10 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-200 dark:shadow-none hover:shadow-indigo-300 dark:hover:shadow-none hover:-translate-y-1 transition-all text-lg font-bold">
-              <RefreshCw className="mr-3 h-6 w-6" /> Importar Dados Agora
+            <Button onClick={handleSync} size="lg" className="h-12 px-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:shadow-indigo-300 dark:hover:shadow-none hover:-translate-y-0.5 transition-all text-base font-bold">
+              <RefreshCw className="mr-2 h-5 w-5" /> Importar Dados Agora
             </Button>
           </div>
         ) : (

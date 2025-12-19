@@ -4,13 +4,15 @@ const nextConfig = {
   // Necessário para produção com Docker (standalone output)
   output: 'standalone',
   // Habilitar hot reload no Docker (dev only)
-  if(!isServer && process.env.WATCHPACK_POLLING === 'true') {
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      }
     }
-  }
-return config
+    return config
+  },
 }
 
 module.exports = nextConfig

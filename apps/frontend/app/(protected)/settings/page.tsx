@@ -180,16 +180,36 @@ export default function SettingsPage() {
 
       {/* Alerts */}
       {!credential?.isVerified && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-4 animate-fade-in text-amber-900">
-          <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0" />
-          <p className="font-medium">É necessário ativar uma credencial do IFMS para sincronizar seus diários.</p>
+        <div className="bg-white border border-indigo-100 rounded-3xl p-6 shadow-xl shadow-indigo-100/50 flex items-center gap-6 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
+
+          <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100 group-hover:bg-indigo-600 transition-colors duration-500 relative z-10">
+            <AlertTriangle className="h-6 w-6 text-indigo-600 group-hover:text-white transition-colors duration-500" />
+          </div>
+
+          <div className="relative z-10">
+            <h4 className="font-bold text-slate-800 text-lg">Atenção Necessária</h4>
+            <p className="text-slate-600 font-medium leading-relaxed">
+              É necessário ativar uma credencial do IFMS para <span className="text-indigo-600 font-bold">sincronizar seus diários</span>.
+            </p>
+          </div>
         </div>
       )}
 
       {credential?.isVerified && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-4 animate-fade-in text-emerald-900">
-          <CheckCircle2 className="h-6 w-6 text-emerald-600 flex-shrink-0" />
-          <p className="font-medium">Sua credencial do IFMS está conectada e operando normalmente.</p>
+        <div className="bg-white border border-emerald-100 rounded-3xl p-6 shadow-xl shadow-emerald-100/50 flex items-center gap-6 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
+
+          <div className="h-12 w-12 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-emerald-100 group-hover:bg-emerald-600 transition-colors duration-500 relative z-10">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors duration-500" />
+          </div>
+
+          <div className="relative z-10">
+            <h4 className="font-bold text-slate-800 text-lg">Tudo Certo!</h4>
+            <p className="text-slate-600 font-medium leading-relaxed">
+              Sua credencial do IFMS está <span className="text-emerald-600 font-bold">conectada e operando normalmente</span>.
+            </p>
+          </div>
         </div>
       )}
 

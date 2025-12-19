@@ -14,8 +14,7 @@ import {
   Clock,
   Plus,
   TrendingUp,
-  Calendar,
-  AlertCircle
+  Calendar
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -54,15 +53,22 @@ export default function DashboardPage() {
 
       {/* Alert if not configured */}
       {!hasVerifiedCredential && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex items-start space-x-4 animate-fade-in">
-          <div className="bg-amber-100 p-2 rounded-lg">
-            <AlertCircle className="h-6 w-6 text-amber-600" />
+        <div className="bg-white border border-indigo-100 rounded-3xl p-8 shadow-xl shadow-indigo-100/50 flex flex-col md:flex-row items-center md:items-start gap-6 relative overflow-hidden group">
+          {/* Background Decorative */}
+          <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-indigo-50 rounded-full blur-3xl opacity-50 group-hover:scale-110 transition-transform duration-700"></div>
+
+          <div className="h-14 w-14 bg-indigo-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100 group-hover:bg-indigo-600 transition-colors duration-500 relative z-10">
+            <BookOpen className="h-7 w-7 text-indigo-600 group-hover:text-white transition-colors duration-500" />
           </div>
-          <div>
-            <h3 className="font-bold text-amber-900 text-lg">Conecte sua conta do IFMS</h3>
-            <p className="text-amber-700 mt-1 mb-4">Para gerar planos automaticamente baseados nas suas turmas reais, precisamos conectar ao sistema acadêmico.</p>
+          <div className="flex-1 text-center md:text-left relative z-10">
+            <h3 className="font-black text-slate-800 text-xl mb-2">Conecte sua conta do IFMS</h3>
+            <p className="text-slate-600 mb-6 leading-relaxed max-w-2xl text-base">
+              Conecte-se ao sistema acadêmico para <span className="font-bold text-indigo-700">automatizar a geração</span> dos seus planos de ensino baseados nas turmas reais.
+            </p>
             <Link href="/settings">
-              <Button variant="outline" className="border-amber-300 text-amber-800 hover:bg-amber-100">Configurar Agora</Button>
+              <Button className="h-12 px-8 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-105 active:scale-95 transition-all duration-300 font-bold text-base border border-transparent hover:border-indigo-400/30 ring-offset-2 focus:ring-2 ring-indigo-500">
+                Conectar Agora <Sparkles className="ml-2 h-4 w-4 text-indigo-100 animate-pulse" />
+              </Button>
             </Link>
           </div>
         </div>

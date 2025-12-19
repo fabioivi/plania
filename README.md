@@ -164,3 +164,26 @@ npx shadcn-ui@latest add dropdown-menu
 
 **Versão:** 1.0.0  
 **Status:** ✅ Pronto para Produção
+
+## 🚀 Configuração de Deploy Automático (CI/CD)
+
+Este projeto usa GitHub Actions para construir e publicar imagens Docker, e webhooks para atualizar automaticamente o Portainer.
+
+### 1. Obter o Webhook no Portainer
+1. Acesse seu **Portainer**.
+2. Vá para **Stacks** e selecione a Stack do PlanIA.
+3. Clique na aba **Editor**.
+4. Ative a opção **"Webhook"** (ou "Git Repository" > "Automatic updates" > "Webhook").
+5. Copie a URL gerada (ex: `https://portainer.seu-dominio.com/api/stacks/webhooks/...`).
+
+### 2. Configurar o Secret no GitHub
+1. No repositório do GitHub, vá em **Settings** > **Secrets and variables** > **Actions**.
+2. Clique em **New repository secret**.
+3. **Name**: `PORTAINER_WEBHOOK`
+4. **Value**: Cole a URL do webhook que você copiou do Portainer.
+5. Clique em **Add secret**.
+
+Agora, sempre que você fizer um *push* de uma nova versão ou tag, o GitHub Actions irá:
+1. Construir as imagens Docker.
+2. Publicar no GitHub Container Registry (GHCR).
+3. Acionar o Portainer para baixar a nova imagem e atualizar a Stack automaticamente.

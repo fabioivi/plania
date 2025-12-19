@@ -127,16 +127,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-card rounded-3xl border border-slate-100 dark:border-border p-6 shadow-sm dark:shadow-none">
-            <h4 className="font-bold text-slate-900 dark:text-foreground mb-4 flex items-center"><Calendar className="mr-2 h-4 w-4 text-slate-400" /> Próximas Aulas</h4>
-            <div className="space-y-4">
-              {['Cálculo I - Turma A', 'Física - Lab 2', 'Mentoria'].map((a, i) => (
-                <div key={i} className="flex items-center text-slate-600 dark:text-muted-foreground font-medium pb-2 border-b border-slate-50 dark:border-border/50 last:border-0 last:pb-0">
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full mr-3"></div> {a}
-                </div>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

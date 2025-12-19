@@ -1,8 +1,6 @@
 'use client'
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { CheckCircle2, XCircle, Loader2, AlertTriangle, Download, Upload, RefreshCw } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, AlertTriangle, RefreshCw } from "lucide-react"
 import { SyncProgress } from "@/hooks/useSyncProgress"
 
 export type SyncType = 'download' | 'upload' | 'sync'
@@ -34,156 +32,189 @@ interface SyncProgressDisplayProps {
   className?: string
 }
 
-export function SyncProgressDisplay({ 
-  state, 
+export function SyncProgressDisplay({
+  state,
   progress,
   isConnected = true,
-  className = '' 
+  className = ''
 }: SyncProgressDisplayProps) {
   // Se tiver progresso SSE, usar ele ao invés do state
   if (progress) {
     return <SyncProgressDisplaySSE progress={progress} isConnected={isConnected} className={className} />
   }
-  
+
   if (!state) return null
 
   const progressPercentage = state.total > 0 ? (state.current / state.total) * 100 : 0
   const errors = state.items.filter(item => !item.success)
 
-  const getIcon = () => {
-    if (state.status === 'syncing') {
-      return <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+  // Premium Colors & Styles based on Status
+  const getStatusStyles = () => {
+    switch (state.status) {
+      case 'syncing':
+        return {
+          container: "bg-white border-indigo-100 shadow-xl shadow-indigo-100/20",
+          iconBg: "bg-indigo-50 text-indigo-600",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-indigo-600",
+          animation: "animate-pulse-subtle"
+        }
+      case 'completed':
+        return {
+          container: "bg-white border-emerald-100 shadow-xl shadow-emerald-100/20",
+          iconBg: "bg-emerald-50 text-emerald-600",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-emerald-500",
+          animation: ""
+        }
+      case 'error':
+        return {
+          container: "bg-white border-rose-100 shadow-xl shadow-rose-100/20",
+          iconBg: "bg-rose-50 text-rose-600",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-rose-500",
+          animation: ""
+        }
+      default:
+        return {
+          container: "bg-white border-slate-200 shadow-sm",
+          iconBg: "bg-slate-50 text-slate-500",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-slate-400",
+          animation: ""
+        }
     }
-    if (state.status === 'completed') {
-      return <CheckCircle2 className="h-5 w-5 text-green-600" />
-    }
-    if (state.status === 'error') {
-      return <XCircle className="h-5 w-5 text-red-600" />
-    }
-    if (state.type === 'download') {
-      return <Download className="h-5 w-5 text-blue-600" />
-    }
-    if (state.type === 'upload') {
-      return <Upload className="h-5 w-5 text-blue-600" />
-    }
-    return <RefreshCw className="h-5 w-5 text-blue-600" />
   }
 
-  const getColor = () => {
-    switch (state.status) {
-      case 'completed':
-        return 'bg-green-50 border-green-200'
-      case 'error':
-        return 'bg-red-50 border-red-200'
-      default:
-        return 'bg-blue-50 border-blue-200'
+  const styles = getStatusStyles()
+
+  const getIcon = () => {
+    if (state.status === 'syncing') {
+      return <Loader2 className="h-6 w-6 animate-spin" />
     }
+    if (state.status === 'completed') {
+      return <CheckCircle2 className="h-6 w-6" />
+    }
+    if (state.status === 'error') {
+      return <XCircle className="h-6 w-6" />
+    }
+    return <RefreshCw className="h-6 w-6" />
   }
 
   const getMessage = () => {
     if (state.message) return state.message
-
-    if (state.status === 'syncing') {
-      if (state.type === 'download') return 'Baixando dados...'
-      if (state.type === 'upload') return 'Enviando dados...'
-      return 'Sincronizando...'
-    }
-    if (state.status === 'completed') {
-      return state.failed === 0
-        ? `${state.succeeded} ${state.succeeded === 1 ? 'item processado' : 'itens processados'} com sucesso!`
-        : `Concluído: ${state.succeeded} sucesso, ${state.failed} falhas`
-    }
-    if (state.status === 'error') {
-      return 'Erro na operação'
-    }
-    return 'Pronto'
+    if (state.status === 'syncing') return 'Sincronizando dados...'
+    if (state.status === 'completed') return 'Sincronização concluída!'
+    if (state.status === 'error') return 'Erro na sincronização'
+    return 'Aguardando...'
   }
 
   return (
-    <Card className={`${getColor()} border-2 ${className}`}>
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          {/* Status Header */}
-          <div className="flex items-start gap-3">
+    <div className={`relative ${className}`}>
+      <div className="flex flex-col gap-6 relative z-10 p-2">
+        {/* Header Row */}
+        <div className="flex items-center gap-4">
+          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm ${styles.iconBg} transition-colors duration-500`}>
             {getIcon()}
-            <div className="flex-1 space-y-1">
-              <p className="font-semibold text-sm">
-                {getMessage()}
-              </p>
-
-              {/* Current Item */}
-              {state.currentItem && (
-                <p className="text-xs text-muted-foreground">
-                  {state.currentItem}
-                </p>
-              )}
-
-              {/* Counter */}
-              {state.total > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {state.current} de {state.total}
-                </p>
-              )}
-            </div>
           </div>
-
-          {/* Progress Bar */}
-          {state.status === 'syncing' && state.total > 0 && (
-            <Progress value={progressPercentage} className="h-2" />
-          )}
-
-          {/* Stats */}
-          {state.current > 0 && (state.status === 'syncing' || state.status === 'completed') && (
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>Sucesso: <strong>{state.succeeded}</strong></span>
-              </div>
-              <div className="flex items-center gap-2">
-                <XCircle className="h-4 w-4 text-red-500" />
-                <span>Falhas: <strong>{state.failed}</strong></span>
-              </div>
-            </div>
-          )}
-
-          {/* Error List */}
-          {errors.length > 0 && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg max-h-40 overflow-y-auto">
-              <p className="text-sm font-semibold text-red-800 mb-2 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Erros encontrados:
+          <div className="flex-1 min-w-0">
+            <h4 className={`text-lg font-bold truncate leading-tight ${styles.title}`}>
+              {getMessage()}
+            </h4>
+            {/* Connection Status Subtitle */}
+            {!isConnected && state.status === 'syncing' && (
+              <p className="text-xs font-semibold text-amber-500 flex items-center gap-1 mt-1 animate-pulse">
+                <AlertTriangle className="h-3 w-3" /> Conexão instável...
               </p>
-              <ul className="space-y-1 text-xs text-red-700">
-                {errors.map((err, idx) => (
-                  <li key={idx} className="flex flex-col gap-1 border-l-2 border-red-300 pl-2">
-                    <span className="font-semibold">{err.name}</span>
-                    {err.message && (
-                      <span className="text-red-600">{err.message}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+            )}
+            {isConnected && state.currentItem && (
+              <p className="text-sm text-slate-500 font-medium truncate mt-0.5 opacity-80">
+                {state.currentItem}
+              </p>
+            )}
+          </div>
+          {/* Counter Pill */}
+          {state.total > 0 && (
+            <div className="px-3 py-1 bg-white/50 rounded-full border border-black/5 text-xs font-bold text-slate-600 whitespace-nowrap shadow-sm backdrop-blur-md">
+              {state.current} / {state.total}
             </div>
-          )}
-
-          {/* Connection Status */}
-          {!isConnected && state.status === 'syncing' && (
-            <p className="text-xs text-yellow-600">
-              ⚠️ Conexão perdida. Reconectando...
-            </p>
           )}
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Progress Bar Section */}
+        {(state.status === 'syncing' || state.status === 'error') && state.total > 0 && (
+          <div className="space-y-2">
+            <div className={`h-3 w-full rounded-full overflow-hidden ${styles.barBg}`}>
+              <div
+                className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${styles.barFill}`}
+                style={{ width: `${progressPercentage}%` }}
+              >
+                {/* Shimmer Effect */}
+                <div className="absolute top-0 left-0 bottom-0 right-0 bg-white/20 skew-x-12 animate-[shimmer_2s_infinite]" />
+              </div>
+            </div>
+            <div className="flex justify-between text-xs font-medium text-slate-400 px-1">
+              <span>{Math.round(progressPercentage)}% concluído</span>
+              <span className="opacity-75">{state.type === 'upload' ? 'Enviando envios...' : 'Processando...'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Completion Stats Grid */}
+        {state.status === 'completed' && (
+          <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <span className="block text-xl font-bold text-emerald-700 leading-none">{state.succeeded}</span>
+                <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-500/80">Sucesso</span>
+              </div>
+            </div>
+            <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-3 flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center">
+                <XCircle className="h-4 w-4 text-rose-600" />
+              </div>
+              <div>
+                <span className="block text-xl font-bold text-rose-700 leading-none">{state.failed}</span>
+                <span className="text-[10px] uppercase tracking-wider font-bold text-rose-500/80">Falhas</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error Details Collapsible */}
+        {errors.length > 0 && (
+          <div className="max-h-32 overflow-y-auto pr-2 custom-scrollbar bg-white/40 rounded-xl border border-rose-100 p-3">
+            <p className="text-xs font-bold text-rose-700 mb-2 flex items-center gap-1.5 sticky top-0 bg-white/0 backdrop-blur-sm">
+              <AlertTriangle className="h-3 w-3" /> Detalhes dos erros ({errors.length})
+            </p>
+            <ul className="space-y-2">
+              {errors.map((err, idx) => (
+                <li key={idx} className="text-xs p-2 rounded-lg bg-rose-50/80 border border-rose-100 text-rose-800">
+                  <span className="font-bold block mb-0.5">{err.name}</span>
+                  <span className="opacity-90">{err.message || 'Erro desconhecido'}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
 // Componente para exibir progresso SSE (antigo sistema)
-function SyncProgressDisplaySSE({ 
-  progress, 
+function SyncProgressDisplaySSE({
+  progress,
   isConnected,
   className = ''
-}: { 
+}: {
   progress: SyncProgress
   isConnected: boolean
   className?: string
@@ -194,84 +225,120 @@ function SyncProgressDisplaySSE({
     return Math.min(Math.max(percentage, 0), 100)
   }
 
+  // Premium Colors & Styles based on Status
+  const getStatusStyles = () => {
+    switch (progress.stage) {
+      case 'starting':
+      case 'diaries':
+      case 'plans':
+        return {
+          container: "bg-white border-indigo-100 shadow-xl shadow-indigo-100/20",
+          iconBg: "bg-indigo-50 text-indigo-600",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-indigo-600",
+          animation: "animate-pulse-subtle"
+        }
+      case 'completed':
+        return {
+          container: "bg-white border-emerald-100 shadow-xl shadow-emerald-100/20",
+          iconBg: "bg-emerald-50 text-emerald-600",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-emerald-500",
+          animation: ""
+        }
+      case 'error':
+        return {
+          container: "bg-white border-rose-100 shadow-xl shadow-rose-100/20",
+          iconBg: "bg-rose-50 text-rose-600",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-rose-500",
+          animation: ""
+        }
+      default:
+        return {
+          container: "bg-white border-slate-200 shadow-sm",
+          iconBg: "bg-slate-50 text-slate-500",
+          title: "text-slate-900",
+          barBg: "bg-slate-100",
+          barFill: "bg-slate-400",
+          animation: ""
+        }
+    }
+  }
+
+  const styles = getStatusStyles()
+
   const getIcon = () => {
     switch (progress.stage) {
       case 'starting':
       case 'diaries':
       case 'plans':
-        return <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
+        return <Loader2 className="h-6 w-6 animate-spin" />
       case 'completed':
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />
+        return <CheckCircle2 className="h-6 w-6" />
       case 'error':
-        return <XCircle className="h-5 w-5 text-red-600" />
+        return <XCircle className="h-6 w-6" />
       default:
-        return <RefreshCw className="h-5 w-5 text-blue-600" />
+        return <RefreshCw className="h-6 w-6" />
     }
   }
 
-  const getColor = () => {
-    switch (progress.stage) {
-      case 'completed':
-        return 'bg-green-50 border-green-200'
-      case 'error':
-        return 'bg-red-50 border-red-200'
-      default:
-        return 'bg-blue-50 border-blue-200'
-    }
-  }
+  const progressPercentage = getProgressValue()
 
   return (
-    <Card className={`${getColor()} border-2 ${className}`}>
-      <CardContent className="pt-6">
-        <div className="space-y-4">
-          {/* Status Header */}
-          <div className="flex items-start gap-3">
+    <div className={`relative ${className}`}>
+      <div className="flex flex-col gap-6 relative z-10 p-2">
+        {/* Header Row */}
+        <div className="flex items-center gap-4">
+          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-sm ${styles.iconBg} transition-colors duration-500`}>
             {getIcon()}
-            <div className="flex-1 space-y-1">
-              <p className="font-semibold text-sm">
-                {progress.message}
-              </p>
-              
-              {/* Detalhes do diário/plano */}
-              {progress.diaryName && (
-                <p className="text-xs text-muted-foreground">
-                  📚 {progress.diaryName}
-                  {progress.planName && (
-                    <span className="ml-2">
-                      → {progress.planName}
-                    </span>
-                  )}
-                </p>
-              )}
-              
-              {/* Contador */}
-              {progress.current !== undefined && progress.total !== undefined && (
-                <p className="text-xs text-muted-foreground">
-                  {progress.current} de {progress.total}
-                </p>
-              )}
-            </div>
           </div>
-
-          {/* Progress Bar */}
-          {progress.stage !== 'completed' && progress.stage !== 'error' && (
-            <div>
-              {progress.current && progress.total ? (
-                <Progress value={getProgressValue()} className="h-2" />
-              ) : (
-                <Progress value={0} className="h-2" />
-              )}
+          <div className="flex-1 min-w-0">
+            <h4 className={`text-lg font-bold truncate leading-tight ${styles.title}`}>
+              {progress.message}
+            </h4>
+            {/* Connection Status Subtitle */}
+            {!isConnected && progress.stage !== 'completed' && (
+              <p className="text-xs font-semibold text-amber-500 flex items-center gap-1 mt-1 animate-pulse">
+                <AlertTriangle className="h-3 w-3" /> Conexão instável...
+              </p>
+            )}
+            {isConnected && progress.diaryName && (
+              <p className="text-sm text-slate-500 font-medium truncate mt-0.5 opacity-80">
+                {progress.diaryName} {progress.planName && `→ ${progress.planName}`}
+              </p>
+            )}
+          </div>
+          {/* Counter Pill */}
+          {progress.current !== undefined && progress.total !== undefined && (
+            <div className="px-3 py-1 bg-white/50 rounded-full border border-black/5 text-xs font-bold text-slate-600 whitespace-nowrap shadow-sm backdrop-blur-md">
+              {progress.current} / {progress.total}
             </div>
-          )}
-
-          {/* Connection Status */}
-          {!isConnected && progress.stage !== 'completed' && (
-            <p className="text-xs text-yellow-600">
-              ⚠️ Conexão perdida. Reconectando...
-            </p>
           )}
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Progress Bar Section */}
+        {progress.stage !== 'completed' && progress.stage !== 'error' && (
+          <div className="space-y-2">
+            <div className={`h-3 w-full rounded-full overflow-hidden ${styles.barBg}`}>
+              <div
+                className={`h-full rounded-full transition-all duration-500 ease-out relative overflow-hidden ${styles.barFill}`}
+                style={{ width: `${progressPercentage}%` }}
+              >
+                {/* Shimmer Effect */}
+                <div className="absolute top-0 left-0 bottom-0 right-0 bg-white/20 skew-x-12 animate-[shimmer_2s_infinite]" />
+              </div>
+            </div>
+            <div className="flex justify-between text-xs font-medium text-slate-400 px-1">
+              <span>{Math.round(progressPercentage)}% concluído</span>
+              <span className="opacity-75">Processando...</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

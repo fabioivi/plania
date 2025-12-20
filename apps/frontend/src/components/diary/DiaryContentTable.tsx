@@ -263,7 +263,7 @@ export function DiaryContentTable({
             <tr className="border-b border-slate-200 dark:border-border">
               <th className="p-4 pl-6 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[100px]">Data</th>
               <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[140px]">Horário</th>
-              <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[120px]">Tipo</th>
+              <th className="hidden sm:table-cell p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[120px]">Tipo</th>
               <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Conteúdo</th>
               {editable && (
                 <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Observações</th>
@@ -335,15 +335,28 @@ export function DiaryContentTable({
                         <td className="py-2 px-4 align-top">
                           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-foreground font-medium whitespace-nowrap bg-slate-50 dark:bg-secondary/30 px-2.5 py-1.5 rounded-md border border-slate-100 dark:border-border w-fit">
                             <Clock className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
-                            <span className="leading-none">{item.timeRange}</span>
+                            {(() => {
+                              const parts = item.timeRange.split(/\s*(?:-|às|as)\s*/i)
+                              if (parts.length === 2) {
+                                return (
+                                  <div className="flex flex-col sm:flex-row sm:gap-1 leading-none text-center sm:text-left">
+                                    <span className="font-semibold">{parts[0]}</span>
+                                    <span className="hidden sm:inline">-</span>
+                                    <span className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 sm:text-inherit sm:font-medium">{parts[1]}</span>
+                                  </div>
+                                )
+                              }
+                              return <span className="leading-none">{item.timeRange}</span>
+                            })()}
                           </div>
                         </td>
 
                         {/* Tipo (fixo) */}
-                        <td className="py-2 px-4 align-top">
+                        <td className="hidden sm:table-cell py-2 px-4 align-top">
                           <div className="flex flex-col gap-1.5">
-                            <Badge variant="outline" className={`${getTypeColor(item.type)} text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md`}>
-                              {getTypeLabel(item.type)}
+                            <Badge variant="outline" className={`${getTypeColor(item.type)} text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md justify-center`}>
+                              <span className="sm:hidden">{item.type}</span>
+                              <span className="hidden sm:inline">{getTypeLabel(item.type)}</span>
                             </Badge>
 
                             {item.isAntecipation && item.originalDate && (

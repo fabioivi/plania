@@ -332,7 +332,7 @@ export default function DiaryContentPage() {
                     );
                   })()}
 
-                  <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                  <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4 text-sm text-slate-500 dark:text-slate-400">
                     {diaryInfo.curso && (
                       <div className="flex items-center gap-2">
                         <GraduationCap className="h-4 w-4 text-slate-400" />
@@ -469,6 +469,6 @@ export default function DiaryContentPage() {
           )}
         </div>
       </div>
-    </ProtectedRoute>
+    </ProtectedRoute >
   )
 }

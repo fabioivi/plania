@@ -4,7 +4,7 @@ import { Providers } from "./providers";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "PlanIA - Plataforma de Planos de Ensino",
+  title: "PlanIA",
   description: "Plataforma para criação e gerenciamento de planos de ensino",
 };
 

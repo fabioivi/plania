@@ -99,6 +99,47 @@ export class ScrapingService {
     }
   }
 
+  /**
+   * Format error message based on environment
+   * In production, returns user-friendly messages for system failures
+   */
+  private formatErrorMessage(error: any): string {
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    const isDev = nodeEnv === 'development';
+    const originalMessage = error.message || String(error);
+
+    // In development, return the full raw error
+    if (isDev) {
+      return originalMessage;
+    }
+
+    // Production: User-friendly messages
+    const lowerMsg = originalMessage.toLowerCase();
+
+    // Timeouts
+    if (lowerMsg.includes('timeout') || lowerMsg.includes('time out') || lowerMsg.includes('tempo esgotado')) {
+      return 'O Sistema Acadêmico do IFMS está demorando para responder. O sistema pode estar lento ou instável no momento.';
+    }
+
+    // Navigation / Connection
+    if (lowerMsg.includes('net::err_') || lowerMsg.includes('navigation') || lowerMsg.includes('failed to navigate')) {
+      return 'Não foi possível conectar ao Sistema Acadêmico do IFMS. O portal parece estar fora do ar.';
+    }
+
+    // Rate Limiting / WAF (if applicable, generic)
+    if (lowerMsg.includes('429') || lowerMsg.includes('too many requests')) {
+      return 'Muitas requisições ao sistema do IFMS. Aguarde um momento e tente novamente.';
+    }
+
+    // Login (Keep specific auth errors)
+    if (lowerMsg.includes('inválido') || lowerMsg.includes('invalid') || lowerMsg.includes('incorreta')) {
+      return originalMessage; // Credential errors are safe to show
+    }
+
+    // Generic fallback for production
+    return 'Ocorreu um erro inesperado na comunicação com o sistema do IFMS. O problema pode ser instabilidade no portal.';
+  }
+
   async getBrowser(): Promise<Browser> {
     if (!this.browser || !this.browser.isConnected()) {
       const headless =
@@ -214,26 +255,7 @@ export class ScrapingService {
 
     } catch (error) {
       console.error('IFMS login test failed:', error);
-
-      // Customizar mensagens de erro
-      if (error.message.includes('Timeout') || error.message.includes('timeout')) {
-        throw new Error('Tempo esgotado ao tentar acessar o sistema acadêmico. Verifique sua conexão ou tente novamente mais tarde.');
-      }
-
-      if (error.message.includes('navigation')) {
-        throw new Error('Erro de navegação. O sistema acadêmico pode estar indisponível no momento.');
-      }
-
-      if (error.message.includes('Credenciais inválidas')) {
-        throw error;
-      }
-
-      if (error.message.includes('Não foi possível verificar')) {
-        throw error;
-      }
-
-      throw new Error(`Erro ao conectar com o sistema acadêmico: ${error.message}`);
-
+      throw new Error(this.formatErrorMessage(error));
     } finally {
       await context.close();
     }
@@ -385,7 +407,7 @@ export class ScrapingService {
       console.error('Get diaries failed:', error);
       return {
         success: false,
-        message: error.message,
+        message: this.formatErrorMessage(error),
       };
     } finally {
       await context.close();
@@ -485,7 +507,7 @@ export class ScrapingService {
       console.error('Get diary content failed:', error);
       return {
         success: false,
-        message: error.message,
+        message: this.formatErrorMessage(error),
       };
     } finally {
       await context.close();
@@ -533,7 +555,7 @@ export class ScrapingService {
       console.error('Get diary avaliacoes failed:', error);
       return {
         success: false,
-        message: error.message,
+        message: this.formatErrorMessage(error),
       };
     } finally {
       await context.close();
@@ -604,7 +626,7 @@ export class ScrapingService {
       console.error(`Get teaching plans for diary ${diaryId} failed:`, error);
       return {
         success: false,
-        message: error.message,
+        message: this.formatErrorMessage(error),
       };
     }
   }
@@ -1433,7 +1455,7 @@ export class ScrapingService {
       console.error('❌ Erro ao extrair conteúdo do diário:', error);
       return {
         success: false,
-        message: `Erro ao extrair conteúdo: ${error.message}`,
+        message: this.formatErrorMessage(error),
       };
     }
   }
@@ -1529,7 +1551,7 @@ export class ScrapingService {
       console.error('❌ Erro ao enviar conteúdo para o sistema:', error);
       return {
         success: false,
-        message: `Erro ao enviar conteúdo: ${error.message}`,
+        message: this.formatErrorMessage(error),
       };
     } finally {
       await page.close();
@@ -1574,7 +1596,7 @@ export class ScrapingService {
           }
         } catch (error) {
           console.error(`❌ Erro ao enviar conteúdo ${contentId}:`, error);
-          const errorMessage = `Erro ao enviar conteúdo: ${error.message}`;
+          const errorMessage = this.formatErrorMessage(error);
           results.push({
             contentId,
             success: false,
@@ -1595,7 +1617,7 @@ export class ScrapingService {
       return contents.map(({ contentId }) => ({
         contentId,
         success: false,
-        message: `Erro de login: ${error.message}`,
+        message: this.formatErrorMessage(error),
       }));
     } finally {
       await page.close();

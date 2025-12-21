@@ -2,7 +2,7 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: plania-postgres-dev
+    container_name: plania-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -11,45 +11,42 @@ services:
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
-      - postgres_data_dev:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
-      - plania-dev
+      - plania-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   # Redis Cache
   redis:
-    image: redis:7-alpine
-    container_name: plania-redis-dev
-    restart: unless-stopped
+    image: redis:alpine
+    container_name: plania-redis
+    restart: always
     ports:
-      - "${REDIS_PORT:-6380}:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis_data_dev:/data
+      - redis_data:/data
     networks:
-      - plania-dev
+      - plania-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Backend API (NestJS) - Development
+  # Backend API (NestJS)
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-      target: development
-    container_name: plania-backend-dev
-    restart: unless-stopped
-    shm_size: '1gb'
+      target: dev # Usa o stage de desenvolvimento
+    container_name: plania-backend
+    restart: always
     environment:
       NODE_ENV: development
-      NODE_OPTIONS: "--max-old-space-size=2048"
-      PORT: 3001
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
       DATABASE_USERNAME: ${POSTGRES_USER:-postgres}
@@ -57,16 +54,21 @@ services:
       DATABASE_NAME: ${POSTGRES_DB:-plania}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_in_production}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev_32_character_key_change_now!}
+      JWT_SECRET: ${JWT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       PLAYWRIGHT_HEADLESS: "true"
+      PLAYWRIGHT_BROWSERS_PATH: /app/ms-playwright
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium
+      CHOKIDAR_USEPOLLING: "true" # Enable polling for Windows hot reload
       IFMS_BASE_URL: https://academico.ifms.edu.br
-      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "${BACKEND_PORT:-3001}:3001"
     volumes:
       - ./apps/backend:/app/apps/backend
-      - /app/node_modules
       - /app/apps/backend/node_modules
     depends_on:
       postgres:
@@ -74,54 +76,45 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - plania-dev
+      - plania-network
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3001/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Frontend (Next.js) - Development
+  # Frontend (Next.js)
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-      target: development
-    container_name: plania-frontend-dev
+      target: dev
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+    container_name: plania-frontend
     restart: unless-stopped
     environment:
       NODE_ENV: development
-      WATCHPACK_POLLING: "true"
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:${BACKEND_PORT:-3001}/api}
-      NODE_OPTIONS: "--max-old-space-size=4096"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      WATCHPACK_POLLING: "true" # Enable polling for Next.js hot reload
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     volumes:
       - ./apps/frontend:/app/apps/frontend
-      - /app/node_modules
       - /app/apps/frontend/node_modules
-      - /app/apps/frontend/.next
     depends_on:
       - backend
     networks:
-      - plania-dev
-
-  # Adminer (Database UI)
-  adminer:
-    image: adminer:latest
-    container_name: plania-adminer-dev
-    restart: unless-stopped
-    ports:
-      - "${ADMINER_PORT:-8080}:8080"
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-      ADMINER_DESIGN: dracula
-    depends_on:
-      - postgres
-    networks:
-      - plania-dev
+      - plania-network
 
 networks:
-  plania-dev:
+  plania-network:
     driver: bridge
 
 volumes:
-  postgres_data_dev:
+  postgres_data:
     driver: local
-  redis_data_dev:
+  redis_data:
     driver: local

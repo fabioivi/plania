@@ -1,129 +1,124 @@
 # syntax=docker/dockerfile:1.4
 
-# ============================================
-# Stage 1: Base
-# ============================================
-FROM node:20-alpine AS base
-
-# Install system dependencies
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    wget \
-    dumb-init
-
-# Configure Playwright
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
-    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
+# -----------------------------------------------------------------------------
+# Base Image
+# -----------------------------------------------------------------------------
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
+RUN npm install -g turbo
 WORKDIR /app
 
-# ============================================
-# Stage 2: Dependencies
-# ============================================
-FROM base AS deps
-
-# Install root dependencies
-COPY package*.json turbo.json ./
-COPY apps/backend/package.json ./apps/backend/package.json
-COPY apps/frontend/package.json ./apps/frontend/package.json
-
-# Fallback to npm install if lockfile is missing from context
-RUN npm install
-
-# ============================================
-# Stage 3: Development
-# ============================================
-FROM base AS development
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/package-lock.json ./package-lock.json
-COPY --from=deps /app/turbo.json ./turbo.json
-
+# -----------------------------------------------------------------------------
+# Stage: Pruner (Isolate scope)
+# -----------------------------------------------------------------------------
+FROM base AS pruner
 COPY . .
+RUN turbo prune --scope=plania-backend --docker
 
-RUN rm -f apps/backend/.env
+# -----------------------------------------------------------------------------
+# Stage: Dev Dependencies (For Building)
+# -----------------------------------------------------------------------------
+FROM base AS dev-deps
+WORKDIR /app
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# Install full dependencies (dev + prod) for build
+RUN pnpm install --frozen-lockfile --shamefully-hoist
 
+# -----------------------------------------------------------------------------
+# Stage: Development
+# -----------------------------------------------------------------------------
+FROM base AS dev
+WORKDIR /app
 ENV NODE_ENV=development
-EXPOSE 3001
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/ms-playwright
 
-ENTRYPOINT ["dumb-init", "--"]
-# Run specifically the backend dev script via turbo
-CMD ["npx", "turbo", "run", "dev", "--filter=plania-backend"]
+# Install Playwright dependencies (system deps) for dev
+RUN apt-get update -y && \
+    apt-get install -y openssl && \
+    npx playwright install-deps chromium && \
+    rm -rf /var/lib/apt/lists/*
 
-# ============================================
-# Stage 4: Builder
-# ============================================
-# ============================================
-# Stage 4: Builder
-# ============================================
-FROM base AS builder
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
 
-RUN npx turbo run build --filter=plania-backend && \
-    echo "=== Build completed, checking output ===" && \
-    ls -la /app/apps/backend/dist/ && \
-    ls -la /app/apps/backend/dist/src/ || echo "Dist/src folder not found"
+# Install Playwright Browsers
+RUN npx playwright install chromium
 
-# ============================================
-# Stage 5: Production Dependencies
-# ============================================
+# Symlink Chromium to a fixed path for reliable access
+# We search for 'chrome' binary and link it.
+RUN ln -sf $(find /app/ms-playwright -name "chrome" -type f | head -n 1) /usr/bin/chromium
+
+# Create storage directory
+RUN mkdir -p /app/apps/backend/storage && chmod -R 777 /app/apps/backend/storage
+
+EXPOSE 3001
+# We generally want to run hot-reload in dev
+CMD ["pnpm", "turbo", "run", "dev", "--filter=plania-backend"]
+
+# -----------------------------------------------------------------------------
+# Stage: Prod Dependencies (For Runner)
+# -----------------------------------------------------------------------------
 FROM base AS prod-deps
-
-COPY package*.json turbo.json ./
-COPY apps/backend/package.json ./apps/backend/package.json
-COPY apps/frontend/package.json ./apps/frontend/package.json
-
-# Debug: Check files
-RUN ls -la && ls -la apps/backend
-
-# Use npm install instead of ci to tolerate potential lockfile inconsistencies in this context
-RUN npm install --omit=dev
-
-# ============================================
-# Stage 6: Production
-# ============================================
-FROM base AS production
-
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 -G nodejs
-
 WORKDIR /app
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+# Install ONLY production dependencies
+# Note: --ignore-scripts to avoid heavy postinstall scripts if not needed, 
+# but Playwright usually needs manually installed binaries anyway.
+RUN pnpm install --prod --frozen-lockfile --shamefully-hoist
 
-# Copy package files for reference
-COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/package.json ./apps/backend/
+# -----------------------------------------------------------------------------
+# Stage: Builder
+# -----------------------------------------------------------------------------
+FROM base AS builder
+WORKDIR /app
+COPY --from=dev-deps /app/node_modules ./node_modules
+COPY --from=pruner /app/out/full/ .
+RUN turbo run build --filter=plania-backend
 
-# Copy production node_modules
-COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=prod-deps --chown=nestjs:nodejs /app/apps/backend/node_modules ./apps/backend/node_modules
-
-# Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
-
-# Check contents for debugging
-RUN echo "=== Checking Production Build Contents ===" && \
-    ls -la /app/apps/backend/dist && \
-    ls -la /app/node_modules
-
-USER nestjs
+# -----------------------------------------------------------------------------
+# Stage: Runner
+# -----------------------------------------------------------------------------
+FROM node:20-slim AS runner
+WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/ms-playwright
+
+# Install system dependencies (Playwright + NestJS/Prisma deps)
+RUN apt-get update -y && \
+    apt-get install -y openssl && \
+    npx playwright install-deps chromium && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create user
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nestjs && \
+    mkdir -p /home/nestjs && chown nestjs:nodejs /home/nestjs
+
+# Copy Production Dependencies
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=prod-deps /app/package.json ./package.json
+
+# Copy Built Artifacts
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
+
+# Install Playwright Browsers (Chromium only)
+RUN npx playwright install chromium
+
+# Ensure storage directories
+RUN mkdir -p /app/apps/backend/storage && \
+    mkdir -p /app/ms-playwright && \
+    chown -R nestjs:nodejs /app/apps/backend/storage && \
+    chown -R nestjs:nodejs /app/ms-playwright
+
+USER nestjs
 EXPOSE 3001
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
-
-ENTRYPOINT ["dumb-init", "--"]
-
 WORKDIR /app/apps/backend
-CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/main"]

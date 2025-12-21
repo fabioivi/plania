@@ -54,6 +54,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       PLAYWRIGHT_HEADLESS: "true"
+      PLAYWRIGHT_BROWSERS_PATH: /app/ms-playwright
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/chromium
       IFMS_BASE_URL: https://academico.ifms.edu.br
       FRONTEND_URL: ${FRONTEND_URL}
       # LLM API Keys

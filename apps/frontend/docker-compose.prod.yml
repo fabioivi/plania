@@ -2,7 +2,7 @@ services:
   plania-app:
     build:
       context: .
-      target: runner  # Usa o stage de produção
+      target: runner # Usa o stage de produção
     container_name: plania-design-system-prod
     restart: always
     environment:

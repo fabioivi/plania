@@ -1,14 +1,11 @@
 {
   "name": "plania",
   "version": "1.0.0",
-  "packageManager": "npm@10.9.0",
+  "packageManager": "pnpm@9.1.0",
   "private": true,
-  "workspaces": [
-    "apps/*"
-  ],
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
+    "dev": "turbo run dev --filter=!//",
+    "build": "turbo run build --filter=!//",
     "docker:up": "docker-compose up -d --build",
     "docker:db": "docker-compose up -d postgres redis",
     "docker:down": "docker-compose down",

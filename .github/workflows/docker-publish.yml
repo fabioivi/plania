@@ -73,11 +73,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # IMPORTANT: To enable automatic deployment updates in Portainer:
-      # 1. Go to your GitHub Repository > Settings > Secrets and variables > Actions
-      # 2. Add 'PORTAINER_WEBHOOK' with the webhook URL for the stack/service.
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
       - name: Trigger Portainer Webhook
-        if: github.event_name != 'pull_request'
         run: |
           if [[ -n "${{ secrets.PORTAINER_WEBHOOK }}" ]]; then
             echo "🚀 Triggering Portainer Stack Deployment Webhook..."
@@ -85,3 +86,5 @@ jobs:
           else
             echo "⚠️ PORTAINER_WEBHOOK secret not found. Skipping deployment trigger."
           fi
+
+

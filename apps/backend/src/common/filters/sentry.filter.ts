@@ -3,8 +3,8 @@ import {
     ArgumentsHost,
     HttpException,
     HttpStatus,
-    BaseExceptionFilter,
 } from '@nestjs/common';
+import { BaseExceptionFilter } from '@nestjs/core';
 import * as Sentry from '@Sentry/nestjs';
 
 @Catch()

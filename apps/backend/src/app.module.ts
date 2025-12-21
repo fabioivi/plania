@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryModule } from '@sentry/nestjs';
 import { AuthModule } from './modules/auth/auth.module';
 import { AcademicModule } from './modules/academic/academic.module';
 import { ScrapingModule } from './modules/scraping/scraping.module';
@@ -12,9 +14,21 @@ import { AIModule } from './modules/ai/ai.module';
 import { HealthModule } from './modules/health/health.module';
 import { CryptoService } from './common/services/crypto.service';
 import { SessionCacheService } from './common/services/session-cache.service';
+import { SentryFilter } from './common/filters/sentry.filter';
 
 @Module({
   imports: [
+    // Sentry (Must be one of the first imports)
+    SentryModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        dsn: config.get('SENTRY_DSN'),
+        debug: config.get('NODE_ENV') === 'development',
+        environment: config.get('NODE_ENV') || 'development',
+        enabled: !!config.get('SENTRY_DSN'), // Only enable if DSN is set
+      }),
+      inject: [ConfigService],
+    }),
     // Config
     ConfigModule.forRoot({
       isGlobal: true,
@@ -70,7 +84,14 @@ import { SessionCacheService } from './common/services/session-cache.service';
     AIModule,
     HealthModule,
   ],
-  providers: [CryptoService, SessionCacheService],
+  providers: [
+    CryptoService,
+    SessionCacheService,
+    {
+      provide: APP_FILTER,
+      useClass: SentryFilter,
+    },
+  ],
   exports: [CryptoService, SessionCacheService],
 })
 export class AppModule { }

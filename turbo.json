@@ -20,7 +20,12 @@
         "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH",
         "IFMS_BASE_URL",
         "DB_SYNCHRONIZE",
-        "DB_LOGGING"
+        "DB_LOGGING",
+        "SENTRY_DSN",
+        "SENTRY_AUTH_TOKEN",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT"
     ],
     "tasks": {
         "build": {

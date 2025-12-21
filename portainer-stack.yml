@@ -63,6 +63,8 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # Sentry Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-}
     ports:
       - "${BACKEND_PORT:-3001}:3001"
     depends_on:
@@ -91,6 +93,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:

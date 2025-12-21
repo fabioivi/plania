@@ -23,17 +23,9 @@ jobs:
           - app: backend
             dockerfile: apps/backend/Dockerfile
             image_suffix: backend
-            image_suffix: backend
-            build_args: |
-              TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-              TURBO_TEAM=${{ secrets.TURBO_TEAM }}
           - app: frontend
             dockerfile: apps/frontend/Dockerfile
             image_suffix: frontend
-            build_args: |
-              NEXT_PUBLIC_API_URL=https://plania.fabiodev.com.br/api
-              TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
-              TURBO_TEAM=${{ secrets.TURBO_TEAM }}
 
     steps:
       - name: Checkout repository
@@ -74,7 +66,11 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: ${{ matrix.build_args }}
+          build-args: |
+            TURBO_TOKEN=${{ secrets.TURBO_TOKEN }}
+            TURBO_TEAM=${{ secrets.TURBO_TEAM }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            NEXT_PUBLIC_API_URL=https://plania.fabiodev.com.br/api
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -9,6 +9,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@9.1.0 --activate
 RUN npm install -g turbo
 WORKDIR /app
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 # -----------------------------------------------------------------------------
 # Stage: Pruner (Isolate scope)
@@ -117,6 +118,16 @@ COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
 
 # Install Playwright Browsers (Chromium only)
 RUN npx playwright install chromium
+
+# Symlink Chromium to a fixed path for reliable access (Production)
+RUN CHROME_PATH=$(find /app/ms-playwright -name "chrome" -type f | head -n 1) && \
+    if [ -z "$CHROME_PATH" ]; then \
+    echo "Error: Chromium binary not found in /app/ms-playwright"; \
+    ls -R /app/ms-playwright; \
+    exit 1; \
+    fi && \
+    echo "Found Chromium at $CHROME_PATH" && \
+    ln -sf "$CHROME_PATH" /usr/bin/chromium
 
 # Ensure storage directories
 RUN mkdir -p /app/apps/backend/storage && \

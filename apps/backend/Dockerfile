@@ -85,6 +85,12 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=dev-deps /app/node_modules ./node_modules
 COPY --from=pruner /app/out/full/ .
+
+ARG TURBO_TOKEN
+ARG TURBO_TEAM
+ENV TURBO_TOKEN=$TURBO_TOKEN
+ENV TURBO_TEAM=$TURBO_TEAM
+
 RUN turbo run build --filter=plania-backend
 
 # -----------------------------------------------------------------------------

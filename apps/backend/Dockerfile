@@ -48,8 +48,15 @@ COPY . .
 RUN npx playwright install chromium
 
 # Symlink Chromium to a fixed path for reliable access
-# We search for 'chrome' binary and link it.
-RUN ln -sf $(find /app/ms-playwright -name "chrome" -type f | head -n 1) /usr/bin/chromium
+# We search for 'chrome' binary and link it. Fail if not found.
+RUN CHROME_PATH=$(find /app/ms-playwright -name "chrome" -type f | head -n 1) && \
+    if [ -z "$CHROME_PATH" ]; then \
+    echo "Error: Chromium binary not found in /app/ms-playwright"; \
+    ls -R /app/ms-playwright; \
+    exit 1; \
+    fi && \
+    echo "Found Chromium at $CHROME_PATH" && \
+    ln -sf "$CHROME_PATH" /usr/bin/chromium
 
 # Create storage directory
 RUN mkdir -p /app/apps/backend/storage && chmod -R 777 /app/apps/backend/storage

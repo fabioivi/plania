@@ -60,7 +60,7 @@ function DeleteDataButton() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" disabled={isPending} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:text-red-700 shadow-none font-bold">
+        <Button variant="destructive" disabled={isPending} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:text-red-700 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/50 dark:hover:text-red-300 shadow-none font-bold transition-all duration-300">
           {isPending ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -194,10 +194,10 @@ export default function SettingsPage() {
       {/* Alerts */}
       {!credential?.isVerified && (
         <div className="bg-white dark:bg-card border border-indigo-100 dark:border-indigo-900/50 rounded-3xl p-6 shadow-xl shadow-indigo-100/50 dark:shadow-none flex items-center gap-6 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-indigo-50 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-indigo-50 dark:bg-indigo-950/20 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
 
-          <div className="h-12 w-12 bg-indigo-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100 group-hover:bg-indigo-600 transition-colors duration-500 relative z-10">
-            <AlertTriangle className="h-6 w-6 text-indigo-600 group-hover:text-white transition-colors duration-500" />
+          <div className="h-12 w-12 bg-indigo-50 dark:bg-indigo-950/30 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-indigo-100 dark:border-indigo-900/50 group-hover:bg-indigo-600 transition-colors duration-500 relative z-10">
+            <AlertTriangle className="h-6 w-6 text-indigo-600 dark:text-indigo-400 group-hover:text-white transition-colors duration-500" />
           </div>
 
           <div className="relative z-10">
@@ -211,10 +211,10 @@ export default function SettingsPage() {
 
       {credential?.isVerified && (
         <div className="bg-white dark:bg-card border border-emerald-100 dark:border-emerald-900/50 rounded-3xl p-6 shadow-xl shadow-emerald-100/50 dark:shadow-none flex items-center gap-6 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-emerald-50 dark:bg-emerald-950/20 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
 
-          <div className="h-12 w-12 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-emerald-100 group-hover:bg-emerald-600 transition-colors duration-500 relative z-10">
-            <CheckCircle2 className="h-6 w-6 text-emerald-600 group-hover:text-white transition-colors duration-500" />
+          <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-emerald-100 dark:border-emerald-900/50 group-hover:bg-emerald-600 transition-colors duration-500 relative z-10">
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400 group-hover:text-white transition-colors duration-500" />
           </div>
 
           <div className="relative z-10">
@@ -233,8 +233,8 @@ export default function SettingsPage() {
           <div className="p-8 border-b border-slate-100 dark:border-border">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <div className="bg-blue-50 p-3 rounded-2xl">
-                  <Database className="h-8 w-8 text-blue-600" />
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-2xl">
+                  <Database className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-foreground">Sistema Acadêmico</h2>
@@ -286,31 +286,31 @@ export default function SettingsPage() {
                 {/* Form */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="pl-1">Matrícula / Usuário</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Label className="pl-1 text-slate-700 dark:text-slate-200">Matrícula / Usuário</Label>
+                    <div className="relative group">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                       <Input
                         value={username}
                         onChange={e => setUsername(e.target.value)}
-                        className="pl-10 h-11 bg-slate-50 dark:bg-secondary/50 border-slate-200 dark:border-border text-slate-900 dark:text-slate-100"
+                        className="pl-10 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                         placeholder="Ex: nome.sobrenome"
                         disabled={isSaving || isDeleting}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="pl-1">Senha do Portal</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Label className="pl-1 text-slate-700 dark:text-slate-200">Senha do Portal</Label>
+                    <div className="relative group">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                       <Input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="pl-10 h-11 bg-slate-50 dark:bg-secondary/50 border-slate-200 dark:border-border text-slate-900 dark:text-slate-100"
+                        className="pl-10 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                         placeholder={credential ? "••••••••" : "Sua senha"}
                         disabled={isSaving || isDeleting}
                       />
-                      <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
+                      <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
@@ -405,16 +405,24 @@ export default function SettingsPage() {
         </section>
 
         {/* Danger Zone */}
-        <section className="border border-rose-100 bg-rose-50/30 rounded-[2rem] p-8">
-          <h3 className="text-lg font-bold text-rose-700 mb-4 flex items-center">
-            <AlertTriangle className="mr-2 h-5 w-5" /> Zona de Perigo
-          </h3>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white dark:bg-card p-6 rounded-2xl border border-rose-100 dark:border-rose-900/30">
-            <div className="space-y-1">
-              <h4 className="font-bold text-slate-900 dark:text-foreground">Apagar Dados Acadêmicos</h4>
-              <p className="text-sm text-slate-500 dark:text-muted-foreground font-medium">Remove todos os diários e planos gerados. Suas credenciais serão mantidas.</p>
+        <section className="bg-white dark:bg-card rounded-[2rem] border border-slate-200 dark:border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+          <div className="p-8 border-b border-slate-100 dark:border-border/50 flex items-center gap-4">
+            <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-2xl">
+              <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
-            <DeleteDataButton />
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-foreground">Zona de Perigo</h2>
+              <p className="text-slate-500 dark:text-muted-foreground font-medium">Ações irreversíveis e gerenciamento de dados</p>
+            </div>
+          </div>
+          <div className="p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border border-red-100 dark:border-red-900/20 bg-red-50/50 dark:bg-red-950/5">
+              <div className="space-y-1">
+                <h4 className="font-bold text-slate-900 dark:text-foreground">Apagar Dados Acadêmicos</h4>
+                <p className="text-sm text-slate-500 dark:text-muted-foreground font-medium">Remove todos os diários e planos gerados. Suas credenciais serão mantidas.</p>
+              </div>
+              <DeleteDataButton />
+            </div>
           </div>
         </section>
       </div>

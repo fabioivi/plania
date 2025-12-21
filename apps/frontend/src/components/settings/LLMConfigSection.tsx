@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Sparkles, Eye, EyeOff, Trash2, Plus } from "lucide-react"
+import { Loader2, Sparkles, Eye, EyeOff, Trash2, Plus, Lock } from "lucide-react"
 import { LLMConfig, llmConfigApi } from "@/services/api"
 import { toast } from "sonner"
 
@@ -108,7 +108,7 @@ export function LLMConfigSection() {
   const [configs, setConfigs] = useState<LLMConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
-  
+
   // Form state
   const [provider, setProvider] = useState<'gemini' | 'openai' | 'claude' | 'grok' | 'openrouter'>('gemini')
   const [apiKey, setApiKey] = useState('')
@@ -149,10 +149,10 @@ export function LLMConfigSection() {
         modelName: modelName || undefined,
         isActive: true,
       })
-      
+
       setConfigs([...configs, newConfig])
       toast.success('Configuração salva com sucesso!')
-      
+
       // Reset form
       setApiKey('')
       setModelName('')
@@ -168,7 +168,7 @@ export function LLMConfigSection() {
     try {
       setTestingId(configId)
       const result = await llmConfigApi.testApiKey(configId)
-      
+
       if (result.success) {
         toast.success('✅ Chave de API válida!')
       } else {
@@ -258,9 +258,12 @@ export function LLMConfigSection() {
           Adicionar Provedor de IA
         </Button>
       ) : (
-        <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium">Nova Configuração</h4>
+        <div className="border border-slate-200 dark:border-border rounded-2xl p-6 space-y-6 bg-slate-50/50 dark:bg-secondary/10 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-border/50 pb-4">
+            <div>
+              <h4 className="font-bold text-slate-900 dark:text-foreground">Nova Configuração</h4>
+              <p className="text-xs text-slate-500 dark:text-muted-foreground">Adicione um modelo de linguagem</p>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -269,16 +272,17 @@ export function LLMConfigSection() {
                 setApiKey('')
                 setModelName('')
               }}
+              className="hover:bg-slate-200 dark:hover:bg-slate-800"
             >
               Cancelar
             </Button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="provider">Provedor</Label>
+              <Label htmlFor="provider" className="text-slate-700 dark:text-slate-200 font-medium">Provedor</Label>
               <Select value={provider} onValueChange={(v: any) => setProvider(v)}>
-                <SelectTrigger id="provider">
+                <SelectTrigger id="provider" className="h-11 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -317,8 +321,8 @@ export function LLMConfigSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="apiKey">Chave de API</Label>
-              <div className="relative">
+              <Label htmlFor="apiKey" className="text-slate-700 dark:text-slate-200 font-medium">Chave de API</Label>
+              <div className="relative group">
                 <Input
                   id="apiKey"
                   type={showApiKey ? "text" : "password"}
@@ -326,11 +330,12 @@ export function LLMConfigSection() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   disabled={saving}
+                  className="h-11 pr-10 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full"
+                  className="absolute right-1 top-1 h-9 w-9 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
                   onClick={() => setShowApiKey(!showApiKey)}
                   type="button"
                 >
@@ -344,24 +349,26 @@ export function LLMConfigSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="modelName">Modelo (opcional)</Label>
+              <Label htmlFor="modelName" className="text-slate-700 dark:text-slate-200 font-medium">Modelo (opcional)</Label>
               <Input
                 id="modelName"
                 placeholder="gemini-pro, gpt-4, claude-3-opus..."
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
                 disabled={saving}
+                className="h-11 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
               />
             </div>
 
-            <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-              <AlertDescription className="text-xs text-blue-800 dark:text-blue-200">
-                🔒 Sua chave de API é criptografada e armazenada com segurança
+            <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/50">
+              <AlertDescription className="text-xs text-blue-700 dark:text-blue-300 font-medium flex items-center gap-2">
+                <Lock className="h-3 w-3" />
+                Sua chave de API é criptografada e armazenada com segurança
               </AlertDescription>
             </Alert>
 
             <Button
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
               onClick={handleSave}
               disabled={saving}
             >

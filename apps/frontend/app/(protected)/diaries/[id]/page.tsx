@@ -24,6 +24,7 @@ import { useSyncState } from "@/hooks/useSyncState"
 import { useDiary, useDiaryContent, useDiaryContentStats, useSyncSpecificDiary } from "@/hooks/api"
 import { toast } from "sonner"
 import type { DiaryContent } from "@/types"
+import { DiaryDetailsSkeleton } from "@/components/skeletons/DiaryDetailsSkeleton"
 
 export default function DiaryContentPage() {
   const params = useParams()
@@ -248,12 +249,7 @@ export default function DiaryContentPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-slate-50 dark:bg-background flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-600 dark:text-indigo-400" />
-            <p className="text-slate-500 dark:text-muted-foreground font-medium animate-pulse">Carregando diário...</p>
-          </div>
-        </div>
+        <DiaryDetailsSkeleton />
       </ProtectedRoute>
     )
   }

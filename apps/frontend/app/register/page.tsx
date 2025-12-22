@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { BrainCircuit, Mail, Lock, User, School, ArrowLeft, AlertCircle } from 'lucide-react';
+import { BrainCircuit, Mail, Lock, User, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -13,10 +13,8 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
-    school: '',
     password: ''
   });
 
@@ -41,7 +39,7 @@ export default function RegisterPage() {
 
     try {
       await register(
-        `${formData.firstName} ${formData.lastName}`,
+        formData.fullName,
         formData.email,
         formData.password
       );
@@ -88,38 +86,24 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Nome</label>
-              <div className="relative">
-                <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  placeholder="Maria"
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Sobrenome</label>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Nome Completo</label>
+            <div className="relative">
+              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
                 type="text"
-                name="lastName"
-                value={formData.lastName}
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
-                placeholder="Silva"
-                className="w-full px-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
+                placeholder="Maria da Silva"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Email Profissional</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Email</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
               <input
@@ -135,21 +119,6 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Escola / Instituição</label>
-            <div className="relative">
-              <School className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
-              <input
-                type="text"
-                name="school"
-                value={formData.school}
-                onChange={handleChange}
-                placeholder="Colégio Exemplo"
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
             <label className="block text-sm font-semibold text-slate-700 dark:text-foreground mb-2">Senha</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
@@ -158,7 +127,7 @@ export default function RegisterPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Mínimo de 8 caracteres"
+                placeholder="Mínimo de 6 caracteres"
                 className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-secondary/50 font-medium text-slate-700 dark:text-foreground outline-none"
                 required
               />

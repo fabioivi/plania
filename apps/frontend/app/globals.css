@@ -84,16 +84,28 @@
     animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-500 { animation-delay: 500ms; }
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .delay-500 {
+    animation-delay: 500ms;
+  }
 
   @keyframes fadeInUp {
     from {
       opacity: 0;
       transform: translateY(30px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -101,7 +113,39 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Autofill Background Hack */
+@layer base {
+
+  /* Light Mode */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #f8fafc inset !important;
+    /* bg-slate-50 */
+    -webkit-text-fill-color: #0f172a !important;
+    /* text-slate-900 */
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Dark Mode */
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover,
+  .dark input:-webkit-autofill:focus,
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #1e1e20 inset !important;
+    /* dark card color */
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }

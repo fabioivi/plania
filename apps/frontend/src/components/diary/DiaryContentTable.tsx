@@ -256,7 +256,7 @@ export function DiaryContentTable({
   }
 
   return (
-    <Card className={`overflow-hidden ${className}`}>
+    <Card className={`overflow-hidden bg-transparent border-0 shadow-none ${className}`}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead className="bg-slate-50 dark:bg-[#121214] sticky top-0 z-10">

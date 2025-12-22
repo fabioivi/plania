@@ -455,7 +455,7 @@ export default function DiaryContentPage() {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-card rounded-2xl border border-slate-200 dark:border-border shadow-sm dark:shadow-none overflow-hidden">
+              <div className="bg-slate-50 dark:bg-background rounded-2xl border border-slate-200 dark:border-border shadow-sm dark:shadow-none overflow-hidden">
                 <DiaryContentTable
                   contents={content}
                   onReorder={handleReorder}

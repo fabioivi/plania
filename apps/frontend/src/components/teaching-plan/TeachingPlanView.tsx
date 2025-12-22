@@ -174,31 +174,39 @@ export function TeachingPlanView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-border">
-                  {plan.avaliacaoAprendizagem.map((avaliacao, index) => (
-                    <tr key={index} className="hover:bg-slate-50/80 dark:hover:bg-secondary/10 transition-colors bg-white dark:bg-card">
-                      <td className="py-4 px-6 font-bold text-slate-700 dark:text-foreground">{avaliacao.etapa || '-'}</td>
-                      <td className="py-4 px-6 text-slate-600 dark:text-muted-foreground font-medium leading-relaxed max-w-[200px]">{avaliacao.avaliacao || '-'}</td>
-                      <td className="py-4 px-6">
-                        {avaliacao.instrumentos ? (
-                          <div className="flex flex-wrap gap-1">
-                            {avaliacao.instrumentos.split(',').map((instr, i) => (
-                              <Badge key={i} variant="secondary" className="bg-slate-100 dark:bg-secondary text-slate-600 dark:text-muted-foreground border-slate-200 dark:border-border font-medium rounded-md hover:bg-slate-200 dark:hover:bg-secondary/80 transition-colors">
-                                {instr.trim()}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : <span className="text-slate-300">-</span>}
-                      </td>
-                      <td className="py-4 px-6 text-slate-500 dark:text-muted-foreground font-medium whitespace-nowrap">{avaliacao.dataPrevista || '-'}</td>
-                      <td className="py-4 px-6">
-                        {avaliacao.valorMaximo ? (
-                          <div className="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg inline-block border border-indigo-100 min-w-[3rem] text-center shadow-sm">
-                            {avaliacao.valorMaximo}
-                          </div>
-                        ) : <span className="text-slate-300">-</span>}
-                      </td>
-                    </tr>
-                  ))}
+                  {plan.avaliacaoAprendizagem
+                    .filter(avaliacao =>
+                      // Only show rows that have at least one meaningful value
+                      avaliacao.etapa ||
+                      avaliacao.avaliacao ||
+                      avaliacao.instrumentos ||
+                      avaliacao.valorMaximo
+                    )
+                    .map((avaliacao, index) => (
+                      <tr key={index} className="hover:bg-slate-50/80 dark:hover:bg-secondary/10 transition-colors bg-white dark:bg-card">
+                        <td className="py-4 px-6 font-bold text-slate-700 dark:text-foreground">{avaliacao.etapa || '-'}</td>
+                        <td className="py-4 px-6 text-slate-600 dark:text-muted-foreground font-medium leading-relaxed max-w-[200px]">{avaliacao.avaliacao || '-'}</td>
+                        <td className="py-4 px-6">
+                          {avaliacao.instrumentos ? (
+                            <div className="flex flex-wrap gap-1">
+                              {avaliacao.instrumentos.split(',').map((instr, i) => (
+                                <Badge key={i} variant="secondary" className="bg-slate-100 dark:bg-secondary text-slate-600 dark:text-muted-foreground border-slate-200 dark:border-border font-medium rounded-md hover:bg-slate-200 dark:hover:bg-secondary/80 transition-colors">
+                                  {instr.trim()}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : <span className="text-slate-300">-</span>}
+                        </td>
+                        <td className="py-4 px-6 text-slate-500 dark:text-muted-foreground font-medium whitespace-nowrap">{avaliacao.dataPrevista || '-'}</td>
+                        <td className="py-4 px-6">
+                          {avaliacao.valorMaximo ? (
+                            <div className="font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-lg inline-block border border-indigo-200 dark:border-indigo-800 min-w-[3rem] text-center shadow-sm">
+                              {avaliacao.valorMaximo}
+                            </div>
+                          ) : <span className="text-slate-300">-</span>}
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -294,19 +302,29 @@ export function TeachingPlanView({
     if (basicasRaw && !complementaresRaw && basicasRaw.toLowerCase().includes('bibliografia complementar')) {
       const parts = basicasRaw.split(/Bibliografia Complementar/i)
       if (parts.length >= 2) {
-        basicasRaw = parts[0]
-        complementaresRaw = parts.slice(1).join('\n')
+        basicasRaw = parts[0].trim()
+        complementaresRaw = parts.slice(1).join('\n').trim()
       }
     }
     // Also check 'referencias' as a fallback source if both specific are empty
     else if (!basicasRaw && !complementaresRaw && referenciasRaw) {
       if (referenciasRaw.toLowerCase().includes('bibliografia complementar')) {
         const parts = referenciasRaw.split(/Bibliografia Complementar/i)
-        basicasRaw = parts[0]
-        complementaresRaw = parts.slice(1).join('\n')
+        basicasRaw = parts[0].trim()
+        complementaresRaw = parts.slice(1).join('\n').trim()
       } else {
         basicasRaw = referenciasRaw
       }
+    }
+
+    // Remove duplicate "Bibliografia Básica" header if present at the start (case insensitive)
+    if (basicasRaw && /^Bibliografia Básica/i.test(basicasRaw.trim())) {
+      basicasRaw = basicasRaw.trim().replace(/^Bibliografia Básica\s*/i, '').trim()
+    }
+
+    // Remove duplicate "Bibliografia Complementar" header if present at the start (case insensitive)
+    if (complementaresRaw && /^Bibliografia Complementar/i.test(complementaresRaw.trim())) {
+      complementaresRaw = complementaresRaw.trim().replace(/^Bibliografia Complementar\s*/i, '').trim()
     }
 
     const hasBasica = !!basicasRaw && basicasRaw.length > 0

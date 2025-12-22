@@ -107,7 +107,7 @@ export function WorkProposalTable({
     accessorKey: "classes",
     header: () => <span className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Aulas</span>,
     cell: ({ row }) => (
-      <div className="font-bold text-slate-600 dark:text-foreground bg-slate-50 dark:bg-secondary/30 px-2.5 py-1 rounded-md inline-block border border-slate-100 dark:border-border min-w-[2.5rem] text-center">
+      <div className="font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-lg inline-block border border-indigo-200 dark:border-indigo-800 min-w-[3rem] text-center shadow-sm">
         {row.getValue("classes")}
       </div>
     ),

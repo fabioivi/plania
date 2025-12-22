@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
-  FileText,
   Target,
   BookOpen,
   Calendar,
@@ -12,8 +11,6 @@ import {
   GraduationCap,
   ClipboardCheck,
   BookMarked,
-  Clock,
-  Layers,
   School
 } from "lucide-react"
 import { WorkProposalTable, type WeekSchedule } from "./WorkProposalTable"
@@ -67,152 +64,13 @@ export interface TeachingPlanData {
 
 interface TeachingPlanViewProps {
   plan: TeachingPlanData
-  variant?: 'full' | 'compact'
   showHeader?: boolean
 }
 
 export function TeachingPlanView({
   plan,
-  variant = 'full',
   showHeader = true
 }: TeachingPlanViewProps) {
-
-  const renderIdentification = () => (
-    <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
-      <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 border-b border-indigo-100/50 dark:border-indigo-900/50 flex items-center gap-3">
-        <div className="bg-indigo-100 dark:bg-indigo-900/50 p-2 rounded-lg">
-          <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-        </div>
-        <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Identificação</h3>
-      </div>
-      <CardContent className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          {plan.campus && (
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Campus</p>
-              <div className="flex items-center gap-2">
-                <School className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
-                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.campus}</p>
-              </div>
-            </div>
-          )}
-          {plan.anoSemestre && (
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Ano/Semestre</p>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
-                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.anoSemestre}</p>
-              </div>
-            </div>
-          )}
-          {plan.curso && (
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Curso</p>
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
-                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.curso}</p>
-              </div>
-            </div>
-          )}
-          {plan.unidadeCurricular && (
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Unidade Curricular</p>
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
-                <p className="font-semibold text-slate-900 dark:text-foreground">{plan.unidadeCurricular}</p>
-              </div>
-            </div>
-          )}
-          {plan.professores && (
-            <div className="md:col-span-2 space-y-1">
-              <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Professor(es)</p>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-slate-400 dark:text-muted-foreground" />
-                <p className="font-medium text-slate-900 dark:text-foreground bg-slate-50 dark:bg-secondary/50 px-3 py-1 rounded-md inline-block">{plan.professores}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {(plan.cargaHorariaTotal || plan.numAulasTeorica || plan.numAulasPraticas) && (
-          <div className="grid grid-cols-3 gap-4 pt-6 mt-2 border-t border-slate-100 dark:border-border">
-            {plan.cargaHorariaTotal !== undefined && (
-              <div className="space-y-1 text-center bg-slate-50 dark:bg-secondary/30 rounded-xl p-3">
-                <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">Carga Total</p>
-                <p className="font-bold text-xl text-indigo-600 dark:text-indigo-400">{plan.cargaHorariaTotal}h</p>
-              </div>
-            )}
-            {plan.numAulasTeorica !== undefined && (
-              <div className="space-y-1 text-center bg-slate-50 dark:bg-secondary/30 rounded-xl p-3">
-                <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">Teóricas</p>
-                <p className="font-bold text-xl text-slate-700 dark:text-foreground">{plan.numAulasTeorica}</p>
-              </div>
-            )}
-            {plan.numAulasPraticas !== undefined && (
-              <div className="space-y-1 text-center bg-slate-50 dark:bg-secondary/30 rounded-xl p-3">
-                <p className="text-xs font-medium text-slate-500 dark:text-muted-foreground">Práticas</p>
-                <p className="font-bold text-xl text-slate-700 dark:text-foreground">{plan.numAulasPraticas}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-
-  const renderStatusCards = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="bg-blue-50 p-2.5 rounded-xl">
-            <Calendar className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Período</p>
-            <p className="font-bold text-slate-700 dark:text-foreground">{plan.anoSemestre || 'N/A'}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="bg-purple-50 p-2.5 rounded-xl">
-            <Clock className="h-5 w-5 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Carga Horária</p>
-            <p className="font-bold text-slate-700 dark:text-foreground">{plan.cargaHorariaTotal || 0}h</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="bg-emerald-50 p-2.5 rounded-xl">
-            <Layers className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Aulas</p>
-            <p className="font-bold text-slate-700 dark:text-foreground">
-              {(plan.numAulasTeorica || 0) + (plan.numAulasPraticas || 0)}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-sm dark:shadow-none ring-1 ring-slate-100 dark:ring-border bg-white dark:bg-card">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="bg-slate-50 p-2.5 rounded-xl">
-            <Target className="h-5 w-5 text-slate-600" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase">Status</p>
-            <Badge variant="secondary" className="mt-0.5 bg-slate-100 dark:bg-secondary text-slate-600 dark:text-foreground hover:bg-slate-200 dark:hover:bg-secondary/80">{plan.status || 'Ativo'}</Badge>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
 
   const renderEmenta = () => {
     if (!plan.ementa) return null
@@ -515,8 +373,6 @@ export function TeachingPlanView({
   return (
     <div className="space-y-8 animate-fade-in w-full">
       {renderPrintHeader()}
-      {/* {variant === 'full' && renderStatusCards()} - Removed to use unified header */}
-      {/* {renderIdentification()} - Removed per user request */}
       {renderEmenta()}
       {renderObjetivos()}
       {renderMetodologia()}

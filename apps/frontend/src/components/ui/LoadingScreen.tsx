@@ -18,5 +18,5 @@ export function LoadingScreen() {
                 </h1>
             </div>
         </div>
-    );
+    )
 }

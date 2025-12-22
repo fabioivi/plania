@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
-import { Share2, Shield, Zap, Sparkles, BookOpen, Calendar, FileText } from 'lucide-react';
+import { Share2, Shield, Zap, BookOpen, Calendar, FileText } from 'lucide-react';
 
 const availableFeatures = [
     {

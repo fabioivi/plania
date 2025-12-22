@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 import { Input } from "@/components/ui/input"
 
-import { BookOpen, Search, Filter, RefreshCw, Loader2, SearchX, X, GraduationCap, Clock } from "lucide-react"
+import { BookOpen, Search, Filter, RefreshCw, Loader2, X, GraduationCap, Clock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useEffect, useState, useRef } from "react"
 import { useSyncProgress } from "@/hooks/useSyncProgress"
@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils"
 import { DisciplinesGridSkeleton } from "@/components/skeletons/DisciplinesSkeleton"
 
 export default function DisciplinesPage() {
-  // ... rest of state code (no changes here) ...
+  const router = useRouter()
   const queryClient = useQueryClient()
   // React Query hooks
   const { data: diaries = [], isLoading: loading } = useDiaries()

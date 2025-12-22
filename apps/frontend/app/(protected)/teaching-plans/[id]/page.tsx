@@ -183,9 +183,9 @@ export default function TeachingPlanViewPage() {
                     </a>
                   )}
 
-                  {plan.turma && (
+                  {diary?.turma && (
                     <div className="flex items-center text-slate-500 dark:text-muted-foreground bg-slate-50 dark:bg-secondary/50 px-2.5 py-1 rounded-md border border-slate-100 dark:border-border text-[10px] font-bold uppercase tracking-widest">
-                      Turma: {plan.turma}
+                      Turma: {diary.turma}
                     </div>
                   )}
 
@@ -307,7 +307,7 @@ export default function TeachingPlanViewPage() {
           </div>
 
           {/* Teaching Plan View Component */}
-          <TeachingPlanView plan={plan} variant="full" showHeader={true} />
+          <TeachingPlanView plan={plan} showHeader={true} />
         </div>
       </div>
 

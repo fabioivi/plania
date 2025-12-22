@@ -877,7 +877,7 @@ export class ScrapingService {
         // TABLE 6 (Section 06): RECUPERAÇÃO DA APRENDIZAGEM
         // ============================================
         const recupTable = allTables[6];
-        const recupCell = recupTable?.querySelector('tr:nth-child(2) td');
+        const recupCell = recupTable?.querySelector('tr:nth-child(2) td div.controls');
         const recuperacaoAprendizagem = cleanText(recupCell?.textContent);
 
         // ============================================

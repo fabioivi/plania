@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, FileText, Loader2, RefreshCw, Sparkles, Trash2, Printer, ChevronLeft, Clock, GraduationCap, ExternalLink } from "lucide-react"
+import { ArrowLeft, FileText, RefreshCw, Sparkles, Trash2, Printer, ChevronLeft, Clock, GraduationCap, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 

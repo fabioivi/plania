@@ -261,9 +261,9 @@ export function DiaryContentTable({
         <table className="w-full border-collapse">
           <thead className="bg-slate-50 dark:bg-[#121214] sticky top-0 z-10">
             <tr className="border-b border-slate-200 dark:border-border">
-              <th className="p-4 pl-6 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[100px]">Data</th>
+              <th className="p-4 pl-6 text-center text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[100px]">Data</th>
               <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[140px]">Horário</th>
-              <th className="hidden sm:table-cell p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[120px]">Tipo</th>
+              <th className="hidden sm:table-cell p-4 text-center text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[120px]">Tipo</th>
               <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Conteúdo</th>
               {editable && (
                 <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Observações</th>
@@ -321,7 +321,7 @@ export function DiaryContentTable({
                         {/* Data e Horário (Calendário Visual com RowSpan) */}
                         {isDifferentDay && (
                           <td
-                            className="py-2 pl-6 align-middle border-r border-slate-100/50 dark:border-border/50 bg-white dark:bg-card"
+                            className="py-1.5 px-3 sm:py-2 sm:px-6 align-middle bg-white dark:bg-card"
                             rowSpan={sameDayCount}
                           >
                             <div className="flex flex-col items-center justify-center bg-white dark:bg-card border border-slate-200 dark:border-border rounded-lg p-1.5 w-[70px] shadow-sm dark:shadow-none ring-1 ring-slate-50 dark:ring-border mx-auto group-hover:border-slate-300 dark:group-hover:border-slate-700 transition-colors">
@@ -332,17 +332,17 @@ export function DiaryContentTable({
                           </td>
                         )}
 
-                        <td className="py-2 px-4 align-top">
+                        <td className="py-1.5 px-2 sm:py-2 sm:px-4 align-top">
                           <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-foreground font-medium whitespace-nowrap bg-slate-50 dark:bg-secondary/30 px-2.5 py-1.5 rounded-md border border-slate-100 dark:border-border w-fit">
                             <Clock className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                             {(() => {
                               const parts = item.timeRange.split(/\s*(?:-|às|as)\s*/i)
                               if (parts.length === 2) {
                                 return (
-                                  <div className="flex flex-col sm:flex-row sm:gap-1 leading-none text-center sm:text-left">
+                                  <div className="flex flex-col sm:flex-row sm:gap-1 items-center leading-none">
                                     <span className="font-semibold">{parts[0]}</span>
                                     <span className="hidden sm:inline">-</span>
-                                    <span className="text-[11px] sm:text-sm text-slate-500 dark:text-slate-400 sm:text-inherit sm:font-medium">{parts[1]}</span>
+                                    <span className="font-medium text-[11px] sm:text-sm">{parts[1]}</span>
                                   </div>
                                 )
                               }
@@ -352,8 +352,8 @@ export function DiaryContentTable({
                         </td>
 
                         {/* Tipo (fixo) */}
-                        <td className="hidden sm:table-cell py-2 px-4 align-top">
-                          <div className="flex flex-col gap-1.5">
+                        <td className="hidden sm:table-cell py-1.5 px-2 sm:py-2 sm:px-4 align-middle text-center">
+                          <div className="flex flex-col gap-1.5 items-center">
                             <Badge variant="outline" className={`${getTypeColor(item.type)} text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md justify-center`}>
                               <span className="sm:hidden">{item.type}</span>
                               <span className="hidden sm:inline">{getTypeLabel(item.type)}</span>
@@ -369,7 +369,7 @@ export function DiaryContentTable({
                         </td>
 
                         {/* Conteúdo (sortable) */}
-                        <td className="py-2 px-4 align-top w-full">
+                        <td className="py-1.5 px-2 sm:py-2 sm:px-4 align-middle w-full">
                           <SortableContentCell
                             content={currentTextObj?.content || item.content || ''}
                             contentId={item.id}

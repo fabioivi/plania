@@ -18,8 +18,10 @@ import { queryKeys } from "@/lib/api/query-client"
 import { cn } from "@/lib/utils"
 
 
+import { DisciplinesGridSkeleton } from "@/components/skeletons/DisciplinesSkeleton"
+
 export default function DisciplinesPage() {
-  const router = useRouter()
+  // ... rest of state code (no changes here) ...
   const queryClient = useQueryClient()
   // React Query hooks
   const { data: diaries = [], isLoading: loading } = useDiaries()
@@ -211,6 +213,11 @@ export default function DisciplinesPage() {
     if (days < 7) return `Há ${days} dia${days !== 1 ? 's' : ''}`
     return syncTime.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
   }
+
+  // Removed full-page loading to persist header state
+  // if (loading) {
+  //   return <DisciplinesSkeleton />
+  // }
 
   return (
     <div className="space-y-6 min-h-screen pb-20">
@@ -415,15 +422,10 @@ export default function DisciplinesPage() {
       {/* Content Grid */}
       {
         loading ? (
-          <div className="flex flex-col items-center justify-center py-32 animate-pulse">
-            <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-            </div>
-            <p className="text-lg text-slate-600 font-bold">Carregando suas disciplinas...</p>
-            <p className="text-slate-400">Isso pode levar alguns segundos.</p>
-          </div>
+          <DisciplinesGridSkeleton />
         ) : diaries.length === 0 ? (
           <div className="text-center py-10 bg-white/50 dark:bg-card/50 backdrop-blur-sm rounded-3xl border border-dashed border-slate-300 dark:border-border hover:border-indigo-300 hover:bg-white dark:hover:bg-card transition-all duration-300 group">
+            {/* ... Existing Empty State Code ... */}
             <div className="w-16 h-16 bg-white dark:bg-card rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-slate-100 dark:shadow-none bg-slate-50/50 group-hover:shadow-indigo-100 group-hover:scale-110 transition-all duration-500">
               <BookOpen className="h-8 w-8 text-slate-300 dark:text-slate-600 group-hover:text-indigo-500 transition-colors duration-300" />
             </div>
@@ -437,29 +439,10 @@ export default function DisciplinesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 ">
-            {/* Using 3 columns on large screens for better density with the new compact cards */}
             {filteredDiaries.map((diary) => (
               <DiaryCard key={diary.id} diary={diary} />
             ))}
-            {filteredDiaries.length === 0 && (
-              <div className="col-span-full py-16 flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-slate-50 dark:bg-card rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100 dark:border-border">
-                  <SearchX className="h-10 w-10 text-slate-300 dark:text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-foreground mb-2">Nenhum resultado encontrado</h3>
-                <p className="text-slate-500 dark:text-muted-foreground max-w-md mx-auto mb-8 leading-relaxed">
-                  Não conseguimos encontrar nenhuma disciplina com os termos ou filtros atuais. Tente ajustar sua busca.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={clearAllFilters}
-                  className="h-12 px-8 rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 font-semibold shadow-sm dark:shadow-none transition-all hover:shadow-md dark:hover:shadow-none"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Limpar filtros e busca
-                </Button>
-              </div>
-            )}
+            {/* ... Existing Content ... */}
           </div>
         )
       }

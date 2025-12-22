@@ -243,25 +243,29 @@ export function TeachingPlanView({
         </div>
         <CardContent className="p-6 space-y-8">
           {plan.objetivoGeral && (
-            <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-50 dark:border-indigo-900/20">
-              <h4 className="flex items-center gap-2 font-bold text-indigo-900 dark:text-indigo-300 mb-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 dark:text-foreground">
                 Objetivo Geral
               </h4>
-              <p className="text-sm md:text-base text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm md:text-base text-slate-700 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">
                 {plan.objetivoGeral}
               </p>
             </div>
           )}
           {plan.objetivosEspecificos && (
-            <div className="pl-2">
-              <h4 className="flex items-center gap-2 font-bold text-slate-800 dark:text-foreground mb-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></span>
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 dark:text-foreground">
                 Objetivos Específicos
               </h4>
-              <p className="text-sm md:text-base text-slate-600 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed border-l-2 border-slate-100 dark:border-border pl-4">
-                {plan.objetivosEspecificos}
-              </p>
+
+              <ul className="space-y-3">
+                {plan.objetivosEspecificos.split(/[;.]/).map(obj => obj.trim()).filter(Boolean).map((obj, index) => (
+                  <li key={index} className="flex items-start gap-3 text-sm md:text-base text-slate-700 dark:text-muted-foreground leading-relaxed">
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-indigo-400 dark:bg-indigo-600 flex-shrink-0" />
+                    <span>{obj}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </CardContent>
@@ -418,10 +422,38 @@ export function TeachingPlanView({
     )
   }
 
+
   const renderBibliografia = () => {
-    const hasBasica = plan.bibliografiaBasica && plan.bibliografiaBasica.length > 0
-    const hasComplementar = plan.bibliografiaComplementar && plan.bibliografiaComplementar.length > 0
-    const hasReferencias = plan.referencias
+    let basicasRaw = plan.bibliografiaBasica || (plan as any).bibliografiasBasicas || ''
+    let complementaresRaw = plan.bibliografiaComplementar || (plan as any).bibliografiasComplementares || ''
+    let referenciasRaw = plan.referencias || ''
+
+    // Handle case where specific fields are arrays (join them first for consistent string handling)
+    if (Array.isArray(basicasRaw)) basicasRaw = basicasRaw.join('\n')
+    if (Array.isArray(complementaresRaw)) complementaresRaw = complementaresRaw.join('\n')
+
+    // INTELLIGENT PARSING: Check if "Basic" field actually contains everything
+    if (basicasRaw && !complementaresRaw && basicasRaw.toLowerCase().includes('bibliografia complementar')) {
+      const parts = basicasRaw.split(/Bibliografia Complementar/i)
+      if (parts.length >= 2) {
+        basicasRaw = parts[0]
+        complementaresRaw = parts.slice(1).join('\n')
+      }
+    }
+    // Also check 'referencias' as a fallback source if both specific are empty
+    else if (!basicasRaw && !complementaresRaw && referenciasRaw) {
+      if (referenciasRaw.toLowerCase().includes('bibliografia complementar')) {
+        const parts = referenciasRaw.split(/Bibliografia Complementar/i)
+        basicasRaw = parts[0]
+        complementaresRaw = parts.slice(1).join('\n')
+      } else {
+        basicasRaw = referenciasRaw
+      }
+    }
+
+    const hasBasica = !!basicasRaw && basicasRaw.length > 0
+    const hasComplementar = !!complementaresRaw && complementaresRaw.length > 0
+    const hasReferencias = !hasBasica && !hasComplementar && !!referenciasRaw
 
     if (!hasBasica && !hasComplementar && !hasReferencias) return null
 
@@ -429,41 +461,34 @@ export function TeachingPlanView({
       <Card className="border-0 shadow-sm ring-1 ring-slate-200 dark:ring-border bg-white dark:bg-card overflow-hidden">
         <div className="bg-slate-50/80 dark:bg-secondary/30 p-4 border-b border-slate-100 dark:border-border flex items-center gap-3">
           <BookMarked className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Referências Bibliográficas</h3>
+          <h3 className="font-bold text-slate-800 dark:text-foreground text-lg">Bibliografia</h3>
         </div>
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="p-6 space-y-8">
           {hasBasica && (
-            <div className="space-y-3">
-              <h4 className="font-bold text-slate-900 dark:text-foreground text-sm uppercase tracking-wide border-b border-slate-100 dark:border-border pb-2">Bibliografia Básica</h4>
-              <ol className="space-y-3 ml-4">
-                {plan.bibliografiaBasica!.map((ref, index) => (
-                  <li key={index} className="text-sm text-slate-600 dark:text-muted-foreground leading-relaxed pl-2 border-l-2 border-indigo-100 dark:border-indigo-900/50">
-                    {ref}
-                  </li>
-                ))}
-              </ol>
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 dark:text-foreground">Bibliografia Básica</h4>
+              <p className="text-sm md:text-base text-slate-700 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {basicasRaw}
+              </p>
             </div>
           )}
 
           {hasComplementar && (
-            <div className="space-y-3">
-              <h4 className="font-bold text-slate-900 dark:text-foreground text-sm uppercase tracking-wide border-b border-slate-100 dark:border-border pb-2">Bibliografia Complementar</h4>
-              <ol className="space-y-3 ml-4">
-                {plan.bibliografiaComplementar!.map((ref, index) => (
-                  <li key={index} className="text-sm text-slate-600 dark:text-muted-foreground leading-relaxed pl-2 border-l-2 border-slate-200 dark:border-border">
-                    {ref}
-                  </li>
-                ))}
-              </ol>
+            <div className="space-y-4">
+              <h4 className="font-bold text-slate-800 dark:text-foreground">Bibliografia Complementar</h4>
+              <p className="text-sm md:text-base text-slate-700 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                {complementaresRaw}
+              </p>
             </div>
           )}
 
           {!hasBasica && !hasComplementar && hasReferencias && (
-            <p className="text-sm text-slate-600 whitespace-pre-wrap">{plan.referencias}</p>
+            <p className="text-sm md:text-base text-slate-700 dark:text-muted-foreground whitespace-pre-wrap leading-relaxed">{referenciasRaw}</p>
           )}
         </CardContent>
       </Card>
     )
+
   }
 
   const renderPrintHeader = () => {
@@ -490,8 +515,8 @@ export function TeachingPlanView({
   return (
     <div className="space-y-8 animate-fade-in w-full">
       {renderPrintHeader()}
-      {variant === 'full' && renderStatusCards()}
-      {renderIdentification()}
+      {/* {variant === 'full' && renderStatusCards()} - Removed to use unified header */}
+      {/* {renderIdentification()} - Removed per user request */}
       {renderEmenta()}
       {renderObjetivos()}
       {renderMetodologia()}

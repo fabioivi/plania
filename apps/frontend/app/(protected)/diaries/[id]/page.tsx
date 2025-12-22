@@ -258,7 +258,7 @@ export default function DiaryContentPage() {
     <ProtectedRoute>
       <div className="min-h-screen bg-slate-50 dark:bg-background pb-20">
 
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <div className="mb-6">
             <Link href="/disciplines" className="inline-block">

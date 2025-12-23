@@ -11,6 +11,7 @@ export { authService } from './auth.service'
 export { academicService } from './academic.service'
 export { llmService } from './llm.service'
 export { aiService } from './ai.service'
+export { adminService } from './admin.service'
 
 // Legacy exports for backwards compatibility
 // These re-export the old API structure from api.ts

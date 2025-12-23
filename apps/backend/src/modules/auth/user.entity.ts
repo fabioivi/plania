@@ -9,6 +9,7 @@ import {
 import { AcademicCredential } from '../academic/academic-credential.entity';
 import { Plan } from '../plans/plan.entity';
 import { LLMConfig } from './llm-config.entity';
+import { Role } from './role.enum';
 
 @Entity('users')
 export class User {
@@ -23,6 +24,16 @@ export class User {
 
   @Column()
   password: string; // bcrypt hashed
+
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.USER,
+  })
+  role: Role;
+
+  @Column({ nullable: true })
+  lastLoginAt: Date;
 
   @Column({ default: true })
   isActive: boolean;

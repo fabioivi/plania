@@ -11,6 +11,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { AIModule } from './modules/ai/ai.module';
 import { HealthModule } from './modules/health/health.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { CryptoService } from './common/services/crypto.service';
 import { SessionCacheService } from './common/services/session-cache.service';
 import { SentryFilter } from './common/filters/sentry.filter';
@@ -71,6 +72,7 @@ import { SentryFilter } from './common/filters/sentry.filter';
     SyncModule,
     AIModule,
     HealthModule,
+    AuditModule,
   ],
   providers: [
     CryptoService,

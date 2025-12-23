@@ -57,6 +57,10 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  role: 'USER' | 'ADMIN' | 'SUPER_ADMIN'; // Matching backend Role enum
+  isActive: boolean;
+  lastLoginAt?: string | null;
+  createdAt?: string;
 }
 
 export interface LoginRequest {

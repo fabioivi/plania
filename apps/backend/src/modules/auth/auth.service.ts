@@ -17,7 +17,7 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private cryptoService: CryptoService,
-  ) {}
+  ) { }
 
   async register(registerDto: RegisterDto) {
     // Check if user exists
@@ -52,6 +52,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        isActive: user.isActive,
       },
       accessToken,
     };
@@ -59,13 +61,17 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     // Find user
+    console.log(`[AuthService] Attempting login for email: ${loginDto.email}`);
     const user = await this.userRepository.findOne({
       where: { email: loginDto.email },
     });
 
     if (!user) {
+      console.warn(`[AuthService] User not found: ${loginDto.email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    console.log(`[AuthService] User found. Verifying password...`);
 
     // Verify password
     const isPasswordValid = await this.cryptoService.comparePassword(
@@ -74,8 +80,11 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
+      console.warn(`[AuthService] Invalid password for user: ${loginDto.email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    console.log(`[AuthService] Password verified. Login successful for: ${loginDto.email}`);
 
     // Generate JWT
     const payload = { sub: user.id, email: user.email };
@@ -86,6 +95,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
+        isActive: user.isActive,
       },
       accessToken,
     };

@@ -25,6 +25,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick })
                 </button>
                 <h2 className="text-lg font-bold text-slate-700 dark:text-foreground hidden sm:block">
                     Área do Professor
+                    {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && <span className="text-indigo-600 dark:text-indigo-400"> / Admin</span>}
                 </h2>
             </div>
 

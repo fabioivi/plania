@@ -11,6 +11,10 @@ import { JwtStrategy } from './jwt.strategy';
 import { CryptoService } from '../../common/services/crypto.service';
 import { LLMConfigService } from './llm-config.service';
 import { LLMConfigController } from './llm-config.controller';
+import { AdminController } from './admin.controller';
+import { AuditModule } from '../audit/audit.module';
+
+import { UserBootstrapService } from './user-bootstrap.service';
 
 @Module({
   imports: [
@@ -24,9 +28,16 @@ import { LLMConfigController } from './llm-config.controller';
       }),
       inject: [ConfigService],
     }),
+    AuditModule,
   ],
-  controllers: [AuthController, LLMConfigController],
-  providers: [AuthService, JwtStrategy, CryptoService, LLMConfigService],
+  controllers: [AuthController, LLMConfigController, AdminController],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    CryptoService,
+    LLMConfigService,
+    UserBootstrapService,
+  ],
   exports: [AuthService, LLMConfigService],
 })
-export class AuthModule {}
+export class AuthModule { }

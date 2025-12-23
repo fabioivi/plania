@@ -12,7 +12,8 @@ import {
     BrainCircuit,
     ChevronLeft,
     ChevronRight,
-    X
+    X,
+    Shield
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     closeMobileMenu
 }) => {
     const pathname = usePathname();
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
 
     const menuItems = [
         { label: 'Visão Geral', icon: LayoutDashboard, href: '/dashboard' },
@@ -40,6 +41,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Meus Planos', icon: FileText, href: '/plans' },
         { label: 'Configurações', icon: Settings, href: '/settings' },
     ];
+
+    if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
+        menuItems.push({ label: 'Administração', icon: Shield, href: '/admin/users' });
+    }
 
     return (
         <aside
@@ -89,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </p>
 
                 {menuItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive = pathname === item.href || (item.href.startsWith('/admin') && pathname?.startsWith('/admin'));
                     return (
                         <Link
                             key={item.href}

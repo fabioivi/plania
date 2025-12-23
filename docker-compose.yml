@@ -65,6 +65,8 @@ services:
       CHOKIDAR_USEPOLLING: "true" # Enable polling for Windows hot reload
       IFMS_BASE_URL: https://academico.ifms.edu.br
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@plania.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
     ports:
       - "${BACKEND_PORT:-3001}:3001"
     volumes:

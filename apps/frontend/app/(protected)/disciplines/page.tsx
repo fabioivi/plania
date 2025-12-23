@@ -276,7 +276,7 @@ export default function DisciplinesPage() {
       )}
 
       {/* Filters and Search Toolbar */}
-      <div className="bg-white dark:bg-card p-2 rounded-2xl border border-slate-200 dark:border-border shadow-lg shadow-slate-200/50 dark:shadow-none flex flex-col md:flex-row gap-2 sticky top-4 z-20 backdrop-blur-xl bg-white/90 dark:bg-card/90">
+      <div className="bg-white dark:bg-card p-2 rounded-2xl border border-slate-200 dark:border-border shadow-lg shadow-slate-200/50 dark:shadow-none flex flex-row items-center gap-2 sticky top-4 z-20 backdrop-blur-xl bg-white/90 dark:bg-card/90">
         <div className="relative flex-1 group">
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 p-1.5 bg-slate-100 dark:bg-secondary rounded-lg group-focus-within:bg-indigo-100 dark:group-focus-within:bg-indigo-900/50 transition-colors">
             <Search className="h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-400 transition-colors" />
@@ -285,7 +285,7 @@ export default function DisciplinesPage() {
             placeholder="Buscar por nome da disciplina, turma ou curso..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-14 h-14 rounded-xl border-2 border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-secondary/20 hover:border-indigo-100 dark:hover:border-indigo-900/30 focus-visible:bg-white dark:focus-visible:bg-secondary/20 focus-visible:border-indigo-500 focus-visible:ring-0 text-base font-medium transition-all"
+            className="pl-14 h-11 rounded-xl text-base font-medium transition-all bg-transparent border-transparent"
           />
         </div>
         <div className="relative">
@@ -294,14 +294,14 @@ export default function DisciplinesPage() {
             variant="ghost"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={cn(
-              "h-14 px-6 rounded-xl font-bold relative transition-all duration-300",
+              "h-11 px-3 md:px-6 rounded-xl font-bold relative transition-all duration-300",
               isFilterOpen || activeFiltersCount > 0
                 ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-900/50"
                 : "text-slate-600 dark:text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
             )}
           >
-            <Filter className={cn("mr-2 h-4 w-4 transition-transform duration-300", isFilterOpen ? "rotate-90" : "")} />
-            Filtros
+            <Filter className={cn("md:mr-2 h-4 w-4 transition-transform duration-300", isFilterOpen ? "rotate-90" : "")} />
+            <span className="hidden md:inline">Filtros</span>
             {activeFiltersCount > 0 && (
               <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white animate-in zoom-in">
                 {activeFiltersCount}
@@ -313,7 +313,7 @@ export default function DisciplinesPage() {
           {isFilterOpen && (
             <div
               ref={filterDropdownRef}
-              className="absolute top-full right-0 mt-3 w-[400px] bg-white dark:bg-card rounded-3xl shadow-2xl border border-slate-100 dark:border-border z-40 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200 p-6"
+              className="absolute top-full right-0 mt-3 w-[calc(100vw-3rem)] md:w-[400px] min-w-[280px] bg-white/95 dark:bg-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl shadow-slate-900/10 dark:shadow-black/50 border border-slate-200/50 dark:border-border z-40 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200 p-5 md:p-6"
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-50 dark:border-border">
                 <h3 className="text-lg font-bold text-slate-800 dark:text-foreground">Filtrar Disciplinas</h3>
@@ -334,9 +334,9 @@ export default function DisciplinesPage() {
               <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                 {/* Cursos Section */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-indigo-600">
-                    <GraduationCap className="h-4 w-4" />
-                    <h4 className="text-xs font-bold uppercase tracking-wider">Cursos</h4>
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-foreground">Cursos</h4>
                   </div>
                   <div className="space-y-1">
                     {uniqueCursos.map(curso => (
@@ -372,9 +372,9 @@ export default function DisciplinesPage() {
 
                 {/* Periodos Section */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-indigo-600">
-                    <Clock className="h-4 w-4" />
-                    <h4 className="text-xs font-bold uppercase tracking-wider">Períodos</h4>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-foreground">Períodos</h4>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {uniquePeriodos.map(periodo => (

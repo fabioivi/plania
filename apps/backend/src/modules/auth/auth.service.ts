@@ -68,7 +68,12 @@ export class AuthService {
 
     if (!user) {
       console.warn(`[AuthService] User not found: ${loginDto.email}`);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
+
+    if (!user.isActive) {
+      console.warn(`[AuthService] Inactive user attempted login: ${loginDto.email}`);
+      throw new UnauthorizedException('Sua conta está desativada. Entre em contato com o suporte.');
     }
 
     console.log(`[AuthService] User found. Verifying password...`);
@@ -103,6 +108,13 @@ export class AuthService {
   }
 
   async validateUser(userId: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (user && !user.isActive) {
+      console.warn(`[AuthService] Active token used by inactive user: ${user.email}`);
+      return null;
+    }
+
+    return user;
   }
 }

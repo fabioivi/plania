@@ -5,11 +5,14 @@ import { authApi, User, AuthResponse } from '@/services/api';
 
 interface AuthContextType {
   user: User | null;
+  realUser: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isImpersonating: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  toggleImpersonation: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   useEffect(() => {
     // Verificar se há token e usuário salvos
@@ -73,18 +77,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    setIsImpersonating(false);
     window.location.href = '/login';
   };
+
+  const toggleImpersonation = () => {
+    setIsImpersonating(prev => !prev);
+  };
+
+  // Mask the user role if impersonating
+  const effectiveUser = isImpersonating && user ? { ...user, role: 'USER' } : user;
 
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: effectiveUser,
+        realUser: user,
         isAuthenticated: !!user,
         isLoading,
+        isImpersonating,
         login,
         register,
         logout,
+        toggleImpersonation,
       }}
     >
       {children}

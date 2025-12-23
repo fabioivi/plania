@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Bell, Menu, Moon, Sun } from 'lucide-react';
+import { Bell, Menu, Moon, Sun, Monitor, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from "next-themes";
 
@@ -10,9 +10,11 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
-    const { user } = useAuth();
+    const { user, realUser, isImpersonating, toggleImpersonation } = useAuth();
     const { theme, setTheme } = useTheme();
     const firstName = user?.name ? user.name.split(' ')[0] : 'Professor';
+
+    const canImpersonate = realUser?.role === 'ADMIN' || realUser?.role === 'SUPER_ADMIN';
 
     return (
         <header className="h-20 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-slate-200 dark:border-border sticky top-0 z-40 px-4 sm:px-8 flex items-center justify-between transition-all duration-200">
@@ -26,10 +28,26 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick })
                 <h2 className="text-lg font-bold text-slate-700 dark:text-foreground hidden sm:block">
                     Área do Professor
                     {['ADMIN', 'SUPER_ADMIN'].includes(user?.role || '') && <span className="text-indigo-600 dark:text-indigo-400"> / Admin</span>}
+                    {isImpersonating && <span className="text-amber-600 dark:text-amber-400 ml-2 text-sm font-medium bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">Visualizando como Usuário</span>}
                 </h2>
             </div>
 
             <div className="flex items-center space-x-3 sm:space-x-4">
+                {canImpersonate && (
+                    <button
+                        onClick={toggleImpersonation}
+                        className={`relative p-2 rounded-full transition-all flex items-center justify-center h-10 w-10 ${isImpersonating
+                            ? "text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40 ring-2 ring-amber-200 dark:ring-amber-800"
+                            : "text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400"
+                            }`}
+                        title={isImpersonating ? "Voltar para Admin" : "Ver como Usuário"}
+                    >
+                        {isImpersonating ? <EyeOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
+                    </button>
+                )}
+
+
+
                 <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                     className="relative p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-400 rounded-full transition-all flex items-center justify-center h-10 w-10"

@@ -4,7 +4,8 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   // Necessário para produção com Docker (standalone output)
-  output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
+  // Necessário para produção com Docker (standalone output)
+  output: 'standalone',
   experimental: {
     outputFileTracingRoot: path.join(__dirname, '../../'), // Include monorepo root
   },

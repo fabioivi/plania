@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mask the user role if impersonating
-  const effectiveUser = isImpersonating && user ? { ...user, role: 'USER' } : user;
+  const effectiveUser: User | null = isImpersonating && user ? { ...user, role: 'USER' } : user;
 
   return (
     <AuthContext.Provider

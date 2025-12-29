@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from 'sonner';
-import { Loader2, Eye, FileJson, FileText, Globe, Monitor } from 'lucide-react';
+import { Eye, FileJson, FileText, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from "@/components/ui/skeleton";

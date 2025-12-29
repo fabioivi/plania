@@ -38,7 +38,6 @@ interface DataTableProps<TData, TValue> {
 export function AdminDataTable<TData, TValue>({
     columns,
     data,
-    searchKey = "email",
     placeholder = "Filtrar...",
 }: DataTableProps<TData, TValue>) {
     const [rowSelection, setRowSelection] = React.useState({})
@@ -78,7 +77,7 @@ export function AdminDataTable<TData, TValue>({
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
         // Simple global filter
-        globalFilterFn: (row, columnId, filterValue) => {
+        globalFilterFn: (row, _columnId, filterValue) => {
             const search = filterValue.toLowerCase()
             const rowValues = Object.values(row.original as object)
             return rowValues.some((value) => {

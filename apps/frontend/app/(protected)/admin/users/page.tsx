@@ -4,14 +4,10 @@ import { useEffect, useState, useMemo } from 'react';
 import { adminService, User, Role } from '@/services/api/admin.service';
 import { AdminDataTable } from '@/components/ui/admin-data-table';
 import { ColumnDef } from '@tanstack/react-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from 'sonner';
-import { Loader2, Users } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Users } from 'lucide-react';
 
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -153,7 +149,7 @@ export default function UsersPage() {
                     <Select
                         disabled={isUpdating}
                         value={isActive ? "active" : "inactive"}
-                        onValueChange={(value) => handleStatusToggle(user)}
+                        onValueChange={() => handleStatusToggle(user)}
                     >
                         <SelectTrigger className={`w-[110px] h-8 text-xs font-semibold border transition-all ${statusStyles}`}>
                             <SelectValue />

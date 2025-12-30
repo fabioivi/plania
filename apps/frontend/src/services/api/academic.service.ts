@@ -37,12 +37,16 @@ export const academicService = {
   },
 
   async saveCredential(data: SaveCredentialRequest): Promise<AcademicCredential> {
+    console.log('📡 [API] saveCredential Request:', data);
     const response = await apiClient.post<AcademicCredential>('/academic/credentials', data)
+    console.log('✅ [API] saveCredential Response:', response.data);
     return response.data
   },
 
   async testCredential(id: string): Promise<TestCredentialResponse> {
+    console.log('📡 [API] testCredential Request ID:', id);
     const response = await apiClient.post<TestCredentialResponse>(`/academic/credentials/${id}/test`)
+    console.log('✅ [API] testCredential Response:', response.data);
     return response.data
   },
 

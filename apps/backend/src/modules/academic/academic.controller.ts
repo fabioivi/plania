@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Logger,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -38,6 +39,8 @@ import {
 @Controller('academic')
 @UseGuards(JwtAuthGuard)
 export class AcademicController {
+  private readonly logger = new Logger(AcademicController.name);
+
   constructor(
     private academicService: AcademicService,
     @InjectQueue('auth-queue') private authQueue: Queue,
@@ -65,6 +68,7 @@ export class AcademicController {
   @Post('credentials/:id/test')
   @ApiTestCredential()
   async testCredential(@Request() req, @Param('id') id: string) {
+    this.logger.debug(`📡 Received test-credential request for ID: ${id} from User: ${req.user.id}`);
     return this.academicService.testCredential(req.user.id, id);
   }
 

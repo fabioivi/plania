@@ -148,12 +148,15 @@ export class AcademicService {
     }
 
     // Queue test job and wait for result
+    this.logger.log(`Adding test-credential job for ${credential.id} to auth-queue...`);
     const job = await this.authQueue.add('test-credential', {
       credentialId: credential.id,
     });
+    this.logger.log(`Job added with ID: ${job.id}. Waiting for completion...`);
 
     // Wait for job to complete (timeout 60 seconds)
     const result = await job.finished();
+    this.logger.log(`Job ${job.id} finished. Result: ${JSON.stringify(result)}`);
 
     // Reload credential to get updated status
     const updatedCredential = await this.credentialRepository.findOne({
@@ -163,7 +166,7 @@ export class AcademicService {
     return {
       success: result.success,
       isVerified: result.isValid,
-      lastError: updatedCredential?.lastError || null,
+      lastError: result.error || updatedCredential?.lastError || null,
       lastTestedAt: updatedCredential?.lastTestedAt || null,
     };
   }
@@ -184,6 +187,7 @@ export class AcademicService {
 
   // Internal method for queue processors to decrypt and use credentials
   async getDecryptedCredential(credentialId: string): Promise<{
+    userId: string;
     system: string;
     username: string;
     password: string;
@@ -204,6 +208,7 @@ export class AcademicService {
     });
 
     return {
+      userId: credential.userId,
       system: credential.system,
       username: credential.username,
       password: decryptedPassword,
@@ -492,14 +497,14 @@ export class AcademicService {
   async syncDiaryContent(userId: string, diaryId: string, payload: { content: any[], metadata?: any }) {
     const { content: contentData, metadata } = payload;
 
-    console.log(`🔄 Sincronizando conteúdo do diário ${diaryId}: ${contentData.length} itens recebidos`);
+    this.logger.log(`🔄 Sincronizando conteúdo do diário ${diaryId}: ${contentData.length} itens recebidos`);
 
     // Update Diary Metadata if available
     if (metadata) {
       try {
         const diary = await this.diaryRepository.findOne({ where: { id: diaryId, userId } });
         if (diary) {
-          console.log(`📝 Atualizando metadados do diário ${diaryId} com base no conteúdo scrapeado`);
+          this.logger.log(`📝 Atualizando metadados do diário ${diaryId} com base no conteúdo scrapeado`);
           if (metadata.code && metadata.name) {
             diary.disciplina = `${metadata.code} - ${metadata.name}`;
           }
@@ -515,7 +520,7 @@ export class AcademicService {
           await this.diaryRepository.save(diary);
         }
       } catch (error) {
-        console.error('Erro ao atualizar metadados do diário:', error);
+        this.logger.error('Erro ao atualizar metadados do diário:', error);
       }
     }
 
@@ -526,7 +531,7 @@ export class AcademicService {
       // Parse and validate date
       const parsedDate = ExtractionUtils.parseBRDateSimple(item.date);
       if (!parsedDate) {
-        console.warn(`⚠️ Data inválida ignorada: "${item.date}" (contentId: ${item.contentId})`);
+        this.logger.warn(`⚠️ Data inválida ignorada: "${item.date}" (contentId: ${item.contentId})`);
         skippedCount++;
         continue; // Skip this item if date is invalid
       }
@@ -536,7 +541,7 @@ export class AcademicService {
       if (item.originalDate) {
         parsedOriginalDate = ExtractionUtils.parseBRDateSimple(item.originalDate);
         if (!parsedOriginalDate) {
-          console.warn(`⚠️ Data original inválida: "${item.originalDate}" (contentId: ${item.contentId})`);
+          this.logger.warn(`⚠️ Data original inválida: "${item.originalDate}" (contentId: ${item.contentId})`);
         }
       }
 
@@ -550,7 +555,7 @@ export class AcademicService {
 
       if (existing) {
         // Update existing content
-        console.log(`🔄 Atualizando conteúdo existente: ${item.contentId}`);
+        this.logger.debug(`🔄 Atualizando conteúdo existente: ${item.contentId}`);
         Object.assign(existing, {
           obsId: item.obsId,
           date: parsedDate,
@@ -566,7 +571,7 @@ export class AcademicService {
         contentsToSave.push(existing);
       } else {
         // Create new content
-        console.log(`➕ Criando novo conteúdo: ${item.contentId}`);
+        this.logger.debug(`➕ Criando novo conteúdo: ${item.contentId}`);
         const content = this.diaryContentRepository.create({
           diaryId,
           contentId: item.contentId,
@@ -584,7 +589,7 @@ export class AcademicService {
 
         // Double-check date is valid before adding to save list
         if (!content.date || isNaN(content.date.getTime())) {
-          console.error(`❌ ERRO: Conteúdo criado com data inválida!`, {
+          this.logger.error(`❌ ERRO: Conteúdo criado com data inválida!`, {
             contentId: content.contentId,
             parsedDate,
             itemDate: item.date,
@@ -602,27 +607,27 @@ export class AcademicService {
       // Validate all items before saving
       const invalidItems = contentsToSave.filter(item => !item.date || isNaN(item.date.getTime()));
       if (invalidItems.length > 0) {
-        console.error('❌ Itens com data inválida detectados antes de salvar:');
+        this.logger.error('❌ Itens com data inválida detectados antes de salvar:');
         invalidItems.forEach(item => {
-          console.error(`  - contentId: ${item.contentId}, date: ${item.date}, raw: ${JSON.stringify(item)}`);
+          this.logger.error(`  - contentId: ${item.contentId}, date: ${item.date}, raw: ${JSON.stringify(item)}`);
         });
         throw new Error(`Encontrados ${invalidItems.length} itens com data inválida`);
       }
 
-      console.log(`💾 Salvando ${contentsToSave.length} conteúdos no banco de dados...`);
+      this.logger.log(`💾 Salvando ${contentsToSave.length} conteúdos no banco de dados...`);
       await this.diaryContentRepository.save(contentsToSave);
-      console.log(`✅ ${contentsToSave.length} conteúdos salvos com sucesso`);
+      this.logger.log(`✅ ${contentsToSave.length} conteúdos salvos com sucesso`);
     }
 
     if (skippedCount > 0) {
-      console.log(`⚠️ ${skippedCount} registro(s) ignorado(s) por data inválida`);
+      this.logger.warn(`⚠️ ${skippedCount} registro(s) ignorado(s) por data inválida`);
     }
 
     // Contar apenas aulas não-antecipação (para não duplicar contagem)
     const realClassesCount = contentsToSave.filter(item => !item.isAntecipation).length;
     const anticipationsCount = contentsToSave.filter(item => item.isAntecipation).length;
 
-    console.log(`📊 Total: ${realClassesCount} aulas + ${anticipationsCount} antecipações`);
+    this.logger.log(`📊 Total: ${realClassesCount} aulas + ${anticipationsCount} antecipações`);
 
     return {
       synced: contentsToSave.length,

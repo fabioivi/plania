@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SaveCredentialDto {
   @ApiProperty({
-    description: 'Sistema acadêmico (atualmente apenas IFMS)',
+    description: 'Sistema acadêmico (ifms ou suap)',
     example: 'ifms',
-    enum: ['ifms'],
+    enum: ['ifms', 'suap'],
   })
   @IsString()
   @IsNotEmpty()

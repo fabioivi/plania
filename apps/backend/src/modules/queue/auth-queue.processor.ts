@@ -1,4 +1,5 @@
 import { Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { BrowserContext, Page } from 'playwright';
 import { AcademicService } from '../academic/academic.service';
@@ -8,6 +9,7 @@ import { SyncEventsService } from '../sync/sync-events.service';
 
 @Processor('auth-queue')
 export class AuthQueueProcessor {
+  private readonly logger = new Logger(AuthQueueProcessor.name);
   constructor(
     private academicService: AcademicService,
     private scrapingService: ScrapingService,
@@ -27,21 +29,47 @@ export class AuthQueueProcessor {
 
       // Test login based on system
       let isValid = false;
-      if (credential.system === 'ifms') {
-        isValid = await this.scrapingService.testIFMSLogin(
+      try {
+        isValid = await this.scrapingService.testLogin(
+          credential.system,
           credential.username,
           credential.password,
         );
+      } catch (e) {
+        this.logger.warn(`Login test failed for ${credential.system}: ${e.message}`);
+        isValid = false;
+        throw e; // Rethrow to trigger catch block below which saves error
       }
 
       // Update credential status
-      await this.academicService.markAsVerified(credentialId, isValid, null);
+      const msg = isValid ? null : 'Não foi possível verificar as credenciais';
+      await this.academicService.markAsVerified(credentialId, isValid, msg);
+
+      // Notify via SSE
+      this.syncEventsService.sendEvent(credential.userId, {
+        userId: credential.userId,
+        stage: 'credential-status',
+        message: isValid ? 'Credenciais verificadas com sucesso' : 'Falha na verificação automática',
+      });
 
       return { success: true, isValid };
     } catch (error) {
-      console.error('Credential verification failed:', error);
+      this.logger.error('Credential verification failed:', error);
       const errorMessage = error.message || 'Erro desconhecido ao verificar credenciais';
       await this.academicService.markAsVerified(credentialId, false, errorMessage);
+
+      // Try to notify failure if possible
+      try {
+        const cred = await this.academicService.getDecryptedCredential(credentialId);
+        this.syncEventsService.sendEvent(cred.userId, {
+          userId: cred.userId,
+          stage: 'credential-status',
+          message: errorMessage,
+        });
+      } catch (e) {
+        // Ignore
+      }
+
       throw error;
     }
   }
@@ -55,22 +83,55 @@ export class AuthQueueProcessor {
         credentialId,
       );
 
+      this.logger.log(`📡 Starting test-credential job for user ${credential.userId}, credential ${credentialId}`);
+      this.logger.debug(`🧪 Testing login for credential ${credentialId}...`);
       let isValid = false;
-      if (credential.system === 'ifms') {
-        isValid = await this.scrapingService.testIFMSLogin(
+      try {
+        isValid = await this.scrapingService.testLogin(
+          credential.system,
           credential.username,
           credential.password,
         );
+        this.logger.log(`✅ Login test returned: ${isValid}`);
+      } catch (e) {
+        this.logger.warn(`⚠️ Login test THREW error: ${e.message}`);
+        // Error will be caught by outer catch
+        throw e;
       }
 
       // Update credential status
-      await this.academicService.markAsVerified(credentialId, isValid, null);
+      if (!isValid) this.logger.warn('❌ Test returned false without throwing.');
 
-      return { success: true, isValid };
+      const msg = isValid ? null : 'Falha ao validar credenciais (sem mensagem de erro)';
+      await this.academicService.markAsVerified(credentialId, isValid, msg);
+
+      this.syncEventsService.sendEvent(credential.userId, {
+        userId: credential.userId,
+        stage: 'credential-status',
+        message: isValid ? 'Teste de conexão com sucesso' : 'Falha no teste de conexão',
+      });
+
+      const ret = { success: true, isValid, error: msg };
+      this.logger.log(`📤 Job finished. Returning: ${JSON.stringify(ret)}`);
+      return ret;
     } catch (error) {
-      console.error('Credential test failed:', error);
+      this.logger.error('❌ Credential test failed in catch block:', error);
       const errorMessage = error.message || 'Erro ao testar credenciais';
+      this.logger.debug(`💾 Saving error to credential: "${errorMessage}"`);
       await this.academicService.markAsVerified(credentialId, false, errorMessage);
+
+      // Try to notify if we found the credential
+      try {
+        const cred = await this.academicService.getDecryptedCredential(credentialId);
+        this.syncEventsService.sendEvent(cred.userId, {
+          userId: cred.userId,
+          stage: 'credential-status',
+          message: errorMessage,
+        });
+      } catch (e) {
+        // Ignore if we can't find credential to notify
+      }
+
       return { success: false, isValid: false, error: errorMessage };
     }
   }
@@ -81,7 +142,7 @@ export class AuthQueueProcessor {
     const startTime = Date.now();
 
     try {
-      console.log(`🔄 Iniciando sincronização para usuário ${userId}`);
+      this.logger.log(`🔄 Iniciando sincronização para usuário ${userId}`);
 
       // Enviar evento: iniciando
       this.syncEventsService.sendEvent(userId, {
@@ -122,7 +183,7 @@ export class AuthQueueProcessor {
         result.data,
       );
 
-      console.log(`✅ ${syncResult.synced} diários sincronizados`);
+      this.logger.log(`✅ ${syncResult.synced} diários sincronizados`);
 
       // Enviar evento: diários sincronizados (SEM progress bar aqui)
       this.syncEventsService.sendEvent(userId, {
@@ -135,7 +196,7 @@ export class AuthQueueProcessor {
       // 🚀 PARALLEL SCRAPING with Browser Pool
       // ============================================
       const diaries = await this.academicService.getUserDiaries(userId);
-      console.log(`🚀 Iniciando scraping PARALELO de ${diaries.length} diários (máx 5 simultâneos)`);
+      this.logger.log(`🚀 Iniciando scraping PARALELO de ${diaries.length} diários (máx 5 simultâneos)`);
 
       let totalPlans = 0;
       let processedItems = 0;
@@ -148,13 +209,13 @@ export class AuthQueueProcessor {
         const diaryName = (diary as any).unidadeCurricular || `Diário ${diary.externalId}`;
 
         try {
-          console.log(`📚 [${index + 1}/${diaries.length}] Processando ${diaryName} (paralelo)`);
+          this.logger.log(`📚 [${index + 1}/${diaries.length}] Processando ${diaryName} (paralelo)`);
 
           // Login with session cache
           await this.scrapingService.ensureLoggedIn(page, credential.username, credential.password);
 
           // Scrape diary content
-          console.log(`📖 Extraindo conteúdo de: ${diaryName}`);
+          this.logger.debug(`📖 Extraindo conteúdo de: ${diaryName}`);
           const contentResult = await this.scrapingService.scrapeClassContent(page, diary.externalId);
 
           if (contentResult.success && contentResult.data && contentResult.data.length > 0) {
@@ -162,14 +223,14 @@ export class AuthQueueProcessor {
               content: contentResult.data,
               metadata: contentResult.metadata
             });
-            console.log(`✅ ${contentResult.data.length} conteúdos salvos - ${diaryName}`);
+            this.logger.log(`✅ ${contentResult.data.length} conteúdos salvos - ${diaryName}`);
           }
 
           // Scrape teaching plans
           const plansListResult = await this.scrapingService.getAllTeachingPlans(page, diary.externalId);
 
           if (!plansListResult.success || !plansListResult.data) {
-            console.log(`⚠️ Sem planos - ${diaryName}`);
+            this.logger.warn(`⚠️ Sem planos - ${diaryName}`);
             return { diary, plansScraped: 0 };
           }
 
@@ -181,7 +242,7 @@ export class AuthQueueProcessor {
             const planSummary = plans[j];
             const planName = `Plano #${planSummary.externalId}`;
 
-            console.log(`📄 [${j + 1}/${plans.length}] Extraindo ${planName} de ${diaryName}`);
+            this.logger.debug(`📄 [${j + 1}/${plans.length}] Extraindo ${planName} de ${diaryName}`);
 
             const planDetailsResult = await this.scrapingService.getTeachingPlanDetails(
               page,
@@ -217,18 +278,18 @@ export class AuthQueueProcessor {
               diary.externalId,
               plansData, // Save all plans in one operation
             );
-            console.log(`✅ ${plansData.length} planos salvos - ${diaryName}`);
+            this.logger.log(`✅ ${plansData.length} planos salvos - ${diaryName}`);
           }
 
           return { diary, plansScraped: plansData.length };
         } catch (error) {
-          console.error(`❌ Erro ao processar ${diaryName}:`, error.message);
+          this.logger.error(`❌ Erro ao processar ${diaryName}:`, error.message);
           return { diary, plansScraped: 0, error: error.message };
         }
       });
 
       // Execute all diary operations in parallel (max 5 concurrent)
-      console.log(`⚡ Executando ${diaryOperations.length} operações em paralelo...`);
+      this.logger.log(`⚡ Executando ${diaryOperations.length} operações em paralelo...`);
       const results = await this.scrapingPool.executeParallel(diaryOperations);
 
       // Calculate totals
@@ -236,8 +297,8 @@ export class AuthQueueProcessor {
 
       const durationMs = Date.now() - startTime;
       const durationSeconds = (durationMs / 1000).toFixed(1);
-      console.log(`⏱️ Sincronização PARALELA finalizada em ${durationSeconds}s`);
-      console.log(`✅ Total: ${totalPlans} planos de ensino sincronizados`);
+      this.logger.log(`⏱️ Sincronização PARALELA finalizada em ${durationSeconds}s`);
+      this.logger.log(`✅ Total: ${totalPlans} planos de ensino sincronizados`);
 
       // Send completion event
       this.syncEventsService.sendEvent(userId, {
@@ -254,7 +315,7 @@ export class AuthQueueProcessor {
         message: `${syncResult.synced} diários e ${totalPlans} planos sincronizados (paralelo)`
       };
     } catch (error) {
-      console.error('❌ Falha na sincronização de diários:', error);
+      this.logger.error('❌ Falha na sincronização de diários:', error);
 
       // Enviar evento: erro
       this.syncEventsService.sendEvent(userId, {
@@ -274,7 +335,7 @@ export class AuthQueueProcessor {
    * Sincroniza um diário específico
    */
   async syncSpecificDiary(userId: string, diaryId: string) {
-    console.log(`🎯 Iniciando sincronização específica do diário ${diaryId}`);
+    this.logger.log(`🎯 Iniciando sincronização específica do diário ${diaryId}`);
 
     try {
       // Busca o diário específico
@@ -305,7 +366,7 @@ export class AuthQueueProcessor {
         await this.scrapingService.ensureLoggedIn(page, decryptedCred.username, decryptedCred.password);
 
         // Extrai conteúdo do diário
-        console.log(`📖 Extraindo conteúdo do diário: ${diary.disciplina}`);
+        this.logger.log(`📖 Extraindo conteúdo do diário: ${diary.disciplina}`);
         const contentsResult = await this.scrapingService.scrapeClassContent(
           page,
           diary.externalId,
@@ -315,21 +376,21 @@ export class AuthQueueProcessor {
           throw new Error(contentsResult.message || 'Falha ao extrair conteúdo do diário');
         }
 
-        console.log(`📦 Dados extraídos: ${contentsResult.data.length} itens`);
+        this.logger.debug(`📦 Dados extraídos: ${contentsResult.data.length} itens`);
 
         // Salva no banco
         const result = await this.academicService.syncDiaryContent(userId, diary.id, {
           content: contentsResult.data,
           metadata: contentsResult.metadata
         });
-        console.log(`✅ Conteúdo do diário ${diary.disciplina} sincronizado: ${result.synced} salvos, ${result.realClasses} aulas, ${result.anticipations} antecipações, ${result.skipped} ignorados`);
+        this.logger.log(`✅ Conteúdo do diário ${diary.disciplina} sincronizado: ${result.synced} salvos, ${result.realClasses} aulas, ${result.anticipations} antecipações, ${result.skipped} ignorados`);
 
         return { success: true, diary, ...result };
       } finally {
         await context.close();
       }
     } catch (error) {
-      console.error(`❌ Erro ao sincronizar diário ${diaryId}:`, error.message);
+      this.logger.error(`❌ Erro ao sincronizar diário ${diaryId}:`, error.message);
       throw error;
     }
   }
@@ -338,7 +399,7 @@ export class AuthQueueProcessor {
    * Sincroniza um plano de ensino específico
    */
   async syncSpecificTeachingPlan(userId: string, planId: string) {
-    console.log(`🎯 Iniciando sincronização específica do plano ${planId}`);
+    this.logger.log(`🎯 Iniciando sincronização específica do plano ${planId}`);
 
     try {
       // Busca o plano específico
@@ -369,7 +430,7 @@ export class AuthQueueProcessor {
         await this.scrapingService.ensureLoggedIn(page, decryptedCred.username, decryptedCred.password);
 
         // Extrai dados completos do plano
-        console.log(`📚 Extraindo dados do plano: ${plan.unidadeCurricular}`);
+        this.logger.log(`📚 Extraindo dados do plano: ${plan.unidadeCurricular}`);
         const fullPlanData = await this.scrapingService.getTeachingPlanDetails(
           page,
           plan.diary.externalId,
@@ -417,14 +478,14 @@ export class AuthQueueProcessor {
 
         // Atualiza no banco
         await this.academicService.updateTeachingPlan(plan.id, updateData);
-        console.log(`✅ Plano ${plan.unidadeCurricular} sincronizado`);
+        this.logger.log(`✅ Plano ${plan.unidadeCurricular} sincronizado`);
 
         return { success: true, plan };
       } finally {
         await context.close();
       }
     } catch (error) {
-      console.error(`❌ Erro ao sincronizar plano ${planId}:`, error.message);
+      this.logger.error(`❌ Erro ao sincronizar plano ${planId}:`, error.message);
       throw error;
     }
   }

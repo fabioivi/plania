@@ -32,6 +32,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/api/query-client"
 import { LLMConfigSection } from "@/components/settings/LLMConfigSection"
 import { useCredentials, useSaveCredential, useTestCredential, useDeleteCredential, useDeleteAllData } from "@/hooks/api"
+import { useSyncProgress } from "@/hooks/useSyncProgress"
 import type { AcademicCredential } from "@/types"
 
 import {
@@ -53,6 +54,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useTheme } from "next-themes"
+
+import { Building2 } from "lucide-react"
 
 function DeleteDataButton() {
   const { mutate: deleteAllData, isPending } = useDeleteAllData()
@@ -76,7 +79,7 @@ function DeleteDataButton() {
           <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
           <AlertDialogDescription>
             Isso excluirá permanentemente todos os seus diários importados e planos de ensino gerados.
-            Suas credenciais do IFMS serão mantidas, então você poderá sincronizar os dados novamente,
+            Suas credenciais serão mantidas, então você poderá sincronizar os dados novamente,
             mas perderá quaisquer planos gerados pela IA que não foram enviados.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -94,67 +97,69 @@ function DeleteDataButton() {
   )
 }
 
-export default function SettingsPage() {
-  const { setTheme, theme } = useTheme()
-  const queryClient = useQueryClient()
-  const { data: credentials = [], isLoading: loadingCredential } = useCredentials()
-  const { mutate: saveCredential, isPending: isSaving } = useSaveCredential()
-  const { mutate: testCredential, isPending: isTesting } = useTestCredential()
-  const { mutate: deleteCredential, isPending: isDeleting } = useDeleteCredential()
+interface CredentialCardProps {
+  system: string
+  title: string
+  description: string
+  icon: React.ElementType
+  iconColorClass: string
+  iconBgClass: string
+  credential: AcademicCredential | null
+  loadingCredential: boolean
+  isSaving: boolean
+  isTesting: boolean
+  isDeleting: boolean
+  onSave: (data: any) => void
+  onTest: (id: string) => void
+  onDelete: (id: string) => void
+}
 
+function CredentialCard({
+  system,
+  title,
+  description,
+  icon: Icon,
+  iconColorClass,
+  iconBgClass,
+  credential,
+  loadingCredential,
+  isSaving,
+  isTesting,
+  isDeleting,
+  onSave,
+  onTest,
+  onDelete
+}: CredentialCardProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  const credential = useMemo(() => {
-    return credentials.find((c: AcademicCredential) => c.system === 'ifms') || null
-  }, [credentials])
-
-  useMemo(() => {
+  // Update local state when credential changes (loaded from API)
+  useEffect(() => {
     if (credential) {
       setUsername(credential.username)
     }
   }, [credential])
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (credential && !credential.isVerified && !credential.lastError) {
-      interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
-      }, 2000)
-    }
-    return () => clearInterval(interval)
-  }, [credential, queryClient])
 
   const handleSave = () => {
     if (!username || !password) {
       toast.error('Preencha todos os campos')
       return
     }
-    saveCredential({ system: 'ifms', username, password }, {
-      onSuccess: () => {
-        setPassword('')
-        toast.info('Credenciais salvas. Verificando acesso...')
-      }
-    })
-  }
-
-  const handleTest = () => {
+    onSave({ system, username, password })
+    // We don't clear password here to let user retry if needed, 
+    // or if successful, parent component might trigger refresh.
+    // Ideally, upon success, we clear password field for security if it's a new entry
     if (!credential) {
-      toast.error('Salve as credenciais antes de testar')
-      return
+      setPassword('')
     }
-    testCredential(credential.id)
   }
 
   const handleDelete = () => {
     if (!credential || !confirm('Tem certeza que deseja remover suas credenciais?')) return
-    deleteCredential(credential.id, {
-      onSuccess: () => {
-        setUsername('')
-        setPassword('')
-      }
-    })
+    onDelete(credential.id)
+    setUsername('')
+    setPassword('')
   }
 
   const getStatusColor = () => {
@@ -181,6 +186,185 @@ export default function SettingsPage() {
     }
   }
 
+  const isVerifying = !!(credential && !credential.isVerified && !credential.lastError && !isTesting);
+
+  return (
+    <section className="bg-white dark:bg-card rounded-[2rem] border border-slate-200 dark:border-border shadow-sm overflow-hidden">
+      <div className="p-8 border-b border-slate-100 dark:border-border">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`${iconBgClass} p-3 rounded-2xl`}>
+              <Icon className={`h-8 w-8 ${iconColorClass}`} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-foreground">{title}</h2>
+              <p className="text-slate-500 dark:text-muted-foreground font-medium">{description}</p>
+            </div>
+          </div>
+          {credential && (
+            <Button variant="ghost" className="text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={handleDelete}>
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-8 space-y-6">
+        {loadingCredential ? (
+          <div className="flex items-center justify-center py-12 text-slate-400">
+            <Loader2 className="h-6 w-6 animate-spin mr-3" /> Carregando...
+          </div>
+        ) : (
+          <>
+            {/* Status Bar */}
+            <div className="flex items-center justify-between bg-slate-50 dark:bg-secondary/50 p-4 rounded-xl border border-slate-100 dark:border-border">
+              <div>
+                <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider mb-1">Status da Conexão</p>
+                <div className="flex items-center gap-2">
+                  {isTesting || (credential && !credential.isVerified && !credential.lastError) ? (
+                    <Loader2 className="h-3 w-3 text-indigo-600 animate-spin" />
+                  ) : (
+                    <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor()}`}></div>
+                  )}
+                  <span className="font-bold text-slate-700 dark:text-foreground">{isTesting ? 'Validando...' : getStatusText()}</span>
+                </div>
+              </div>
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider mb-1">Última Verificação</p>
+                <p className="font-bold text-slate-700 dark:text-foreground">{getLastTestDate()}</p>
+              </div>
+            </div>
+
+            {/* Error Mesage */}
+            {credential?.lastError && !isTesting && !isSaving && (
+              <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex items-start gap-3">
+                <XCircle className="h-5 w-5 text-rose-500 mt-0.5" />
+                <p className="text-rose-700 font-medium text-sm">{credential.lastError}</p>
+              </div>
+            )}
+
+            {/* Form */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="pl-1 text-slate-700 dark:text-slate-200">Matrícula / Usuário</Label>
+                <div className="relative group">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                  <Input
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    className="pl-10 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                    placeholder="Ex: usuário do sistema"
+                    disabled={isSaving || isDeleting}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="pl-1 text-slate-700 dark:text-slate-200">Senha do Portal</Label>
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="pl-10 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                    placeholder={credential ? "••••••••" : "Sua senha"}
+                    disabled={isSaving || isDeleting}
+                  />
+                  <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                onClick={handleSave}
+                className="h-12 flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none"
+                disabled={isSaving || isTesting || isDeleting || isVerifying}
+              >
+                {isSaving || isVerifying ? <Loader2 className="animate-spin mr-2" /> : null}
+                {credential ? 'Atualizar Credenciais' : 'Conectar Agora'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => onTest(credential!.id)}
+                disabled={!credential || isSaving || isTesting}
+                className="h-12 flex-1 border-slate-200 dark:border-border font-bold text-slate-700 dark:text-foreground rounded-xl"
+              >
+                {isTesting ? <Loader2 className="animate-spin mr-2" /> : 'Testar Conexão'}
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
+export default function SettingsPage() {
+  const { setTheme, theme } = useTheme()
+  const queryClient = useQueryClient()
+  const { data: credentials = [], isLoading: loadingCredential } = useCredentials()
+  const { mutate: saveCredential, isPending: isSaving } = useSaveCredential()
+  const { mutate: testCredential, isPending: isTesting } = useTestCredential()
+  const { mutate: deleteCredential, isPending: isDeleting } = useDeleteCredential()
+
+  const ifmsCredential = useMemo(() => {
+    return credentials.find((c: AcademicCredential) => c.system === 'ifms') || null
+  }, [credentials])
+
+  const suapCredential = useMemo(() => {
+    return credentials.find((c: AcademicCredential) => c.system === 'suap') || null
+  }, [credentials])
+
+  // Polling for credential status if verifying
+  const { connect, disconnect, progress } = useSyncProgress()
+
+  // Connect to SSE on mount
+  useEffect(() => {
+    connect()
+    return () => disconnect()
+  }, [connect, disconnect])
+
+  // Listen for credential updates via SSE
+  useEffect(() => {
+    if (progress?.stage === 'credential-status') {
+      console.log('📡 [SettingsPage] SSE Received credential update:', progress)
+      queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
+      // Optional: Toast is already handled by useTestCredential mutation, but this acts as backup for background verification updates
+    }
+  }, [progress, queryClient])
+
+  const handleSave = (data: any) => {
+    console.log('💾 [SettingsPage] handleSave triggered for:', data.system)
+    saveCredential(data, {
+      onSuccess: () => {
+        console.log('✅ [SettingsPage] saveCredential SUCCESS')
+        toast.info('Credenciais salvas. Verificando acesso...')
+      },
+      onError: (error) => {
+        console.error('❌ [SettingsPage] saveCredential ERROR:', error)
+      }
+    })
+  }
+
+  const handleTest = (id: string) => {
+    console.log('🧪 [SettingsPage] handleTest triggered for ID:', id)
+    testCredential(id, {
+      onSuccess: (data) => {
+        console.log('✅ [SettingsPage] testCredential SUCCESS:', data)
+      },
+      onError: (error) => {
+        console.error('❌ [SettingsPage] testCredential ERROR:', error)
+      }
+    })
+  }
+
+  const handleDelete = (id: string) => {
+    deleteCredential(id)
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -191,8 +375,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Alerts */}
-      {!credential?.isVerified && (
+      {/* Alerts - Show for ifms as primary or just generic */}
+      {(!ifmsCredential?.isVerified && !suapCredential?.isVerified) ? (
         <div className="bg-white dark:bg-card border border-indigo-100 dark:border-indigo-900/50 rounded-3xl p-8 shadow-xl shadow-indigo-100/50 dark:shadow-none flex items-center gap-6 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-indigo-50 dark:bg-indigo-950/20 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
 
@@ -203,13 +387,11 @@ export default function SettingsPage() {
           <div className="relative z-10">
             <h4 className="font-bold text-slate-800 dark:text-foreground text-lg">Atenção Necessária</h4>
             <p className="text-slate-600 dark:text-muted-foreground font-medium leading-relaxed">
-              É necessário ativar uma credencial do IFMS para <span className="text-indigo-600 font-bold">sincronizar seus diários</span>.
+              É necessário ativar uma credencial (IFMS ou SUAP) para <span className="text-indigo-600 font-bold">sincronizar seus diários</span>.
             </p>
           </div>
         </div>
-      )}
-
-      {credential?.isVerified && (
+      ) : (
         <div className="bg-white dark:bg-card border border-emerald-100 dark:border-emerald-900/50 rounded-3xl p-8 shadow-xl shadow-emerald-100/50 dark:shadow-none flex items-center gap-6 relative overflow-hidden group animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-emerald-50 dark:bg-emerald-950/20 rounded-full blur-2xl opacity-50 group-hover:scale-125 transition-transform duration-700"></div>
 
@@ -220,7 +402,7 @@ export default function SettingsPage() {
           <div className="relative z-10">
             <h4 className="font-bold text-slate-800 dark:text-foreground text-lg">Tudo Certo!</h4>
             <p className="text-slate-600 dark:text-muted-foreground font-medium leading-relaxed">
-              Sua credencial do IFMS está <span className="text-emerald-600 font-bold">conectada e operando normalmente</span>.
+              Sua conta está <span className="text-emerald-600 font-bold">conectada e pronta para uso</span>.
             </p>
           </div>
         </div>
@@ -228,117 +410,42 @@ export default function SettingsPage() {
 
       {/* Main Grid */}
       <div className="grid gap-8">
-        {/* Academic System Card */}
-        <section className="bg-white dark:bg-card rounded-[2rem] border border-slate-200 dark:border-border shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-slate-100 dark:border-border">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-2xl">
-                  <Database className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-foreground">Sistema Acadêmico</h2>
-                  <p className="text-slate-500 dark:text-muted-foreground font-medium">Conexão com o Portal do Professor do IFMS</p>
-                </div>
-              </div>
-              {credential && (
-                <Button variant="ghost" className="text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={handleDelete}>
-                  <Trash2 className="h-5 w-5" />
-                </Button>
-              )}
-            </div>
-          </div>
 
-          <div className="p-8 space-y-6">
-            {loadingCredential ? (
-              <div className="flex items-center justify-center py-12 text-slate-400">
-                <Loader2 className="h-6 w-6 animate-spin mr-3" /> Carregando...
-              </div>
-            ) : (
-              <>
-                {/* Status Bar */}
-                <div className="flex items-center justify-between bg-slate-50 dark:bg-secondary/50 p-4 rounded-xl border border-slate-100 dark:border-border">
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider mb-1">Status da Conexão</p>
-                    <div className="flex items-center gap-2">
-                      {isTesting || (credential && !credential.isVerified && !credential.lastError) ? (
-                        <Loader2 className="h-3 w-3 text-indigo-600 animate-spin" />
-                      ) : (
-                        <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor()}`}></div>
-                      )}
-                      <span className="font-bold text-slate-700 dark:text-foreground">{isTesting ? 'Validando...' : getStatusText()}</span>
-                    </div>
-                  </div>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider mb-1">Última Verificação</p>
-                    <p className="font-bold text-slate-700 dark:text-foreground">{getLastTestDate()}</p>
-                  </div>
-                </div>
+        {/* IFMS Card */}
+        <CredentialCard
+          system="ifms"
+          title="Sistema Acadêmico - IFMS"
+          description="Conexão com o Portal do Professor do IFMS (Q-Acadêmico)"
+          icon={Database}
+          iconColorClass="text-blue-600 dark:text-blue-400"
+          iconBgClass="bg-blue-50 dark:bg-blue-950/20"
+          credential={ifmsCredential}
+          loadingCredential={loadingCredential}
+          isSaving={isSaving}
+          isTesting={isTesting}
+          isDeleting={isDeleting}
+          onSave={handleSave}
+          onTest={handleTest}
+          onDelete={handleDelete}
+        />
 
-                {/* Error Mesage */}
-                {credential?.lastError && (
-                  <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex items-start gap-3">
-                    <XCircle className="h-5 w-5 text-rose-500 mt-0.5" />
-                    <p className="text-rose-700 font-medium text-sm">{credential.lastError}</p>
-                  </div>
-                )}
-
-                {/* Form */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="pl-1 text-slate-700 dark:text-slate-200">Matrícula / Usuário</Label>
-                    <div className="relative group">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                      <Input
-                        value={username}
-                        onChange={e => setUsername(e.target.value)}
-                        className="pl-10 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
-                        placeholder="Ex: nome.sobrenome"
-                        disabled={isSaving || isDeleting}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="pl-1 text-slate-700 dark:text-slate-200">Senha do Portal</Label>
-                    <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        className="pl-10 h-12 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
-                        placeholder={credential ? "••••••••" : "Sua senha"}
-                        disabled={isSaving || isDeleting}
-                      />
-                      <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
-                    onClick={handleSave}
-                    className="h-12 flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none"
-                    disabled={isSaving || isTesting || isDeleting}
-                  >
-                    {isSaving ? <Loader2 className="animate-spin mr-2" /> : null}
-                    {credential ? 'Atualizar Credenciais' : 'Conectar Agora'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleTest}
-                    disabled={!credential || isSaving || isTesting}
-                    className="h-12 flex-1 border-slate-200 dark:border-border font-bold text-slate-700 dark:text-foreground rounded-xl"
-                  >
-                    {isTesting ? <Loader2 className="animate-spin mr-2" /> : 'Testar Conexão'}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
+        {/* SUAP Card */}
+        <CredentialCard
+          system="suap"
+          title="Sistema Acadêmico - SUAP"
+          description="Conexão com o Sistema Unificado de Administração Pública"
+          icon={Building2}
+          iconColorClass="text-emerald-600 dark:text-emerald-400"
+          iconBgClass="bg-emerald-50 dark:bg-emerald-950/20"
+          credential={suapCredential}
+          loadingCredential={loadingCredential}
+          isSaving={isSaving}
+          isTesting={isTesting}
+          isDeleting={isDeleting}
+          onSave={handleSave}
+          onTest={handleTest}
+          onDelete={handleDelete}
+        />
 
         {/* AI Configuration */}
         <section className="bg-white dark:bg-card rounded-[2rem] border border-slate-200 dark:border-border shadow-sm overflow-hidden">

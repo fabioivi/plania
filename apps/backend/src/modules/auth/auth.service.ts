@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,6 +13,7 @@ import { CryptoService } from '../../common/services/crypto.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -61,22 +63,22 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     // Find user
-    console.log(`[AuthService] Attempting login for email: ${loginDto.email}`);
+    this.logger.debug(`Attempting login for email: ${loginDto.email}`);
     const user = await this.userRepository.findOne({
       where: { email: loginDto.email },
     });
 
     if (!user) {
-      console.warn(`[AuthService] User not found: ${loginDto.email}`);
+      this.logger.warn(`User not found: ${loginDto.email}`);
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
     if (!user.isActive) {
-      console.warn(`[AuthService] Inactive user attempted login: ${loginDto.email}`);
+      this.logger.warn(`Inactive user attempted login: ${loginDto.email}`);
       throw new UnauthorizedException('Sua conta está desativada. Entre em contato com o suporte.');
     }
 
-    console.log(`[AuthService] User found. Verifying password...`);
+    this.logger.debug(`User found. Verifying password...`);
 
     // Verify password
     const isPasswordValid = await this.cryptoService.comparePassword(
@@ -85,11 +87,11 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      console.warn(`[AuthService] Invalid password for user: ${loginDto.email}`);
+      this.logger.warn(`Invalid password for user: ${loginDto.email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    console.log(`[AuthService] Password verified. Login successful for: ${loginDto.email}`);
+    this.logger.log(`Password verified. Login successful for: ${loginDto.email}`);
 
     // Generate JWT
     const payload = { sub: user.id, email: user.email };
@@ -111,7 +113,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (user && !user.isActive) {
-      console.warn(`[AuthService] Active token used by inactive user: ${user.email}`);
+      this.logger.warn(`Active token used by inactive user: ${user.email}`);
       return null;
     }
 

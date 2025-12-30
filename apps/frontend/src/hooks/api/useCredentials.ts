@@ -26,8 +26,12 @@ export function useSaveCredential() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: SaveCredentialRequest) => academicService.saveCredential(data),
-    onSuccess: () => {
+    mutationFn: (data: SaveCredentialRequest) => {
+      console.log('📡 [useSaveCredential] Calling API saveCredential:', data.system)
+      return academicService.saveCredential(data)
+    },
+    onSuccess: (data) => {
+      console.log('✅ [useSaveCredential] API Success:', data)
       // Invalidate credentials list to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
       toast.success('Credenciais salvas', {
@@ -35,6 +39,7 @@ export function useSaveCredential() {
       })
     },
     onError: (error: any) => {
+      console.error('❌ [useSaveCredential] API Error:', error)
       const message = error.response?.data?.message || 'Erro ao salvar credenciais'
       toast.error('Erro ao salvar', {
         description: message
@@ -50,8 +55,12 @@ export function useTestCredential() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => academicService.testCredential(id),
+    mutationFn: (id: string) => {
+      console.log('📡 [useTestCredential] Calling API testCredential for ID:', id)
+      return academicService.testCredential(id)
+    },
     onSuccess: (data) => {
+      console.log('✅ [useTestCredential] API Success:', data)
       // Invalidate credentials to refetch with updated status
       queryClient.invalidateQueries({ queryKey: queryKeys.credentials.all })
 
@@ -60,12 +69,15 @@ export function useTestCredential() {
           description: 'Suas credenciais foram verificadas com sucesso.',
         })
       } else {
+        // Fallback: If no specific error message, show the whole object or a clear warning
+        const errorDesc = data.lastError || `Erro sem detalhes (Backend retornou null). Dados: ${JSON.stringify(data)}`;
         toast.error('Falha na autenticação', {
-          description: data.lastError || 'Verifique se seu usuário e senha estão corretos.',
+          description: errorDesc,
         })
       }
     },
     onError: (error: any) => {
+      console.error('❌ [useTestCredential] API Error:', error)
       const message = error.response?.data?.message || 'Erro ao testar credenciais'
       toast.error('Erro de conexão', {
         description: message

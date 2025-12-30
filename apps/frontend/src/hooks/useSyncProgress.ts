@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { api } from '../services/api'
 
 export interface SyncProgress {
-  stage: 'starting' | 'diaries' | 'plans' | 'completed' | 'error'
+  stage: 'starting' | 'diaries' | 'plans' | 'completed' | 'error' | 'credential-status'
   message: string
   current?: number
   total?: number
@@ -17,7 +17,7 @@ export function useSyncProgress() {
 
   const connect = useCallback(() => {
     console.log('🔵 useSyncProgress: Iniciando conexão SSE...')
-    
+
     // Disconnect existing connection
     if (eventSourceRef.current) {
       console.log('⚠️ useSyncProgress: Fechando conexão existente')
@@ -26,12 +26,12 @@ export function useSyncProgress() {
 
     const baseURL = api.defaults.baseURL || 'http://localhost:3001/api'
     const token = localStorage.getItem('token')
-    
+
     if (!token) {
       console.error('❌ useSyncProgress: Token não encontrado no localStorage')
       return
     }
-    
+
     // Enviar token via query parameter (EventSource não suporta headers customizados)
     const url = `${baseURL}/sync/events?token=${encodeURIComponent(token)}`
 
@@ -46,6 +46,9 @@ export function useSyncProgress() {
     }
 
     eventSource.onmessage = (event) => {
+      // Ignore heartbeat messages
+      if (event.data === ': heartbeat') return;
+
       try {
         const data: SyncProgress = JSON.parse(event.data)
         console.log('📊 useSyncProgress: Evento recebido:', data)
@@ -59,10 +62,13 @@ export function useSyncProgress() {
       console.error('❌ useSyncProgress: Erro na conexão SSE:', error)
       console.log('ReadyState:', eventSource.readyState)
       setIsConnected(false)
-      
-      // Não fechar imediatamente, deixar tentar reconectar
+
+      // Se fechado, tentar reconectar
       if (eventSource.readyState === EventSource.CLOSED) {
-        console.log('🔴 useSyncProgress: Conexão fechada pelo servidor')
+        console.log('🔴 useSyncProgress: Conexão fechada. Tentando reconectar em 3s...')
+        setTimeout(() => {
+          connect()
+        }, 3000)
       }
     }
 

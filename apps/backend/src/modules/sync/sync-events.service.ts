@@ -3,7 +3,7 @@ import { Response } from 'express';
 
 export interface SyncProgress {
   userId: string;
-  stage: 'starting' | 'diaries' | 'plans' | 'completed' | 'error';
+  stage: 'starting' | 'diaries' | 'plans' | 'completed' | 'error' | 'credential-status';
   message: string;
   current?: number;
   total?: number;
@@ -27,18 +27,26 @@ export class SyncEventsService {
     response.setHeader('Content-Type', 'text/event-stream');
     response.setHeader('Cache-Control', 'no-cache');
     response.setHeader('Connection', 'keep-alive');
-    response.setHeader('X-Accel-Buffering', 'no');
+    response.setHeader('X-Accel-Buffering', 'no'); // Disable proxy buffering
 
-    // Send initial connection message
+    // Send initial connection message immediately
     this.sendEvent(userId, {
       userId,
       stage: 'starting',
       message: 'Conexão estabelecida. Aguardando sincronização...',
     });
 
+    // Heartbeat every 30s to keep connection alive
+    const heartbeat = setInterval(() => {
+      if (this.clients.has(userId)) {
+        response.write(': heartbeat\n\n');
+      }
+    }, 30000);
+
     // Handle client disconnect
     response.on('close', () => {
       console.log(`❌ SSE: Cliente desconectado - userId: ${userId}`);
+      clearInterval(heartbeat);
       this.clients.delete(userId);
     });
   }
@@ -59,6 +67,7 @@ export class SyncEventsService {
       }
     } else {
       console.log(`⚠️ SSE: Cliente não encontrado - userId: ${userId}`);
+      console.log(`📋 Clientes ativos:`, Array.from(this.clients.keys()));
     }
   }
 

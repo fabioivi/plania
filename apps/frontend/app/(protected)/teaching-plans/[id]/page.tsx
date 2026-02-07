@@ -275,6 +275,17 @@ export default function TeachingPlanViewPage() {
                   Editar com IA
                 </Button>
 
+                <Link href={`/plans/review/${planId}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-slate-200 dark:border-border text-slate-700 dark:text-foreground font-semibold rounded-xl h-10 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Editor Manual
+                  </Button>
+                </Link>
+
                 {/* CTA for generating diary content */}
                 {plan.diaryId && (
                   <Button

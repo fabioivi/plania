@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -295,13 +295,19 @@ export default function PlanReviewPage() {
   }
 
   // Sync state when plan data loads
-  if (plan && !hasChanges) {
-    if (objetivoGeral !== plan.objetivoGeral) setObjetivoGeral(plan.objetivoGeral || '')
-    if (objetivosEspecificos !== plan.objetivosEspecificos) setObjetivosEspecificos(plan.objetivosEspecificos || '')
-    if (numAulasTeorica !== plan.numAulasTeorica) setNumAulasTeorica(plan.numAulasTeorica || 0)
-    if (numAulasPraticas !== plan.numAulasPraticas) setNumAulasPraticas(plan.numAulasPraticas || 0)
-    if (propostaTrabalho.length === 0 && plan.propostaTrabalho) setPropostaTrabalho(plan.propostaTrabalho)
-  }
+  useEffect(() => {
+    if (plan && !hasChanges) {
+      if (objetivoGeral !== (plan.objetivoGeral || '')) setObjetivoGeral(plan.objetivoGeral || '')
+      if (objetivosEspecificos !== (plan.objetivosEspecificos || '')) setObjetivosEspecificos(plan.objetivosEspecificos || '')
+      if (numAulasTeorica !== (plan.numAulasTeorica || 0)) setNumAulasTeorica(plan.numAulasTeorica || 0)
+      if (numAulasPraticas !== (plan.numAulasPraticas || 0)) setNumAulasPraticas(plan.numAulasPraticas || 0)
+      if (plan.propostaTrabalho && (propostaTrabalho.length === 0 || propostaTrabalho !== plan.propostaTrabalho)) {
+        // Only update if generic empty check passes or reference is different
+        // To stay safe with lists, we can just set it if we have no local changes
+        setPropostaTrabalho(plan.propostaTrabalho)
+      }
+    }
+  }, [plan, hasChanges, objetivoGeral, objetivosEspecificos, numAulasTeorica, numAulasPraticas, propostaTrabalho])
 
 
   // Loading state

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import {
@@ -18,6 +18,7 @@ import { SessionCacheService } from '../../common/services/session-cache.service
 
 @Injectable()
 export class ScrapingService {
+  private readonly logger = new Logger(ScrapingService.name);
   private browser: Browser | null = null;
 
   // Configuration constants for delays (in milliseconds)
@@ -142,10 +143,13 @@ export class ScrapingService {
 
   async getBrowser(): Promise<Browser> {
     if (!this.browser || !this.browser.isConnected()) {
-      const headless =
-        this.configService.get<string>('PLAYWRIGHT_HEADLESS') === 'true';
+      // Default to true for headless unless explicitly set to 'false'
+      const headlessConfig = this.configService.get<string>('PLAYWRIGHT_HEADLESS');
+      const headless = headlessConfig !== 'false';
 
       const executablePath = this.configService.get<string>('PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH');
+
+      console.log(`🚀 Launching browser (Headless: ${headless})`);
 
       this.browser = await chromium.launch({
         headless,
@@ -167,10 +171,12 @@ export class ScrapingService {
       viewport: { width: 1920, height: 1080 },
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      javaScriptEnabled: true, // Explicitly enable JS as requested
     });
 
     // Block unnecessary resources to speed up loading
-    await context.route('**/*.{png,jpg,jpeg,gif,css,woff,woff2,svg,ico,ttf}', (route) => route.abort());
+    // Removed CSS from block list to ensure layout/visibility checks work correctly
+    // await context.route('**/*.{png,jpg,jpeg,gif,woff,woff2,svg,ico,ttf}', (route) => route.abort());
 
     return context;
   }
@@ -1085,6 +1091,8 @@ export class ScrapingService {
     }
   }
 
+
+
   /**
    * Get all diaries from professor
    */
@@ -1622,6 +1630,345 @@ export class ScrapingService {
     } finally {
       await page.close();
       await context.close();
+    }
+  }
+
+  /**
+   * Defines the structure for Teaching Plan data to be filled
+   */
+  async fillTeachingPlan(
+    username: string,
+    password: string,
+    diaryId: string,
+    planId: string,
+    planData: any,
+    onProgress?: (message: string) => void,
+  ): Promise<{ success: boolean; message?: string }> {
+    const context = await this.createContext();
+    const page = await context.newPage();
+
+    let success: boolean = false;
+    let message: string = 'Erro desconhecido ao preencher plano';
+
+    this.logger.log(`🚀 [Scraping] Iniciando preenchimento do plano (User: ${username}, Diary: ${diaryId}, Plan: ${planId})`);
+    if (onProgress) onProgress('Iniciando preenchimento do plano...');
+
+    try {
+      // Step 1: Login
+      // Step 1: Login
+      this.logger.log('🔐 Step 1/4: Autenticando no IFMS...');
+      if (onProgress) onProgress('Autenticando no IFMS...');
+
+      // First, invalidate any existing cached session to force fresh login
+      // This prevents issues with expired sessions when sending teaching plans
+      // this.logger.log(`🧹 Invalidando cache de sessão existente para ${username}...`);
+      // await this.sessionCache.invalidateSession(username);
+
+      try {
+        await this.ensureLoggedIn(page, username, password);
+        this.logger.log('✅ Autenticação bem-sucedida');
+      } catch (error) {
+        this.logger.error(`❌ Erro na autenticação: ${error.message}`);
+
+        // Log more details for debugging
+        if (error.message.includes('inválido') || error.message.includes('Credenciais incorretas')) {
+          this.logger.error('⚠️ Falha de autenticação: As credenciais fornecidas foram rejeitadas pelo IFMS');
+          this.logger.error(`   Username usado: ${username.substring(0, 3)}***${username.substring(username.length - 2)}`);
+        }
+
+        return {
+          success: false,
+          message: `Erro ao autenticar no IFMS: ${error.message}. Verifique suas credenciais.`
+        };
+      }
+
+      // Step 2: Navigate to Edit Page
+      // Step 2: Navigate to Edit Page
+      this.logger.log('🌐 Step 2/4: Navegando para o formulário do plano...');
+      if (onProgress) onProgress('Navegando para o formulário do plano...');
+      const editUrl = buildIFMSUrl(IFMS_ROUTES.TEACHING_PLAN.EDIT(diaryId, planId));
+      this.logger.log(`   URL: ${editUrl}`);
+
+      try {
+        await page.goto(editUrl, {
+          waitUntil: 'load', // Wait for full page load (css, images)
+          timeout: 45000     // Increased timeout for full load
+        });
+        this.logger.log('✅ Página carregada com sucesso');
+      } catch (error) {
+        this.logger.error(`❌ Erro ao carregar página: ${error.message}`);
+        return {
+          success: false,
+          message: `Erro ao acessar formulário do plano (Diary: ${diaryId}, Plan: ${planId}): ${error.message}`
+        };
+      }
+
+      // Wait for the form to be ready
+      this.logger.log('⏳ Aguardando formulário estar pronto...');
+      try {
+        await page.waitForSelector('form', { timeout: 15000 });
+        this.logger.log('✅ Formulário detectado');
+
+        // Wait for any processing overlay to disappear before interacting
+        // await this.waitForProcessingOverlay(page);
+      } catch (error) {
+        console.error('❌ Formulário não encontrado');
+        await page.screenshot({ path: `debug_no_form_${planId}_${Date.now()}.png` });
+        return {
+          success: false,
+          message: `Formulário do plano não encontrado. O plano pode não existir no IFMS ou já foi excluído.`
+        };
+      }
+
+      // Wait 5 seconds before starting to fill
+      this.logger.log('⏳ Aguardando 5 segundos antes de preencher...');
+      await page.waitForTimeout(5000);
+
+      // Step 3: Fill Form Fields
+      // Step 3: Fill Form Fields
+      this.logger.log('✏️ Step 3/4: Preenchendo campos do formulário...');
+      if (onProgress) onProgress('Preenchendo campos do formulário...');
+      try {
+        const staticFields = [
+          {
+            selector: TEACHING_PLAN_SELECTORS.INPUTS.STATIC.OBJETIVO_GERAL,
+            value: planData.objetivoGeral,
+            name: 'Objetivo Geral'
+          },
+          {
+            selector: TEACHING_PLAN_SELECTORS.INPUTS.STATIC.OBJETIVOS_ESPECIFICOS,
+            value: planData.objetivosEspecificos,
+            name: 'Objetivos Específicos'
+          },
+          {
+            selector: TEACHING_PLAN_SELECTORS.INPUTS.STATIC.NUM_AULAS_TEORICA,
+            value: planData.numAulasTeorica?.toString(), // Ensure string
+            name: 'Aulas Teóricas'
+          },
+          {
+            selector: TEACHING_PLAN_SELECTORS.INPUTS.STATIC.NUM_AULAS_PRATICAS,
+            value: planData.numAulasPraticas?.toString(), // Ensure string
+            name: 'Aulas Práticas'
+          },
+          // Outros campos comentados para teste gradual
+        ];
+
+        for (const field of staticFields) {
+          if (field.value) {
+            this.logger.log(`   📝 Preenchendo: ${field.name}`);
+            try {
+              await this.fillSimpleField(page, field.selector, field.value);
+              this.logger.log(`   ✅ ${field.name} preenchido`);
+            } catch (fieldError) {
+              this.logger.warn(`   ⚠️ Erro ao preencher ${field.name}: ${fieldError.message}`);
+              // Continue mesmo com erro em um campo específico
+            }
+          }
+        }
+        this.logger.log('✅ Campos preenchidos');
+      } catch (error) {
+        this.logger.error(`❌ Erro ao preencher campos: ${error.message}`);
+        await page.screenshot({ path: `debug_fill_error_${planId}_${Date.now()}.png` });
+        return {
+          success: false,
+          message: `Erro ao preencher campos do formulário: ${error.message}`
+        };
+      }
+
+      // Step 4: Save (Click Save button)
+      // Step 4: Save (Click Save button)
+      this.logger.log('💾 Step 4/4: Salvando plano no IFMS...');
+      if (onProgress) onProgress('Salvando plano no IFMS...');
+
+      // Ensure no processing overlay blocks the save button
+      // await this.waitForProcessingOverlay(page);
+
+      const DRY_RUN = false; // Set to true to disable saving
+
+      if (!DRY_RUN) {
+        try {
+          // Check if save button exists
+          const saveButton = await page.$(TEACHING_PLAN_SELECTORS.INPUTS.BUTTONS.SAVE);
+          if (!saveButton) {
+            this.logger.error('❌ Botão de salvar não encontrado');
+            await page.screenshot({ path: `debug_no_save_button_${planId}_${Date.now()}.png` });
+            return {
+              success: false,
+              message: 'Botão "Salvar" não encontrado no formulário'
+            };
+          }
+
+          this.logger.log('   🖱️ Clicando em Salvar...');
+          await page.click(TEACHING_PLAN_SELECTORS.INPUTS.BUTTONS.SAVE);
+
+          // Wait for success message or error
+          this.logger.log('   ⏳ Aguardando resposta do IFMS...');
+          await Promise.race([
+            page.waitForSelector(IFMS_SELECTORS.COMMON.SUCCESS_MESSAGE, { timeout: 15000 }),
+            page.waitForSelector(IFMS_SELECTORS.COMMON.ERROR_MESSAGE, { timeout: 15000 }),
+          ]);
+
+          const hasError = await page.$(IFMS_SELECTORS.COMMON.ERROR_MESSAGE);
+          if (hasError) {
+            const errorMsg = await page.textContent(IFMS_SELECTORS.COMMON.ERROR_MESSAGE);
+            this.logger.error(`❌ Erro do IFMS: ${errorMsg}`);
+            await page.screenshot({ path: `debug_ifms_error_${planId}_${Date.now()}.png` });
+            return {
+              success: false,
+              message: `Erro retornado pelo IFMS: ${errorMsg}`
+            };
+          }
+
+          success = true;
+          message = 'Plano de ensino salvo com sucesso no IFMS!';
+          this.logger.log('✅ Plano salvo com sucesso!');
+          if (onProgress) onProgress('Plano salvo com sucesso!');
+        } catch (error) {
+          this.logger.error(`❌ Erro ao salvar: ${error.message}`);
+          await page.screenshot({ path: `debug_save_error_${planId}_${Date.now()}.png` });
+          return {
+            success: false,
+            message: `Erro ao salvar plano no IFMS: ${error.message}`
+          };
+        }
+      } else {
+        success = true;
+        message = 'Plano verificado (modo simulação - DRY_RUN ativo)';
+        this.logger.log('⚠️ Modo DRY_RUN: Salvamento desabilitado');
+      }
+
+    } catch (error) {
+      this.logger.error(`❌ Erro inesperado ao preencher plano: ${error.message}`);
+      this.logger.error(`Stack trace: ${error.stack}`);
+      await page.screenshot({ path: `debug_unexpected_error_${planId}_${Date.now()}.png` });
+      success = false;
+      message = `Erro inesperado: ${error.message}`;
+    } finally {
+      await page.close();
+      await context.close();
+      this.logger.log('🔒 Contexto do navegador fechado');
+    }
+
+    return { success, message };
+  }
+
+
+
+  /**
+   * Helper to fill a simple field (input/textarea)
+   */
+  private async fillSimpleField(page: Page, selector: string, value: string): Promise<void> {
+    try {
+      const element = await page.$(selector);
+      if (element) {
+        await element.scrollIntoViewIfNeeded();
+        await element.fill(''); // Clear first
+        await this.humanType(page, selector, value);
+      } else {
+        console.warn(`⚠️ Field selector not found: ${selector}`);
+      }
+    } catch (e) {
+      console.warn(`Failed to fill field ${selector}: ${e.message}`);
+    }
+  }
+
+  /**
+   * Helper to fill Proposta de Trabalho table
+   */
+  private async fillPropostaTrabalho(page: Page, items: any[]): Promise<void> {
+    for (const item of items) {
+      // Click Add Button
+      await page.click(TEACHING_PLAN_SELECTORS.INPUTS.BUTTONS.ADD_PROPOSTA_ROW);
+      await page.waitForTimeout(500); // Wait for JS to render row
+
+      const table = page.locator(TEACHING_PLAN_SELECTORS.INPUTS.PROPOSTA.TABLE_ID);
+      const lastRow = table.locator('tbody tr').last();
+
+      if (item.mes) {
+        const mesSelect = lastRow.locator('select[name*="mes"]');
+        if ((await mesSelect.count()) > 0) {
+          await mesSelect.selectOption({ label: item.mes }).catch(() => { });
+        }
+      }
+
+      if (item.conteudo) await lastRow.locator('textarea[name*="conteudo"]').fill(item.conteudo);
+      if (item.metodologia) await lastRow.locator('textarea[name*="metodologia_item"]').fill(item.metodologia).catch(() => { });
+      if (item.recursos) await lastRow.locator('textarea[name*="recursos_item"]').fill(item.recursos).catch(() => { });
+      if (item.numAulas) await lastRow.locator('input[name*="num_aulas"]').fill(String(item.numAulas)).catch(() => { });
+
+      if (item.dataInicio) await lastRow.locator('input[name*="data_inicio"]').fill(item.dataInicio).catch(() => { });
+      if (item.dataFim) await lastRow.locator('input[name*="data_fim"]').fill(item.dataFim).catch(() => { });
+
+      await page.waitForTimeout(300);
+    }
+  }
+
+  /**
+   * Helper to fill Avaliação table
+   */
+  private async fillAvaliacao(page: Page, items: any[]): Promise<void> {
+    for (const item of items) {
+      await page.click(TEACHING_PLAN_SELECTORS.INPUTS.BUTTONS.ADD_AVALIACAO_ROW);
+      await page.waitForTimeout(500);
+
+      const table = page.locator(TEACHING_PLAN_SELECTORS.INPUTS.AVALIACAO_DINAMICA.TABLE_ID);
+      const lastRow = table.locator('tbody tr').last();
+
+      if (item.data) await lastRow.locator('input[name*="data_avaliacao"]').fill(item.data).catch(() => { });
+      if (item.instrumento) await lastRow.locator('input[name*="instrumento"]').fill(item.instrumento).catch(() => { });
+      if (item.peso) await lastRow.locator('input[name*="peso"]').fill(String(item.peso)).catch(() => { });
+
+      await page.waitForTimeout(300);
+    }
+  }
+
+  /**
+   * Wait for efficient overlay to disappear
+   */
+  private async waitForProcessingOverlay(page: Page): Promise<void> {
+    try {
+      this.logger.log('⏳ Verificando se há mensagens de processamento...');
+
+      // Use text-based selectors for robustness against class changes
+      // Also include common loading classes
+      const overlaySelectors = [
+        IFMS_SELECTORS.COMMON.PROCESSING_OVERLAY
+      ].join(',');
+
+      // Check if any overlay is visible first to avoid unnecessary waiting logic if not needed
+      const isOverlayVisible = await page.evaluate((selector) => {
+        // Simple check for elements matching selectors or containing text
+        const el = document.querySelector(selector) ||
+          Array.from(document.querySelectorAll('div, span, p, h1, h2, h3, h4')).find(e =>
+            (e.textContent?.includes('Processando') || e.textContent?.includes('Aguarde')) &&
+            window.getComputedStyle(e).display !== 'none'
+          );
+
+        return !!el;
+      }, overlaySelectors);
+
+      if (isOverlayVisible) {
+        this.logger.log('⏳ Detectada mensagem "Processando...", aguardando desaparecer...');
+
+        // Wait for it to disappear (max 30s)
+        // We use a simple polling approach or waitForFunction for broad coverage
+        await page.waitForFunction(() => {
+          const el = Array.from(document.querySelectorAll('div, span, p')).find(e =>
+            (e.textContent?.includes('Processando') || e.textContent?.includes('Aguarde')) &&
+            window.getComputedStyle(e).display !== 'none'
+          );
+          return !el;
+        }, { timeout: 30000 }).catch(() => {
+          this.logger.warn('⚠️ Timeout aguardando mensagem "Processando" desaparecer.');
+        });
+
+        this.logger.log('✅ Mensagem desapareceu (ou timeout exaurido), prosseguindo...');
+        await page.waitForTimeout(1000); // Safety buffer
+      } else {
+        this.logger.log('   ✅ Nenhuma mensagem de processamento bloqueante encontrada.');
+      }
+    } catch (e) {
+      this.logger.warn(`⚠️ Aviso ao aguardar overlay: ${e.message}`);
     }
   }
 

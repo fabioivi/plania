@@ -891,10 +891,13 @@ export class AcademicService {
   /**
    * Send a teaching plan to IFMS via scraping
    */
-  async sendTeachingPlanToIFMS(userId: string, planId: string): Promise<{ success: boolean; message: string; externalId?: string }> {
-    // Find the teaching plan
+  /**
+   * Queue a teaching plan to be filled in IFMS (background job)
+   */
+  async queueTeachingPlanFilling(userId: string, planId: string): Promise<{ success: boolean; message: string }> {
+    // Basic validation before queuing
     const plan = await this.teachingPlanRepository.findOne({
-      where: { id: planId },
+      where: { id: planId, userId },
       relations: ['diary'],
     });
 
@@ -902,41 +905,161 @@ export class AcademicService {
       throw new NotFoundException('Plano de ensino não encontrado');
     }
 
-    // Verify the plan belongs to a diary of this user
-    if (plan.diary.userId !== userId) {
-      throw new BadRequestException('Plano não pertence a este usuário');
-    }
-
-    // Verify plan is AI-generated and not yet sent
-    if (plan.source !== 'ai') {
-      throw new BadRequestException('Apenas planos gerados por IA podem ser enviados');
-    }
-
-    if (plan.sentToIFMS) {
-      throw new BadRequestException('Este plano já foi enviado ao IFMS');
-    }
-
-    // Get user's IFMS credentials
-    const credential = await this.credentialRepository.findOne({
-      where: { userId, system: 'ifms', isVerified: true },
+    // Add to queue
+    await this.authQueue.add('fill-teaching-plan', {
+      userId,
+      planId,
     });
 
-    if (!credential) {
-      throw new NotFoundException('Credencial IFMS verificada não encontrada');
+    return {
+      success: true,
+      message: 'O preenchimento do plano foi iniciado em segundo plano. Acompanhe o progresso na tela.',
+    };
+  }
+
+  /**
+   * Send a teaching plan to IFMS via scraping
+   * NOW accepts an onProgress callback for real-time updates
+   */
+  async sendTeachingPlanToIFMS(
+    userId: string,
+    planId: string,
+    onProgress?: (message: string) => void,
+  ): Promise<{ success: boolean; message?: string }> {
+    this.logger.log(`🚀 [sendTeachingPlanToIFMS] INÍCIO - userId: ${userId}, planId: ${planId}`);
+
+    if (onProgress) onProgress('Iniciando processo de envio...');
+
+    this.logger.log(`📖 [Step 1/7] Buscando plano de ensino...`);
+    const plan = await this.teachingPlanRepository.findOne({
+      where: { id: planId, userId },
+      relations: ['diary'],
+    });
+    this.logger.log(`✅ [Step 1/7] Plano encontrado: ${plan ? 'SIM' : 'NÃO'}`);
+
+    if (!plan) {
+      throw new NotFoundException('Plano de ensino não encontrado');
     }
 
-    // TODO: Implement actual scraping logic to send plan to IFMS
-    // This is a placeholder that will be implemented in Phase 4
-    throw new BadRequestException('Envio ao IFMS ainda não implementado. Será implementado na Fase 4.');
+    if (!plan.diary) {
+      this.logger.error(`Plan ${planId} has no associated diary`);
+      return {
+        success: false,
+        message: 'Erro: Plano de ensino não está associado a um diário'
+      };
+    }
 
-    // Future implementation will:
-    // 1. Use scrapingService to login to IFMS
-    // 2. Navigate to teaching plan form
-    // 3. Fill form with plan data
-    // 4. Submit form
-    // 5. Get external ID from IFMS
-    // 6. Update plan with externalId, sentToIFMS=true, sentAt=now
+    if (!plan.diary.externalId) {
+      this.logger.error(`Diary for plan ${planId} has no externalId`);
+      return {
+        success: false,
+        message: 'Erro: Diário não possui ID externo do IFMS'
+      };
+    }
+
+    if (!plan.externalId) {
+      this.logger.error(`Plan ${planId} has no externalId`);
+      return {
+        success: false,
+        message: 'Erro: Plano não possui ID externo do IFMS. Use apenas planos sincronizados do IFMS.'
+      };
+    }
+
+
+    this.logger.log(`🔐 [Step 2/7] Buscando credenciais IFMS (system: 'ifms')...`);
+    if (onProgress) onProgress('Buscando credenciais...');
+
+    // Get user IFMS credentials (same pattern as sendDiaryContentToSystem)
+    const credential = await this.credentialRepository.findOne({
+      where: { userId, system: 'ifms' },
+    });
+    this.logger.log(`✅ [Step 2/7] Credencial encontrada: ${credential ? 'SIM (id: ' + credential.id + ')' : 'NÃO'}`);
+
+    if (!credential) {
+      return {
+        success: false,
+        message: 'Credenciais IFMS não encontradas. Configure suas credenciais IFMS primeiro.'
+      };
+    }
+
+    this.logger.log(`🔓 [Step 3/7] Descriptografando senha...`);
+    // Decrypt password (same pattern as sendDiaryContentToSystem)
+    const password = this.cryptoService.decrypt({
+      encrypted: credential.passwordEncrypted,
+      iv: credential.passwordIv,
+      authTag: credential.passwordAuthTag,
+    });
+    this.logger.log(`✅ [Step 3/7] Senha descriptografada: ${password ? 'SIM' : 'NÃO'}`);
+
+    // Validate decrypted credentials
+    if (!credential.username || !password) {
+      this.logger.error('Credentials validation failed: username or password is empty');
+      return {
+        success: false,
+        message: 'Erro: Credenciais descriptografadas estão vazias'
+      };
+    }
+
+    this.logger.log(`✅ [Step 4/7] Validação de credenciais passou`);
+    // Log credential info for debugging (mask username for security)
+    const maskedUsername = credential.username.substring(0, 3) + '***' + credential.username.substring(credential.username.length - 2);
+    this.logger.log(`📋 [Step 5/7] Usando credenciais IFMS - username: ${maskedUsername}, system: ${credential.system}`);
+    this.logger.log(`📊 [Step 5/7] Detalhes do plano - diaryId: ${plan.diary.externalId}, planId: ${plan.externalId}`);
+    this.logger.log(`📝 [Step 5/7] Objetivo Geral presente: ${plan.objetivoGeral ? 'SIM' : 'NÃO'}`);
+
+    this.logger.log(`💾 [Step 6/7] Atualizando status do plano...`);
+    if (onProgress) onProgress('Atualizando status para envio...');
+
+    // Update status to processing
+    plan.status = 'Enviando para o IFMS...';
+    await this.teachingPlanRepository.save(plan);
+    this.logger.log(`✅ [Step 6/7] Status atualizado para 'Enviando para o IFMS...'`);
+
+    try {
+      this.logger.log(`🌐 [Step 7/7] Chamando scraping service...`);
+      this.logger.log(`📤 Parâmetros: username=${maskedUsername}, diaryId=${plan.diary.externalId}, planId=${plan.externalId}`);
+
+      // Call scraping service to fill the plan
+      const result = await this.scrapingService.fillTeachingPlan(
+        credential.username,
+        password,  // Use local variable, not credential.password
+        plan.diary.externalId, // diaryId in IFMS
+        plan.externalId,     // planId in IFMS
+        plan, // Pass the whole entity, the service will pick fields
+        onProgress, // Pass the callback
+      );
+
+      if (result.success) {
+        plan.status = 'Sincronizado com Sucesso (Rascunho)';
+        plan.sentToIFMS = true;
+        plan.sentAt = new Date();
+        await this.teachingPlanRepository.save(plan);
+        this.logger.log(`✅ Plan ${planId} sent successfully to IFMS`);
+        return { success: true, message: 'Plano preenchido com sucesso no IFMS!' };
+      } else {
+        plan.status = 'Erro na Sincronização';
+        await this.teachingPlanRepository.save(plan);
+        this.logger.error(`❌ Failed to send plan ${planId}: ${result.message}`);
+        return {
+          success: false,
+          message: result.message || 'Falha ao preencher plano no IFMS'
+        };
+      }
+
+    } catch (error) {
+      this.logger.error(`❌ Exception while sending plan ${planId}: ${error.message}`, error.stack);
+      plan.status = 'Erro na Sincronização';
+      await this.teachingPlanRepository.save(plan);
+
+      // Return specific error message instead of throwing
+      return {
+        success: false,
+        message: `Erro ao enviar plano: ${error.message}`
+      };
+    }
   }
+
+
 
   /**
    * Gera conteúdo do diário baseado no plano de ensino

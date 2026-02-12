@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AcademicService } from './academic.service';
 import { SaveCredentialDto } from './academic.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -191,6 +191,8 @@ export class AcademicController {
     };
   }
 
+
+
   @Put('teaching-plans/:id')
   @ApiOperation({ summary: 'Update an existing teaching plan' })
   @ApiParam({ name: 'id', description: 'ID of the teaching plan' })
@@ -230,8 +232,14 @@ export class AcademicController {
   @ApiResponse({ status: 200, description: 'Teaching plan sent to IFMS successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request or plan already sent' })
   @ApiResponse({ status: 404, description: 'Teaching plan or credentials not found' })
-  async sendTeachingPlanToIFMS(@Request() req, @Param('id') id: string) {
-    const result = await this.academicService.sendTeachingPlanToIFMS(req.user.id, id);
+  async sendTeachingPlanToIFMS(
+    @Request() req,
+    @Param('id') id: string
+  ) {
+    const result = await this.academicService.queueTeachingPlanFilling(
+      req.user.id,
+      id
+    );
     return result;
   }
 

@@ -1,4 +1,4 @@
-import './instrument'; // Must be the first import
+// import './instrument'; // Must be the first import - TEMPORARILY DISABLED: No SENTRY_DSN in .env, blocking console logs
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -6,10 +6,18 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
+
+
   const app = await NestFactory.create(AppModule);
 
   // Cookie parser middleware (Express já vem com @nestjs/platform-express)
   app.use(cookieParser());
+
+  // Logging Middleware
+  app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.originalUrl || req.url}`);
+    next();
+  });
 
   // Enable CORS
   app.enableCors({

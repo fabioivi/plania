@@ -428,4 +428,70 @@ export class AuthQueueProcessor {
       throw error;
     }
   }
+  @Process('fill-teaching-plan')
+  async handleFillTeachingPlan(job: Job) {
+    const { userId, planId } = job.data;
+    const startTime = Date.now();
+
+    try {
+      console.log(`🚀 Iniciando preenchimento de plano ${planId} para usuário ${userId}`);
+
+      // Enviar evento: iniciando
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'starting',
+        message: 'Iniciando preenchimento do plano de ensino...',
+      });
+
+      // Execute scraping with progress callback
+      const result = await this.academicService.sendTeachingPlanToIFMS(
+        userId,
+        planId,
+        (message: string) => {
+          // Send progress message to frontend
+          this.syncEventsService.sendEvent(userId, {
+            userId,
+            stage: 'starting', // Keep stage as starting/processing
+            message: message,
+          });
+        }
+      );
+
+      const durationMs = Date.now() - startTime;
+      const durationSeconds = (durationMs / 1000).toFixed(1);
+
+      if (result.success) {
+        // Send completion event
+        this.syncEventsService.sendEvent(userId, {
+          userId,
+          stage: 'completed',
+          message: `Plano preenchido com sucesso em ${durationSeconds}s!`,
+          duration: durationMs
+        });
+      } else {
+        // Send error event
+        this.syncEventsService.sendEvent(userId, {
+          userId,
+          stage: 'error',
+          message: result.message || 'Falha ao preencher plano',
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ Falha ao preencher plano:', error);
+
+      // Enviar evento: erro
+      this.syncEventsService.sendEvent(userId, {
+        userId,
+        stage: 'error',
+        message: error.message || 'Erro ao preencher plano. Por favor, tente novamente.',
+      });
+
+      return {
+        success: false,
+        error: error.message || 'Erro ao preencher plano'
+      };
+    }
+  }
 }

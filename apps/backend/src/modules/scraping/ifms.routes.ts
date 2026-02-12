@@ -28,11 +28,11 @@ export const IFMS_ROUTES = {
   // Teaching Plan (Plano de Ensino)
   TEACHING_PLAN: {
     LIST: (diaryId: string) => `/administrativo/professores/diario/${diaryId}/plano_ensino`,
-    VIEW: (diaryId: string, planId: string) => 
+    VIEW: (diaryId: string, planId: string) =>
       `/administrativo/professores/diario/${diaryId}/plano_ensino/ver/${planId}`,
-    EDIT: (diaryId: string, planId: string) => 
+    EDIT: (diaryId: string, planId: string) =>
       `/administrativo/professores/diario/${diaryId}/plano_ensino/editar/${planId}`,
-    ADD: (diaryId: string) => 
+    ADD: (diaryId: string) =>
       `/administrativo/professores/diario/${diaryId}/plano_ensino/adicionar`,
   },
 } as const;
@@ -53,6 +53,7 @@ export const IFMS_SELECTORS = {
   // Common Elements
   COMMON: {
     LOADING: '.loading, .spinner',
+    PROCESSING_OVERLAY: '#carregando, .blockUI',
     SUCCESS_MESSAGE: '.alert-success',
     ERROR_MESSAGE: '.alert-error',
     LOGOUT_BUTTON: 'a[href*="logout"]',

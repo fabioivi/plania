@@ -156,4 +156,11 @@ export const academicService = {
     )
     return response.data
   },
+
+  async applyTeachingPlan(planId: string): Promise<{ success: boolean; message?: string }> {
+    const response = await apiClient.post<{ success: boolean; message?: string }>(
+      `/academic/teaching-plans/${planId}/send`
+    )
+    return response.data
+  },
 }

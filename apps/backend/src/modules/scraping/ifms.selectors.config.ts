@@ -23,7 +23,7 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       validators: ['Classe:', 'Professor(es):'],
     },
-    
+
     // Table 1 (Section 01): IDENTIFICAÇÃO
     IDENTIFICATION: {
       primary: 'table.table:has(th:contains("IDENTIFICAÇÃO"))',
@@ -33,49 +33,49 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       validators: ['CAMPUS:', 'CURSO:', 'PROFESSOR(ES):'],
     },
-    
+
     // Table 2 (Section 02): EMENTA
     EMENTA: {
       primary: 'table.table:has(th:contains("EMENTA"))',
       fallbacks: ['table.table:has(th:text-matches("02"))'],
       validators: ['EMENTA'],
     },
-    
+
     // Table 3 (Section 03): OBJETIVO GERAL
     OBJETIVO_GERAL: {
       primary: 'table.table:has(th:contains("OBJETIVO GERAL"))',
       fallbacks: ['table.table:has(th:text-matches("03"))'],
       validators: ['OBJETIVO GERAL'],
     },
-    
+
     // Table 4 (Section 04): OBJETIVOS ESPECÍFICOS
     OBJETIVOS_ESPECIFICOS: {
       primary: 'table.table:has(th:contains("OBJETIVOS ESPECÍFICOS"))',
       fallbacks: ['table.table:has(th:text-matches("04"))'],
       validators: ['OBJETIVOS ESPECÍFICOS'],
     },
-    
+
     // Table 5 (Section 05): AVALIAÇÃO DA APRENDIZAGEM
     AVALIACAO: {
       primary: 'table.table:has(th:contains("AVALIAÇÃO DA APRENDIZAGEM"))',
       fallbacks: ['table.table:has(th:text-matches("05"))'],
       validators: ['AVALIAÇÃO'],
     },
-    
+
     // Table 6 (Section 06): RECUPERAÇÃO
     RECUPERACAO: {
       primary: 'table.table:has(th:contains("RECUPERAÇÃO"))',
       fallbacks: ['table.table:has(th:text-matches("06"))'],
       validators: ['RECUPERAÇÃO'],
     },
-    
+
     // Table 7 (Section 07): REFERÊNCIAS
     REFERENCIAS: {
       primary: 'table.table:has(th:contains("REFERÊNCIAS"))',
       fallbacks: ['table.table:has(th:text-matches("07"))'],
       validators: ['REFERÊNCIAS'],
     },
-    
+
     // Table 8 (Section 08): PROPOSTA DE TRABALHO
     PROPOSTA_TRABALHO: {
       primary: 'table.table:has(th:contains("PROPOSTA DE TRABALHO"))',
@@ -95,7 +95,7 @@ export const TEACHING_PLAN_SELECTORS = {
         'table:has(th:contains("Instrumentos de avaliação"))',
       ],
     },
-    
+
     PROPOSTA_TRABALHO_INNER: {
       primary: 'table#proposta_trabalho',
       fallbacks: [
@@ -116,21 +116,21 @@ export const TEACHING_PLAN_SELECTORS = {
         'tr:first-of-type td:first-of-type',
       ],
     },
-    
+
     UNIDADE_CURRICULAR_CODIGO: {
       selectors: [
         'td:contains("Unidade Curricular")',
         'tr:nth-of-type(1) td:nth-of-type(2)',
       ],
     },
-    
+
     AULAS_NORMAIS_CRIADAS: {
       selectors: [
         'td:contains("Aulas Normais Criadas")',
         'tr:nth-of-type(2) td:nth-of-type(3)',
       ],
     },
-    
+
     // Identification fields
     CAMPUS: {
       selectors: [
@@ -139,7 +139,7 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       pattern: /CAMPUS:\s*(.+)/,
     },
-    
+
     ANO_SEMESTRE: {
       selectors: [
         'td:contains("ANO/SEMESTRE:")',
@@ -147,7 +147,7 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       pattern: /ANO\/SEMESTRE:\s*(.+)/,
     },
-    
+
     CURSO: {
       selectors: [
         'td:contains("CURSO:")',
@@ -155,7 +155,7 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       pattern: /CURSO:\s*(.+)/,
     },
-    
+
     UNIDADE_CURRICULAR: {
       selectors: [
         'td:contains("UNIDADE CURRICULAR")',
@@ -163,7 +163,7 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       pattern: /UNIDADE CURRICULAR.*:\s*(.+)/,
     },
-    
+
     PROFESSORES: {
       selectors: [
         'td:contains("PROFESSOR(ES):")',
@@ -171,26 +171,26 @@ export const TEACHING_PLAN_SELECTORS = {
       ],
       pattern: /PROFESSOR\(ES\):\s*(.+)/,
     },
-    
+
     CARGA_HORARIA: {
       selectors: [
         'td:contains("Carga horária total")',
       ],
       pattern: /Carga horária total.*:\s*(\d+\.?\d*)/,
     },
-    
+
     NUM_SEMANAS: {
       pattern: /Nº de semanas:\s*(\d+)/,
     },
-    
+
     NUM_AULAS_TEORICA: {
       pattern: /Nº total de aulas teóricas:\s*(\d+)/,
     },
-    
+
     NUM_AULAS_PRATICAS: {
       pattern: /Nº total de aulas práticas:\s*(\d+)/,
     },
-    
+
     // Identification section - workload and classes data (Row 5)
     CARGA_HORARIA_CELL: {
       selectors: [
@@ -207,7 +207,7 @@ export const TEACHING_PLAN_SELECTORS = {
         'table.table tr:nth-child(5) td:last-child', // Row 5, Cell 2
       ],
     },
-    
+
     // Status fields (Rows 6 and 7)
     STATUS_APROVACAO_CELL: {
       selectors: [
@@ -238,7 +238,7 @@ export const TEACHING_PLAN_SELECTORS = {
         'div:has(table:has(th:contains("Situação")))',
       ],
     },
-    
+
     TABLE: {
       primary: '#accordion_historico table.diario',
       fallbacks: [
@@ -259,6 +259,59 @@ export const TEACHING_PLAN_SELECTORS = {
     DATE_BR: /\d{2}\/\d{2}\/\d{4}/, // "30/09/2025"
     DATETIME_BR: /\d{2}\/\d{2}\/\d{4}\s+às\s+\d{2}:\d{2}:\d{2}/, // "30/09/2025 às 14:19:12"
   },
+
+  /**
+   * Selectors for EDITING/WRITING data
+   */
+  INPUTS: {
+    // Action Buttons
+    BUTTONS: {
+      SAVE: 'button.btn-success:has-text("Salvar Plano de Ensino"), button:has-text("Salvar Plano"), #btn_salvar',
+      SEND_TO_COORD: 'button:has-text("Enviar para Coordenação")',
+      ADD_PROPOSTA_ROW: 'table#proposta_trabalho button.add-row, button:has-text("Adicionar Conteúdo")', // Generic fallback
+      ADD_AVALIACAO_ROW: 'table#avaliacao button.add-row, button:has-text("Adicionar Avaliação")', // Generic fallback
+      DELETE_ROW: 'button.delete-row, a.btn-danger',
+    },
+
+    // Static text areas (usually defined by name or id)
+    STATIC: {
+      EMENTA: 'textarea[name*="ementa"], textarea#ementa',
+      OBJETIVO_GERAL: 'textarea[name*="objetivo_geral"], textarea#objetivo_geral',
+      OBJETIVOS_ESPECIFICOS: 'textarea[name*="objetivos_especificos"], textarea#objetivos_especificos',
+      METODOLOGIA: 'textarea[name*="metodologia"], textarea#metodologia',
+      RECURSOS: 'textarea[name*="recursos"], textarea#recursos',
+      AVALIACAO: 'textarea[name*="avaliacao"], textarea#avaliacao', // For general description if applicable
+      RECUPERACAO: 'textarea[name*="recuperacao"], textarea#recuperacao',
+      REFERENCIAS: 'textarea[name*="referencias"], textarea#referencias',
+      NUM_AULAS_TEORICA: 'input[name="data[PlanoEnsino][qt_aulas_teoricas]"], input#PlanoEnsinoQtAulasTeoricas',
+      NUM_AULAS_PRATICAS: 'input[name="data[PlanoEnsino][qt_aulas_praticas]"], input#PlanoEnsinoQtAulasPraticas',
+    },
+
+    // Dynamic sections (Proposta de Trabalho)
+    PROPOSTA: {
+      TABLE_ID: 'table#proposta_trabalho',
+      // Fields usually indexed like name="proposta[0].mes"
+      FIELDS: {
+        MES: 'select[name*="mes"]',
+        PERIODO_INICIO: 'input[name*="data_inicio"]',
+        PERIODO_FIM: 'input[name*="data_fim"]',
+        NUM_AULAS: 'input[name*="num_aulas"]',
+        CONTEUDO: 'textarea[name*="conteudo"]',
+        METODOLOGIA: 'textarea[name*="metodologia_item"]',
+        RECURSOS: 'textarea[name*="recursos_item"]',
+      }
+    },
+
+    // Dynamic sections (Avaliação)
+    AVALIACAO_DINAMICA: {
+      TABLE_ID: 'table#avaliacao',
+      FIELDS: {
+        DATA: 'input[name*="data_avaliacao"]',
+        INSTRUMENTO: 'input[name*="instrumento"]',
+        PESO: 'input[name*="peso"]',
+      }
+    }
+  }
 };
 
 /**
@@ -273,7 +326,7 @@ export function getTableBySection(
   if (table && validateTableContent(table, sectionConfig.validators)) {
     return table;
   }
-  
+
   // Try fallback selectors
   for (const fallback of sectionConfig.fallbacks) {
     table = document.querySelector(fallback);
@@ -281,7 +334,7 @@ export function getTableBySection(
       return table;
     }
   }
-  
+
   return null;
 }
 
@@ -293,7 +346,7 @@ function validateTableContent(
   validators?: string[]
 ): boolean {
   if (!validators || validators.length === 0) return true;
-  
+
   const text = table.textContent || '';
   return validators.some(validator => text.includes(validator));
 }

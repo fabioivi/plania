@@ -8,7 +8,7 @@ import { Page } from 'playwright';
 
 export interface CacheScrapingOptions {
   externalId: string;
-  scrapeType: 'teaching_plan' | 'diary' | 'proposta_trabalho';
+  scrapeType: 'teaching_plan' | 'diary' | 'proposta_trabalho' | 'fill_teaching_plan_error';
   url: string;
   page: Page;
   extractedData?: any;
@@ -81,7 +81,7 @@ export class ScrapingDebugService {
 
       // Take screenshot only if requested
       let screenshotPath: string | null = null;
-      
+
       if (takeScreenshot) {
         const timestamp = Date.now();
         const screenshotFilename = `${scrapeType}_${externalId}_${timestamp}.png`;
@@ -91,7 +91,7 @@ export class ScrapingDebugService {
           path: screenshotPath,
           fullPage: true,
         });
-        
+
         console.log(`📸 Screenshot saved: ${screenshotPath}`);
       }
 
@@ -231,7 +231,7 @@ export class ScrapingDebugService {
     const avgCompleteness =
       completenessValues.length > 0
         ? completenessValues.reduce((a, b) => a + b, 0) /
-          completenessValues.length
+        completenessValues.length
         : 0;
 
     // Find common missing fields

@@ -27,10 +27,11 @@ import {
   Save
 } from "lucide-react"
 import Link from "next/link"
-import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan } from "@/hooks/api"
+import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan, useSendTeachingPlan } from "@/hooks/api"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { toast } from "sonner"
 import { aiService } from "@/services/api/ai.service"
+import { academicService } from "@/services/api/academic.service"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,9 +69,9 @@ export default function PlanReviewPage() {
 
   const [showAiAssistant, setShowAiAssistant] = useState(true)
   const [aiPrompt, setAiPrompt] = useState("")
-  const [isFilling, setIsFilling] = useState(false)
-  const [fillSuccess, setFillSuccess] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  // Apply plan mutation
+  const { mutate: applyPlan, isPending: isFilling, isSuccess: fillSuccess } = useSendTeachingPlan()
 
   // AI loading states
   const [aiLoading, setAiLoading] = useState<string | null>(null) // Which action is loading
@@ -82,19 +83,15 @@ export default function PlanReviewPage() {
   const [numAulasPraticas, setNumAulasPraticas] = useState(plan?.numAulasPraticas || 0)
   const [propostaTrabalho, setPropostaTrabalho] = useState(plan?.propostaTrabalho || [])
   const [hasChanges, setHasChanges] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const handleFillDiary = async () => {
-    setIsFilling(true)
-    setFillSuccess(false)
-
-    // Simular preenchimento automático do diário
-    await new Promise(resolve => setTimeout(resolve, 3000))
-
-    setIsFilling(false)
+  /* const handleFillSuccess = () => {
     setFillSuccess(true)
+    // Optionally refresh or redirect
+  } */
 
-    // Remover mensagem de sucesso após 5 segundos
-    setTimeout(() => setFillSuccess(false), 5000)
+  const handleFillDiary = () => {
+    applyPlan(planId)
   }
 
   const handleDeleteClick = () => {
@@ -426,17 +423,17 @@ export default function PlanReviewPage() {
                     {isFilling ? (
                       <>
                         <Wand2 className="h-4 w-4 animate-spin" />
-                        Preenchendo...
+                        Enviando...
                       </>
                     ) : fillSuccess ? (
                       <>
                         <CheckCircle2 className="h-4 w-4" />
-                        Diário Preenchido!
+                        Plano Enviado!
                       </>
                     ) : (
                       <>
                         <Upload className="h-4 w-4" />
-                        Preencher Diário
+                        Enviar Plano para IFMS
                       </>
                     )}
                   </Button>
@@ -470,8 +467,8 @@ export default function PlanReviewPage() {
                   <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
                     <CheckCircle2 className="h-5 w-5" />
                     <div>
-                      <p className="font-semibold">Diário preenchido com sucesso!</p>
-                      <p className="text-sm">O conteúdo do plano de ensino foi sincronizado automaticamente com o Sistema Acadêmico IFMS.</p>
+                      <p className="font-semibold">Plano enviado com sucesso!</p>
+                      <p className="text-sm">O conteúdo do plano de ensino foi preenchido automaticamente no Sistema Acadêmico IFMS.</p>
                     </div>
                   </div>
                 </div>

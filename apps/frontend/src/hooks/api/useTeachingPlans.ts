@@ -154,3 +154,34 @@ export function useDeleteTeachingPlan() {
     },
   })
 }
+
+/**
+ * Apply teaching plan to IFMS (fill form)
+ */
+export function useSendTeachingPlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (planId: string) => {
+      const { apiClient } = await import('@/services/api/client')
+      const response = await apiClient.post<{ success: boolean; message?: string }>(
+        `/academic/teaching-plans/${planId}/send`
+      )
+
+      // Se a API retornar sucesso lógico falso, lança erro para cair no onError
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Falha ao enviar plano')
+      }
+
+      return response.data
+    },
+    onSuccess: (data, planId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.teachingPlans.detail(planId) })
+      toast.success(data.message || 'Plano enviado com sucesso para o IFMS!')
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || 'Erro de conexão ao enviar plano'
+      toast.error(message)
+    },
+  })
+}

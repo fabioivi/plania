@@ -31,7 +31,6 @@ import { useTeachingPlan, useDeleteTeachingPlan, useUpdateTeachingPlan, useSendT
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { toast } from "sonner"
 import { aiService } from "@/services/api/ai.service"
-import { academicService } from "@/services/api/academic.service"
 import {
   AlertDialog,
   AlertDialogAction,

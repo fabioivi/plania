@@ -172,6 +172,7 @@ export class ScrapingService {
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       javaScriptEnabled: true, // Explicitly enable JS as requested
+      ignoreHTTPSErrors: true, // Ignore SSL certificate errors (unable to verify first certificate)
     });
 
     // Block unnecessary resources to speed up loading
@@ -1276,6 +1277,39 @@ export class ScrapingService {
           }
         }
 
+        // Dynamically detect column indices from table header
+        const ths = Array.from(document.querySelectorAll('table.diario thead tr th'));
+        const headers = ths.map(th => th.textContent?.trim() || '');
+
+        const getColIdx = (name: string, fallback: number) => {
+          const idx = headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+          return idx !== -1 ? idx : fallback;
+        };
+
+        const dateIdx = getColIdx('data', 1);
+        const timeIdx = getColIdx('horár', 2);
+        const typeIdx = getColIdx('tipo', 3);
+        const npIdx = getColIdx('presencial', 4);
+        const contentIdx = getColIdx('conteúd', 5);
+        const obsIdx = getColIdx('observaç', 6);
+
+        // Helper to retrieve cell data by ID attribute or by dynamic index
+        const getCellData = (rowElement: Element, colIdx: number, idPrefix: string) => {
+          const cellByAttr = rowElement.querySelector(`td[id^="${idPrefix}_"]`);
+          if (cellByAttr) {
+            return {
+              id: cellByAttr.getAttribute('id')?.replace(`${idPrefix}_`, '') || '',
+              text: cellByAttr.textContent?.replace(/\s+/g, ' ').replace(/<[^>]*>/g, '').trim() || '',
+            };
+          }
+          const cells = rowElement.querySelectorAll('td');
+          const cell = cells[colIdx];
+          return {
+            id: cell?.getAttribute('id')?.replace(`${idPrefix}_`, '') || '',
+            text: cell?.textContent?.replace(/\s+/g, ' ').replace(/<[^>]*>/g, '').trim() || '',
+          };
+        };
+
         const rows = Array.from(document.querySelectorAll('table.diario tbody tr'));
         const results: any[] = [];
         let skipNext = false;
@@ -1297,41 +1331,25 @@ export class ScrapingService {
           if (hasRowspan) {
             // This is an original class with antecipation
             // First row: original class (in italic)
-            const originalDate = cells[1]?.textContent?.trim() || '';
+            const originalDate = cells[dateIdx]?.textContent?.trim() || '';
             const originalTimeRange =
-              cells[2]?.querySelector('center')?.textContent?.trim() || '';
+              cells[timeIdx]?.querySelector('center')?.textContent?.trim() || '';
             const originalType =
-              cells[3]?.querySelector('a.popup')?.textContent?.trim() || 'N';
+              cells[typeIdx]?.querySelector('a.popup')?.textContent?.trim() || 'N';
 
-            const originalContentCell = cells[5];
-            const originalContentId =
-              originalContentCell?.getAttribute('id')?.replace('conteudo_', '') ||
-              '';
-            const originalContent =
-              originalContentCell?.textContent
-                ?.replace(/\s+/g, ' ')
-                .replace(/<[^>]*>/g, '')
-                .trim() || '';
-
-            const originalObsCell = cells[6];
-            const originalObsId =
-              originalObsCell?.getAttribute('id')?.replace('obs_', '') || '';
-            const originalObs =
-              originalObsCell?.textContent
-                ?.replace(/\s+/g, ' ')
-                .replace(/<[^>]*>/g, '')
-                .trim() || '';
+            const originalContentData = getCellData(row, contentIdx, 'conteudo');
+            const originalObsData = getCellData(row, obsIdx, 'obs');
 
             // Add original class
             results.push({
-              contentId: originalContentId,
-              obsId: originalObsId,
+              contentId: originalContentData.id,
+              obsId: originalObsData.id,
               date: originalDate,
               timeRange: originalTimeRange,
               type: originalType,
               isNonPresential: false,
-              content: originalContent,
-              observations: originalObs,
+              content: originalContentData.text,
+              observations: originalObsData.text,
               isAntecipation: false,
               originalContentId: null,
               originalDate: null,
@@ -1341,50 +1359,34 @@ export class ScrapingService {
             const nextRow = rows[i + 1];
             if (nextRow) {
               const nextCells = nextRow.querySelectorAll('td');
+              const shift = 1;
 
-              const anteDate = nextCells[0]?.textContent?.trim() || '';
+              const anteDate = nextCells[dateIdx - shift]?.textContent?.trim() || '';
               const anteTimeRange =
-                nextCells[1]?.querySelector('center')?.textContent?.trim() || '';
+                nextCells[timeIdx - shift]?.querySelector('center')?.textContent?.trim() || '';
               const anteType =
-                nextCells[2]?.querySelector('a.popup')?.textContent?.trim() ||
-                'A';
+                nextCells[typeIdx - shift]?.querySelector('a.popup')?.textContent?.trim() || 'A';
 
-              const anteCheckbox = nextCells[3]?.querySelector(
+              const anteCheckbox = nextCells[npIdx - shift]?.querySelector(
                 'input[type="checkbox"]',
               );
               const anteIsNonPresential =
                 (anteCheckbox as HTMLInputElement)?.checked || false;
 
-              const anteContentCell = nextCells[4];
-              const anteContentId =
-                anteContentCell?.getAttribute('id')?.replace('conteudo_', '') ||
-                '';
-              const anteContent =
-                anteContentCell?.textContent
-                  ?.replace(/\s+/g, ' ')
-                  .replace(/<[^>]*>/g, '')
-                  .trim() || '';
-
-              const anteObsCell = nextCells[5];
-              const anteObsId =
-                anteObsCell?.getAttribute('id')?.replace('obs_', '') || '';
-              const anteObs =
-                anteObsCell?.textContent
-                  ?.replace(/\s+/g, ' ')
-                  .replace(/<[^>]*>/g, '')
-                  .trim() || '';
+              const anteContentData = getCellData(nextRow, contentIdx - shift, 'conteudo');
+              const anteObsData = getCellData(nextRow, obsIdx - shift, 'obs');
 
               results.push({
-                contentId: anteContentId,
-                obsId: anteObsId,
+                contentId: anteContentData.id,
+                obsId: anteObsData.id,
                 date: anteDate,
                 timeRange: anteTimeRange,
                 type: anteType,
                 isNonPresential: anteIsNonPresential,
-                content: anteContent,
-                observations: anteObs,
+                content: anteContentData.text,
+                observations: anteObsData.text,
                 isAntecipation: true,
-                originalContentId: originalContentId,
+                originalContentId: originalContentData.id,
                 originalDate: originalDate,
               });
 
@@ -1392,42 +1394,28 @@ export class ScrapingService {
             }
           } else {
             // Normal class (single row)
-            const date = cells[1]?.textContent?.trim() || '';
+            const date = cells[dateIdx]?.textContent?.trim() || '';
             const timeRange =
-              cells[2]?.querySelector('center')?.textContent?.trim() || '';
+              cells[timeIdx]?.querySelector('center')?.textContent?.trim() || '';
             const type =
-              cells[3]?.querySelector('a.popup')?.textContent?.trim() || 'N';
+              cells[typeIdx]?.querySelector('a.popup')?.textContent?.trim() || 'N';
 
-            const checkbox = cells[4]?.querySelector('input[type="checkbox"]');
+            const checkbox = cells[npIdx]?.querySelector('input[type="checkbox"]');
             const isNonPresential =
               (checkbox as HTMLInputElement)?.checked || false;
 
-            const contentCell = cells[5];
-            const contentId =
-              contentCell?.getAttribute('id')?.replace('conteudo_', '') || '';
-            const content =
-              contentCell?.textContent
-                ?.replace(/\s+/g, ' ')
-                .replace(/<[^>]*>/g, '')
-                .trim() || '';
-
-            const obsCell = cells[6];
-            const obsId = obsCell?.getAttribute('id')?.replace('obs_', '') || '';
-            const observations =
-              obsCell?.textContent
-                ?.replace(/\s+/g, ' ')
-                .replace(/<[^>]*>/g, '')
-                .trim() || '';
+            const contentData = getCellData(row, contentIdx, 'conteudo');
+            const obsData = getCellData(row, obsIdx, 'obs');
 
             results.push({
-              contentId,
-              obsId,
+              contentId: contentData.id,
+              obsId: obsData.id,
               date,
               timeRange,
               type,
               isNonPresential,
-              content,
-              observations,
+              content: contentData.text,
+              observations: obsData.text,
               isAntecipation: false,
               originalContentId: null,
               originalDate: null,
@@ -1515,11 +1503,17 @@ export class ScrapingService {
     const response = await page.request.post(saveUrl, {
       data: formData.toString(),
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': '*/*',
         'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
       },
     });
+
+    const responseText = await response.text();
+    console.log(`[DEBUG sendContent] Response for ${contentId}: status=${response.status()} - ${response.statusText()}`);
+    console.log(`[DEBUG sendContent] Response URL: ${response.url()}`);
+    console.log(`[DEBUG sendContent] Response body preview: ${responseText.substring(0, 1000)}`);
 
     if (!response.ok()) {
       throw new Error(`Erro HTTP: ${response.status()} - ${response.statusText()}`);

@@ -151,7 +151,8 @@ export default function DiaryContentPage() {
     try {
       // Conectar ao SSE endpoint
       const token = localStorage.getItem('token')
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+      const url = `${apiBaseUrl}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
       console.log('📡 Conectando ao SSE:', url)
 
       const eventSource = new EventSource(url)

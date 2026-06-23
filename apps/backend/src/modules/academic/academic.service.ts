@@ -494,6 +494,17 @@ export class AcademicService {
 
     console.log(`🔄 Sincronizando conteúdo do diário ${diaryId}: ${contentData.length} itens recebidos`);
 
+    // Clean up old invalid records with empty contentId to prevent duplicates/conflicts
+    try {
+      await this.diaryContentRepository.delete({
+        diaryId,
+        contentId: "",
+      });
+      console.log(`🧹 Registros com ID de conteúdo em branco removidos para o diário ${diaryId}`);
+    } catch (error) {
+      console.error('Erro ao limpar registros em branco:', error);
+    }
+
     // Update Diary Metadata if available
     if (metadata) {
       try {

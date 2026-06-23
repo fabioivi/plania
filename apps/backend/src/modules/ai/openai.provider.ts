@@ -5,18 +5,21 @@ import { LLMProvider, LLMOptions } from './llm-provider.interface';
 export class OpenAIProvider implements LLMProvider {
   private readonly logger = new Logger(OpenAIProvider.name);
 
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly defaultOptions?: LLMOptions,
+  ) { }
 
   async generateCompletion(prompt: string, options?: LLMOptions): Promise<string> {
-    const model = options?.model || 'gpt-4o-mini';
+    const model = options?.model || this.defaultOptions?.model || 'gpt-4o-mini';
     const url = 'https://api.openai.com/v1/chat/completions';
 
     const messages: any[] = [];
-    
+
     if (options?.systemPrompt) {
       messages.push({ role: 'system', content: options.systemPrompt });
     }
-    
+
     messages.push({ role: 'user', content: prompt });
 
     const body = {

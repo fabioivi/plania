@@ -296,8 +296,8 @@ Sempre responda em português do Brasil.
 
       const response = await llmProvider.generateCompletion(prompt, {
         systemPrompt,
-        temperature: 0.2,  // Baixa temperatura para geração estruturada e consistente
-        maxTokens: 8192,
+        // temperature, k, p, maxTokens are now handled by the provider defaults (user config)
+        // We only override if strictly necessary for this specific task
         responseFormat: { type: 'json_object' },  // Force JSON mode (OpenAI/Gemini)
         responseSchema: teachingPlanSchema,       // Schema validation (quando suportado)
       });
@@ -349,17 +349,34 @@ Sempre responda em português do Brasil.
       };
 
       let parsed: GeneratedTeachingPlan;
+
+      // LOG RAW RESPONSE FOR ANALYSIS
+      this.logger.debug('=== RAW AI RESPONSE START ===');
+      try {
+        // Try to parse and pretty print to show all deep objects
+        const rawObj = JSON.parse(extractJsonString(response) || response);
+        this.logger.debug(JSON.stringify(rawObj, null, 2));
+      } catch (e) {
+        // Fallback to raw string if not valid JSON
+        this.logger.debug(response);
+      }
+      this.logger.debug('=== RAW AI RESPONSE END ===');
+
       const jsonStr = extractJsonString(response);
       if (!jsonStr) {
         this.logger.error('Não foi possível extrair JSON da resposta da IA. Pré-visualização:', String(response).slice(0, 2000));
-        throw new Error('Resposta inválida do provedor LLM: JSON inválido ou não encontrado');
+        const err = new Error('Resposta inválida do provedor LLM: JSON inválido ou não encontrado');
+        (err as any).rawResponse = response;
+        throw err;
       }
 
       try {
         parsed = JSON.parse(jsonStr);
       } catch (e) {
         this.logger.error('Erro inesperado ao parsear JSON da IA (string extraída):', jsonStr.slice(0, 2000));
-        throw new Error('Resposta inválida do provedor LLM: JSON inválido');
+        const err = new Error('Resposta inválida do provedor LLM: JSON inválido');
+        (err as any).rawResponse = response;
+        throw err;
       }
 
       // Accept alternate shapes (best-effort mapping) and validate against schema
@@ -378,16 +395,34 @@ Sempre responda em português do Brasil.
           avaliacaoAprendizagem: [],
           recuperacaoAprrendizagem: '',
           propostaTrabalho: Array.isArray(p.proposta_de_trabalho_semanal)
-            ? p.proposta_de_trabalho_semanal.map((w: any) => ({
-              semana: w.semana,
-              datas: w.periodo,
-              tema: w.conteudo_programatico ?? w.tema ?? '',
-              conteudo: w.conteudo_programatico ?? w.tema ?? '',
-              atividades: '',
-              tecnicasEnsino: w.tecnicas_de_ensino ?? [],
-              recursosEnsino: w.recursos_didaticos ?? [],
-              numAulas: w.aulas_previstas ?? w.numAulas ?? 0,
-            }))
+            ? p.proposta_de_trabalho_semanal.map((w: any) => {
+              // Extract dates reliably
+              let dInicial = w.dataInicial;
+              let dFinal = w.dataFinal;
+
+              // Fallback: try to parse from period if dates are missing
+              if ((!dInicial || !dFinal) && w.periodo) {
+                // Try splitting by ' a ', ' - ', ' à '
+                const parts = w.periodo.split(/ a | - | à /);
+                if (parts.length >= 2) {
+                  dInicial = dInicial || parts[0].trim();
+                  dFinal = dFinal || parts[1].trim();
+                }
+              }
+
+              return {
+                semana: w.semana,
+                datas: w.periodo || (dInicial && dFinal ? `${dInicial} a ${dFinal}` : ''),
+                dataInicial: dInicial,
+                dataFinal: dFinal,
+                tema: w.conteudo_programatico ?? w.tema ?? '',
+                conteudo: w.conteudo_programatico ?? w.tema ?? '',
+                atividades: '',
+                tecnicasEnsino: w.tecnicas_de_ensino ?? [],
+                recursosEnsino: w.recursos_didaticos ?? [],
+                numAulas: w.aulas_previstas ?? w.numAulas ?? 0,
+              };
+            })
             : [],
         };
 
@@ -451,8 +486,12 @@ Sempre responda em português do Brasil.
       const valid = validate(candidate);
       if (!valid) {
         const errors = (validate.errors || []).map((er: any) => `${er.instancePath} ${er.message}`).join('; ');
-        this.logger.error('Resposta da IA não está conforme o schema:', errors, 'Resposta bruta:', parsed);
-        throw new Error(`Resposta do provedor LLM não conforme ao schema: ${errors}`);
+        this.logger.error('Resposta da IA não está conforme o schema:', errors);
+        this.logger.error('Resposta bruta:', JSON.stringify(parsed, null, 2));
+
+        const err = new Error(`Resposta do provedor LLM não conforme ao schema: ${errors}`);
+        (err as any).rawResponse = parsed; // Send the parsed JSON object which failed validation
+        throw err;
       }
 
       // Assign parsed to the validated/mapped candidate

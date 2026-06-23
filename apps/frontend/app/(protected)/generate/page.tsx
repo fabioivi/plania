@@ -34,8 +34,11 @@ function GeneratePageContent() {
     diaryId: diaryId || "",
     basePlanId: planId || "",
     methodology: "",
-    additionalNotes: ""
+    additionalNotes: "",
+    targetExternalId: ""
   })
+
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   // Auto-select diary from URL parameter
   useEffect(() => {
@@ -47,7 +50,11 @@ function GeneratePageContent() {
   // Auto-set basePlanId when base plan is loaded
   useEffect(() => {
     if (planId && basePlan) {
-      setFormData(prev => ({ ...prev, basePlanId: planId }))
+      setFormData(prev => ({
+        ...prev,
+        basePlanId: planId,
+        targetExternalId: basePlan.externalId || ""
+      }))
       toast.success(`Plano "${basePlan.unidadeCurricular}" carregado como base`)
     }
   }, [planId, basePlan])
@@ -72,8 +79,9 @@ function GeneratePageContent() {
 
       eventSource.onmessage = (event) => {
         try {
+          console.log('📦 SSE Raw Event:', event.data);
           const data = JSON.parse(event.data)
-          console.log('SSE message:', data)
+          console.log('🚀 SSE Parsed Data:', data)
 
           if (data.type === 'progress') {
             setGenerationProgress(data.progress)
@@ -89,6 +97,7 @@ function GeneratePageContent() {
                 diaryId: formData.diaryId,
                 generatedPlan: data.plan,
                 basePlanId: formData.basePlanId || undefined,
+                targetExternalId: formData.targetExternalId || undefined,
               },
               {
                 onSuccess: (response) => {
@@ -103,12 +112,19 @@ function GeneratePageContent() {
               }
             )
           } else if (data.type === 'error') {
+            console.error('❌ SSE Error:', data);
+            if (data.rawResponse) {
+              console.log('📝 Raw AI Response (Error Context):', data.rawResponse);
+            }
             toast.error(data.message)
+            if (data.rawResponse) {
+              setErrorDetails(data.rawResponse);
+            }
             setStep("config")
             eventSource.close()
           }
         } catch (err) {
-          console.error('Error parsing SSE message:', err)
+          console.error('Error parsing SSE message:', err, 'Raw data:', event.data)
         }
       }
 
@@ -230,6 +246,28 @@ function GeneratePageContent() {
                         onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
                       />
                     </div>
+
+                    {/* External ID (Optional) */}
+                    <div className="space-y-3">
+                      <Label htmlFor="externalId" className="text-base font-bold text-slate-700 dark:text-foreground">ID do Plano no IFMS (Opcional)</Label>
+                      <div className="relative">
+                        <input
+                          id="externalId"
+                          type="text"
+                          placeholder="Ex: 46332"
+                          className="w-full h-12 border border-slate-200 dark:border-border bg-slate-50/50 dark:bg-secondary/50 focus:ring-2 focus:ring-indigo-500 rounded-xl px-4 text-slate-600 dark:text-foreground placeholder:text-slate-400 outline-none transition-all"
+                          value={formData.targetExternalId || ''}
+                          onChange={(e) => setFormData({ ...formData, targetExternalId: e.target.value })}
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                          <BrainCircuit className="h-5 w-5 text-slate-400" />
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 px-1">
+                        Se preenchido, o sistema tentará atualizar o plano existente com este ID no sistema.
+                        {basePlan && " Preenchido automaticamente com o ID do plano base."}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Actions */}
@@ -309,6 +347,32 @@ function GeneratePageContent() {
               <p className="mt-8 text-center text-slate-400 text-sm max-w-md">
                 Isso pode levar alguns segundos. Não feche esta página enquanto a mágica acontece.
               </p>
+            </div>
+          )}
+
+
+          {/* Error Details Modal */}
+          {errorDetails && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+              <Card className="max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+                <div className="p-4 border-b flex justify-between items-center bg-red-50 dark:bg-red-900/10">
+                  <h3 className="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <BrainCircuit className="h-5 w-5" />
+                    Resposta da IA (Depuração)
+                  </h3>
+                  <Button variant="ghost" size="sm" onClick={() => setErrorDetails(null)}>Fechar</Button>
+                </div>
+                <CardContent className="p-0 overflow-hidden flex-1 relative">
+                  <div className="absolute inset-0 overflow-auto p-4 bg-slate-900 text-slate-50 font-mono text-xs">
+                    <pre className="whitespace-pre-wrap break-all">
+                      {typeof errorDetails === 'string' ? errorDetails : JSON.stringify(errorDetails, null, 2)}
+                    </pre>
+                  </div>
+                </CardContent>
+                <div className="p-4 border-t bg-slate-50 dark:bg-secondary/50 flex justify-end">
+                  <Button onClick={() => setErrorDetails(null)}>Entendi</Button>
+                </div>
+              </Card>
             </div>
           )}
 

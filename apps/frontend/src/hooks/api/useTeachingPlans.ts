@@ -67,6 +67,7 @@ export function useSaveAITeachingPlan() {
       diaryId: string
       generatedPlan: any
       basePlanId?: string
+      targetExternalId?: string
     }) => {
       const { apiClient } = await import('@/services/api/client')
       const response = await apiClient.post<{ success: boolean; plan: TeachingPlan }>(

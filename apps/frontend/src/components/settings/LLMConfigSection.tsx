@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Sparkles, Eye, EyeOff, Trash2, Plus, Lock } from "lucide-react"
+import { Loader2, Sparkles, Eye, EyeOff, Trash2, Plus, Lock, Pencil } from "lucide-react"
 import { LLMConfig, llmConfigApi } from "@/services/api"
 import { toast } from "sonner"
 
 interface LLMConfigItemProps {
   config: LLMConfig
   onDelete: () => void
+  onEdit: () => void
   onTest: () => void
   onActivate: () => void
   onDeactivate: () => void
@@ -35,7 +36,7 @@ const providerColors: Record<string, string> = {
   openrouter: 'text-teal-600',
 }
 
-function LLMConfigItem({ config, onDelete, onTest, onActivate, onDeactivate, testing }: LLMConfigItemProps) {
+function LLMConfigItem({ config, onDelete, onEdit, onTest, onActivate, onDeactivate, testing }: LLMConfigItemProps) {
   const providerColor = providerColors[config.provider] || 'text-gray-600'
 
   return (
@@ -94,8 +95,18 @@ function LLMConfigItem({ config, onDelete, onTest, onActivate, onDeactivate, tes
         <Button
           variant="ghost"
           size="icon"
+          onClick={onEdit}
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 ml-1"
+          title="Editar"
+        >
+          <Sparkles className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onDelete}
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          title="Excluir"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -113,9 +124,39 @@ export function LLMConfigSection() {
   const [provider, setProvider] = useState<'gemini' | 'openai' | 'claude' | 'grok' | 'openrouter'>('gemini')
   const [apiKey, setApiKey] = useState('')
   const [modelName, setModelName] = useState('')
+  const [additionalConfig, setAdditionalConfig] = useState<any>({})
   const [showApiKey, setShowApiKey] = useState(false)
   const [saving, setSaving] = useState(false)
   const [testingId, setTestingId] = useState<string | null>(null)
+  const [openRouterModels, setOpenRouterModels] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [editingConfigId, setEditingConfigId] = useState<string | null>(null)
+
+  // Fetch OpenRouter models when provider is selected or refresh requested
+  const fetchOpenRouterModels = async (key?: string) => {
+    // Only fetch if key is provided or we are checking without key (public endpoint attempt)
+    // But our backend requires auth usually. The backend method uses stored key if not provided.
+    try {
+      setLoadingModels(true);
+      const models = await llmConfigApi.getOpenRouterModels(key);
+      setOpenRouterModels(models);
+      // If current modelName is not in list and we have models, maybe partial match or keep custom
+    } catch (err) {
+      console.error('Failed to fetch OpenRouter models', err);
+      toast.error('Erro ao buscar modelos do OpenRouter');
+    } finally {
+      setLoadingModels(false);
+    }
+  };
+
+  useEffect(() => {
+    if (provider === 'openrouter' && showAddForm) {
+      fetchOpenRouterModels(apiKey);
+    }
+  }, [provider, showAddForm]);
+
+  // When API key changes significantly (on blur maybe? or just manual refresh button)
+  // for now let's add a refresh button next to model select
 
   const loadConfigs = async () => {
     try {
@@ -136,27 +177,51 @@ export function LLMConfigSection() {
   }, [])
 
   const handleSave = async () => {
-    if (!apiKey) {
+    // If editing, API key is optional (keep existing). If creating, it's required.
+    if (!editingConfigId && !apiKey) {
       toast.error('Informe a chave de API')
       return
     }
 
     try {
       setSaving(true)
-      const newConfig = await llmConfigApi.saveConfig({
-        provider,
-        apiKey,
-        modelName: modelName || undefined,
-        isActive: true,
-      })
 
-      setConfigs([...configs, newConfig])
-      toast.success('Configuração salva com sucesso!')
+      if (editingConfigId) {
+        // Update existing
+        await llmConfigApi.updateConfig(editingConfigId, {
+          apiKey: apiKey || undefined, // Only send if user typed something
+          modelName: modelName || undefined,
+          isActive: true,
+          additionalConfig: Object.keys(additionalConfig).length > 0 ? additionalConfig : undefined
+        })
+
+        // Reload configs to get latest state (simple way)
+        await loadConfigs()
+        toast.success('Configuração atualizada com sucesso!')
+      } else {
+        // Create new
+        const newConfig = await llmConfigApi.saveConfig({
+          provider,
+          apiKey,
+          modelName: modelName || undefined,
+          isActive: true,
+          additionalConfig: Object.keys(additionalConfig).length > 0 ? additionalConfig : undefined
+        })
+        setConfigs([newConfig, ...configs.filter(c => c.id !== newConfig.id)]) // Ensure unique? Actually backend deactivates others.
+        // It's safer to reload or just append. 
+        // If we created a new active one, others became inactive. Local state might be stale regarding isActive of others.
+        // Let's iterate to fix local state or just reload.
+        // For simplicity/correctness, let's reload.
+        await loadConfigs()
+        toast.success('Configuração salva com sucesso!')
+      }
 
       // Reset form
       setApiKey('')
       setModelName('')
+      setAdditionalConfig({})
       setShowAddForm(false)
+      setEditingConfigId(null)
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Erro ao salvar configuração')
     } finally {
@@ -205,6 +270,15 @@ export function LLMConfigSection() {
     }
   }
 
+  const handleEdit = (config: LLMConfig) => {
+    setEditingConfigId(config.id)
+    setProvider(config.provider as any)
+    setApiKey('') // Empty means verify/keep existing
+    setModelName(config.modelName || '')
+    setAdditionalConfig(config.additionalConfig || {})
+    setShowAddForm(true)
+  }
+
   const handleDelete = async (configId: string) => {
     if (!confirm('Tem certeza que deseja remover esta configuração?')) {
       return
@@ -238,6 +312,7 @@ export function LLMConfigSection() {
               key={config.id}
               config={config}
               onDelete={() => handleDelete(config.id)}
+              onEdit={() => handleEdit(config)}
               onTest={() => handleTest(config.id)}
               onActivate={() => handleActivate(config.id)}
               onDeactivate={() => handleDeactivate(config.id)}
@@ -261,8 +336,12 @@ export function LLMConfigSection() {
         <div className="border border-slate-200 dark:border-border rounded-2xl p-6 space-y-6 bg-slate-50/50 dark:bg-secondary/10 animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-border/50 pb-4">
             <div>
-              <h4 className="font-bold text-slate-900 dark:text-foreground">Nova Configuração</h4>
-              <p className="text-xs text-slate-500 dark:text-muted-foreground">Adicione um modelo de linguagem</p>
+              <h4 className="font-bold text-slate-900 dark:text-foreground">
+                {editingConfigId ? 'Editar Configuração' : 'Nova Configuração'}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-muted-foreground">
+                {editingConfigId ? 'Atualize os detalhes do provedor' : 'Adicione um modelo de linguagem'}
+              </p>
             </div>
             <Button
               variant="ghost"
@@ -271,6 +350,8 @@ export function LLMConfigSection() {
                 setShowAddForm(false)
                 setApiKey('')
                 setModelName('')
+                setAdditionalConfig({})
+                setEditingConfigId(null)
               }}
               className="hover:bg-slate-200 dark:hover:bg-slate-800"
             >
@@ -281,7 +362,17 @@ export function LLMConfigSection() {
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="provider" className="text-slate-700 dark:text-slate-200 font-medium">Provedor</Label>
-              <Select value={provider} onValueChange={(v: any) => setProvider(v)}>
+              <Select value={provider} onValueChange={(v: any) => {
+                setProvider(v);
+                // Set default recommended model based on provider
+                if (v === 'gemini') setModelName('gemini-2.0-flash');
+                else if (v === 'openai') setModelName('gpt-4o');
+                else if (v === 'claude') setModelName('claude-3-sonnet-20240229');
+                else if (v === 'openrouter') setModelName('google/gemini-2.0-flash-lite-preview-02-05:free');
+                else setModelName('');
+              }}
+                disabled={!!editingConfigId}
+              >
                 <SelectTrigger id="provider" className="h-11 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                   <SelectValue />
                 </SelectTrigger>
@@ -326,7 +417,7 @@ export function LLMConfigSection() {
                 <Input
                   id="apiKey"
                   type={showApiKey ? "text" : "password"}
-                  placeholder="sk-..."
+                  placeholder={editingConfigId ? "Deixe em branco para manter a atual" : "sk-..."}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   disabled={saving}
@@ -349,16 +440,188 @@ export function LLMConfigSection() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="modelName" className="text-slate-700 dark:text-slate-200 font-medium">Modelo (opcional)</Label>
-              <Input
-                id="modelName"
-                placeholder="gemini-pro, gpt-4, claude-3-opus..."
-                value={modelName}
-                onChange={(e) => setModelName(e.target.value)}
-                disabled={saving}
-                className="h-11 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-              />
+              <div className="flex justify-between items-center">
+                <Label htmlFor="modelName" className="text-slate-700 dark:text-slate-200 font-medium">Modelo</Label>
+                {provider === 'openrouter' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fetchOpenRouterModels(apiKey)}
+                    disabled={loadingModels}
+                    className="h-6 text-xs"
+                    type="button"
+                    title="Atualizar lista de modelos"
+                  >
+                    <Sparkles className={`h-3 w-3 mr-1 ${loadingModels ? 'animate-spin' : ''}`} />
+                    Atualizar Lista
+                  </Button>
+                )}
+              </div>
+              <div className="relative">
+                <Select
+                  value={modelName}
+                  onValueChange={(value) => {
+                    if (value === 'custom') {
+                      setModelName('')
+                    } else {
+                      setModelName(value)
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-11 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                    <SelectValue placeholder="Selecione ou digite o modelo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingModels && (
+                      <div className="flex items-center justify-center p-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Carregando modelos...
+                      </div>
+                    )}
+                    {provider === 'gemini' && (
+                      <>
+                        <SelectItem value="gemini-2.0-flash">Gemini 2.0 Flash (Recomendado)</SelectItem>
+                        <SelectItem value="gemini-2.0-pro-exp">Gemini 2.0 Pro Experimental</SelectItem>
+                        <SelectItem value="gemini-1.5-pro">Gemini 1.5 Pro</SelectItem>
+                        <SelectItem value="gemini-1.5-flash">Gemini 1.5 Flash</SelectItem>
+                      </>
+                    )}
+                    {provider === 'openai' && (
+                      <>
+                        <SelectItem value="gpt-4o">GPT-4o (Recomendado)</SelectItem>
+                        <SelectItem value="gpt-4o-mini">GPT-4o Mini (Rápido)</SelectItem>
+                        <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                      </>
+                    )}
+                    {provider === 'claude' && (
+                      <>
+                        <SelectItem value="claude-3-opus-20240229">Claude 3 Opus</SelectItem>
+                        <SelectItem value="claude-3-sonnet-20240229">Claude 3 Sonnet</SelectItem>
+                        <SelectItem value="claude-3-haiku-20240307">Claude 3 Haiku</SelectItem>
+                      </>
+                    )}
+                    {provider === 'openrouter' && (
+                      <>
+                        {openRouterModels.length > 0 ? (
+                          openRouterModels.map((model) => (
+                            <SelectItem key={model.id} value={model.id}>
+                              {model.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <>
+                            <SelectItem value="google/gemini-2.0-flash-lite-preview-02-05:free">Gemini 2.0 Flash Lite (Free)</SelectItem>
+                            <SelectItem value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</SelectItem>
+                            <SelectItem value="deepseek/deepseek-chat:free">DeepSeek Chat (Free)</SelectItem>
+                            <SelectItem value="mistralai/mistral-7b-instruct:free">Mistral 7B (Free)</SelectItem>
+                          </>
+                        )}
+                      </>
+                    )}
+                    {provider === 'grok' && (
+                      <>
+                        <SelectItem value="grok-1">Grok-1</SelectItem>
+                      </>
+                    )}
+                    <SelectItem value="custom">Outro (Digitar manualmente)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* Fallback Input if custom or empty/unmatched */}
+                {(() => {
+                  const presets: Record<string, string[]> = {
+                    gemini: ['gemini-2.0-flash', 'gemini-2.0-pro-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+                    openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+                    claude: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+                    openrouter: ['google/gemini-2.0-flash-lite-preview-02-05:free', 'deepseek/deepseek-r1:free', 'deepseek/deepseek-chat:free', 'mistralai/mistral-7b-instruct:free'],
+                    grok: ['grok-1']
+                  };
+                  const currentPresets = presets[provider] || [];
+                  const isPreset = currentPresets.includes(modelName);
+
+                  if (!modelName || !isPreset) {
+                    return (
+                      <Input
+                        id="modelNameCustom"
+                        placeholder="Nome do modelo customizado..."
+                        value={modelName}
+                        onChange={(e) => setModelName(e.target.value)}
+                        disabled={saving}
+                        className="mt-2 h-11 bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      />
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
             </div>
+
+            {provider === 'gemini' && (
+              <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-border/50">
+                <h5 className="font-semibold text-sm text-slate-900 dark:text-foreground">Parâmetros Avançados</h5>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="temperature" className="text-slate-700 dark:text-slate-200 text-xs font-medium flex justify-between">
+                      Temperatura
+                      <span className="text-slate-500">{additionalConfig.temperature ?? 0.7}</span>
+                    </Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700"
+                      value={additionalConfig.temperature ?? 0.7}
+                      onChange={(e) => setAdditionalConfig({ ...additionalConfig, temperature: parseFloat(e.target.value) })}
+                    />
+                    <p className="text-[10px] text-slate-500">Mais criativo (1.0) vs Mais preciso (0.0)</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="topP" className="text-slate-700 dark:text-slate-200 text-xs font-medium flex justify-between">
+                      Top P
+                      <span className="text-slate-500">{additionalConfig.topP ?? 0.95}</span>
+                    </Label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700"
+                      value={additionalConfig.topP ?? 0.95}
+                      onChange={(e) => setAdditionalConfig({ ...additionalConfig, topP: parseFloat(e.target.value) })}
+                    />
+                    <p className="text-[10px] text-slate-500">Diversidade de tokens</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="topK" className="text-slate-700 dark:text-slate-200 text-xs font-medium">Top K (Opcional)</Label>
+                    <Input
+                      id="topK"
+                      type="number"
+                      placeholder="Ex: 40"
+                      value={additionalConfig.topK || ''}
+                      onChange={(e) => setAdditionalConfig({ ...additionalConfig, topK: e.target.value ? parseInt(e.target.value) : undefined })}
+                      className="h-9 bg-slate-50 dark:bg-slate-900/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="maxTokens" className="text-slate-700 dark:text-slate-200 text-xs font-medium">Max Tokens</Label>
+                    <Input
+                      id="maxTokens"
+                      type="number"
+                      placeholder="Ex: 8192"
+                      value={additionalConfig.maxTokens || ''}
+                      onChange={(e) => setAdditionalConfig({ ...additionalConfig, maxTokens: e.target.value ? parseInt(e.target.value) : undefined })}
+                      className="h-9 bg-slate-50 dark:bg-slate-900/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
 
             <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/50">
               <AlertDescription className="text-xs text-blue-700 dark:text-blue-300 font-medium flex items-center gap-2">
@@ -380,7 +643,7 @@ export function LLMConfigSection() {
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Salvar Configuração
+                  {editingConfigId ? 'Atualizar Configuração' : 'Salvar Configuração'}
                 </>
               )}
             </Button>

@@ -1568,6 +1568,168 @@ export class ScrapingService {
   }
 
   /**
+   * Fill teaching plan proposal (Detalhamento da Proposta de Trabalho)
+   */
+  async fillTeachingPlanProposal(
+    username: string,
+    password: string,
+    diaryId: string,
+    planId: string,
+    proposalData: any[],
+  ): Promise<{ success: boolean; message?: string }> {
+    const context = await this.createContext();
+    const page = await context.newPage();
+
+    try {
+      console.log(`🚀 Preenchendo proposta de trabalho para o plano ${planId}...`);
+
+      // Login
+      await this.ensureLoggedIn(page, username, password);
+
+      const proposalUrl = buildIFMSUrl(IFMS_ROUTES.TEACHING_PLAN.PROPOSAL(diaryId, planId));
+      console.log(`Navigating to proposal page: ${proposalUrl}`);
+
+      await page.goto(proposalUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000
+      });
+
+      // Wait for table
+      await page.waitForSelector('#tabelaLote', { timeout: 10000 });
+
+      // Execute filling logic in browser context
+      const result = await page.evaluate(async (data) => {
+        const rows = document.querySelectorAll('#tabelaLote tbody tr');
+        let filledCount = 0;
+        let errors = [];
+
+        // Helper to normalize strings for comparison
+        const normalize = (str) => str ? str.trim().toLowerCase() : '';
+
+        // Iterate through provided data to fill rows BY INDEX
+        // "vamos prrencher com base na ordem da tabela"
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+
+          if (i >= rows.length) {
+            errors.push(`More data items (${data.length}) than table rows (${rows.length}). Stopping at index ${i}.`);
+            break;
+          }
+
+          const row = rows[i];
+          // We found the row by index, so we proceed directly
+          console.log(`[DEBUG] Preenchendo linha ${i + 1} da tabela com a Semana ${item.semana}`);
+
+          // 1. Fill Number of Classes
+          const aulasInput = row.querySelector('input[name*="[total_aulas]"]');
+          if (aulasInput) {
+            (aulasInput as HTMLInputElement).value = item.numAulas;
+          }
+
+          // Helper to update chosen select
+          const updateChosen = (selectClass, values) => {
+            const select = row.querySelector(`select.${selectClass}`);
+            if (!select) return;
+
+            if (!values || values.length === 0) return;
+
+            const $select = window['jQuery'](select);
+
+            // Handle new values
+            values.forEach(val => {
+              const existsValue = $select.find(`option[value="${val}"]`).length > 0;
+              if (!existsValue) {
+                console.log(`[DEBUG] Adicionando nova opção: "${val}" ao select .${selectClass}`);
+                $select.append(new Option(val, val, false, false));
+              }
+            });
+
+            // Set values and trigger update
+            $select.val(values);
+            $select.trigger('chosen:updated');
+          };
+
+          // 2. Fill Content
+          const conteudos = item.conteudo ? [item.conteudo] : [];
+          updateChosen('conteudo-select', conteudos);
+
+          // 3. Fill Techniques
+          updateChosen('tecnica-select', item.tecnicasEnsino || []);
+
+          // 4. Fill Resources
+          updateChosen('recurso-select', item.recursosEnsino || []);
+
+          filledCount++;
+        }
+
+
+
+        return { filledCount, errors };
+      }, proposalData);
+
+      console.log(`✅ Preenchidas ${result.filledCount} linhas.`);
+      if (result.errors.length > 0) {
+        console.warn('⚠️ Avisos no preenchimento:', result.errors);
+      }
+
+      // DEBUG: Delay to allow manual inspection
+      console.log('⏳ (DEBUG) Aguardando 10 segundos para análise manual antes de salvar...');
+      // REMOVER ESSE TEMPORIZADOR DEPOIS
+      await page.waitForTimeout(10000);
+
+      // Submit form
+      console.log('Salving form...');
+
+      // Try to find the save button using multiple strategies
+      // 1. Try the specific button ID 'form' (legacy) if it's a button/input
+      const simpleFormBtn = await page.$('#form');
+      const tagName = simpleFormBtn ? await simpleFormBtn.evaluate(el => el.tagName.toLowerCase()) : '';
+
+      if (simpleFormBtn && (tagName === 'button' || tagName === 'input')) {
+        console.log('Clicando no botão #form...');
+        await simpleFormBtn.click();
+      } else {
+        // 2. Try generic submit button or "Salvar" text
+        console.log('Botão #form não é um botão clicável ou não existe. Tentando seletores alternativos...');
+        const saveBtn = await page.$('button.btn-success, input[type="submit"], button:has-text("Salvar")');
+
+        if (saveBtn) {
+          console.log('Botão de salvar alternativo encontrado. Clicando...');
+          await saveBtn.click();
+        } else {
+          console.warn('⚠️ Nenhum botão de salvar encontrado! Tentando submeter o formulário diretamente...');
+          // Try submitting the form element if exact button isn't found
+          const formElement = await page.$('form#formLote, form[action*="salvar"]');
+          if (formElement) {
+            await formElement.evaluate((form: HTMLFormElement) => form.submit());
+          } else {
+            throw new Error('Botão de salvar não encontrado e formulário não identificado.');
+          }
+        }
+      }
+
+      // Wait for navigation or success message
+      try {
+        await Promise.race([
+          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }),
+          page.waitForSelector('.alert-success', { timeout: 30000 })
+        ]);
+        console.log('✅ Formulário salvo com sucesso!');
+        return { success: true };
+      } catch (e) {
+        console.error('Erro ao salvar formulário (timeout ou erro):', e);
+        return { success: false, message: 'Timeout ao salvar formulário' };
+      }
+
+    } catch (error) {
+      console.error('Erro ao preencher proposta:', error);
+      return { success: false, message: this.formatErrorMessage(error) };
+    } finally {
+      await context.close();
+    }
+  }
+
+  /**
    * Send multiple diary contents to IFMS system using single login session
    */
   async sendDiaryContentBulkToSystem(

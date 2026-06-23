@@ -58,7 +58,8 @@ export function SendProgressDialog({
     try {
       // Conectar ao SSE endpoint
       const token = localStorage.getItem('token')
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const url = `${API_BASE_URL}/academic/diaries/${diaryId}/content/send-bulk-sse?contentIds=${contentIds.join(',')}&token=${token}`
       console.log('📡 Conectando ao SSE:', url)
 
       const eventSource = new EventSource(url)

@@ -42,6 +42,7 @@ export class AIController {
     let isComplete = false;
     let hasError = false;
     let errorMessage = '';
+    let errorObj: any = null; // Better approach: use a local variable accessible to the closure
 
     // Start generation in background
     this.teachingPlanGeneratorService
@@ -61,6 +62,7 @@ export class AIController {
       })
       .catch((error) => {
         hasError = true;
+        errorObj = error;
         errorMessage = error.message || 'Erro ao gerar plano';
         currentMessage = errorMessage;
       });
@@ -73,6 +75,7 @@ export class AIController {
             data: {
               type: 'error',
               message: errorMessage,
+              rawResponse: errorObj?.rawResponse,
             },
           };
         }

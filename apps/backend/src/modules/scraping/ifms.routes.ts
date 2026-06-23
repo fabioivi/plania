@@ -34,6 +34,8 @@ export const IFMS_ROUTES = {
       `/administrativo/professores/diario/${diaryId}/plano_ensino/editar/${planId}`,
     ADD: (diaryId: string) =>
       `/administrativo/professores/diario/${diaryId}/plano_ensino/adicionar`,
+    PROPOSAL: (diaryId: string, planId: string) =>
+      `/administrativo/professores/inserir_propostas_em_lote/${diaryId}/${planId}`,
   },
 } as const;
 

@@ -706,6 +706,7 @@ export class AcademicService {
     diaryId: string,
     generatedPlan: any,
     basePlanId?: string,
+    targetExternalId?: string,
   ): Promise<TeachingPlan> {
     // Verify diary exists and belongs to user
     const diary = await this.diaryRepository.findOne({
@@ -716,26 +717,52 @@ export class AcademicService {
       throw new NotFoundException('Diário não encontrado');
     }
 
-    // If basePlanId provided, verify it exists
     let basePlan: TeachingPlan | null = null;
     if (basePlanId) {
       basePlan = await this.teachingPlanRepository.findOne({
-        where: { id: basePlanId, diaryId },
+        where: { id: basePlanId, userId },
       });
       if (!basePlan) {
         throw new NotFoundException('Plano base não encontrado');
       }
     }
 
-    // Create new teaching plan with AI-generated data
-    const newPlan = this.teachingPlanRepository.create({
+    // Determine if we are updating an existing plan (by externalId) or creating a new one
+    let planToSave: TeachingPlan | undefined;
+
+    if (targetExternalId) {
+      // Check if a plan with this externalId already exists
+      const existingPlan = await this.teachingPlanRepository.findOne({
+        where: { externalId: targetExternalId },
+      });
+
+      if (existingPlan) {
+        // Validation: Verify ownership
+        if (existingPlan.userId !== userId) {
+          throw new BadRequestException('O ID externo informado pertence a um plano de outro usuário.');
+        }
+        // Validation: Verify diary relationship (optional but good practice)
+        if (existingPlan.diaryId !== diaryId) {
+          // It might be possible to move a plan between diaries? Unlikely for IFMS.
+          // But let's warn or block if contexts differ drastically.
+          // For now, let's assume if it matches userId it's fair game to overwrite/update.
+        }
+
+        this.logger.log(`🔄 Atualizando plano existente (External ID: ${targetExternalId}) com conteúdo de IA`);
+        planToSave = existingPlan;
+      }
+    }
+
+    // Prepare data structure
+    const planData: Partial<TeachingPlan> = {
       userId,
       diaryId,
-      source: 'ai',
-      basePlanId: basePlanId || null,
-      sentToIFMS: false,
+      source: 'ai', // Mark as AI-generated/modified
+      basePlanId: basePlanId || (planToSave?.basePlanId) || null,
+      sentToIFMS: false, // Reset sent status as content changed
       status: 'Gerado por IA - Rascunho',
       excluido: false,
+      externalId: targetExternalId || null, // Set the requested external ID
 
       // Copy identification fields from base plan or diary
       campus: basePlan?.campus || diary.curso,
@@ -761,15 +788,24 @@ export class AcademicService {
 
       // Map propostaTrabalho from AI schema to entity schema
       propostaTrabalho: (generatedPlan.propostaTrabalho || []).map((item: any) => {
-        // Extract month from dataInicial (format: "02/03/2025")
+        // Extract month from dataInicial (format: "02/03/2025" or "02/03")
         const dataInicial = item.dataInicial || '';
         const dataFinal = item.dataFinal || '';
-        const monthMatch = dataInicial.match(/\/(\d+)\/(\d+)$/);
-        const monthNumber = monthMatch ? parseInt(monthMatch[1]) : 1;
+
+        let monthNumber = 1;
+        const parts = dataInicial.split('/');
+        if (parts.length >= 2) {
+          // parts[0] is day, parts[1] is month
+          monthNumber = parseInt(parts[1], 10);
+        }
+
         const monthNames = [
           'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
         ];
+        // Ensure valid month
+        if (monthNumber < 1 || monthNumber > 12) monthNumber = 1;
+
         const mes = `${monthNumber} - ${monthNames[monthNumber - 1]}`;
 
         // Build periodo from dataInicial and dataFinal (ex: "02 a 08")
@@ -792,14 +828,17 @@ export class AcademicService {
           recursosEnsino: item.recursosEnsino || [],
         };
       }),
-    });
+    };
 
-    const savedPlan = await this.teachingPlanRepository.save(newPlan);
-
-    // Note: TeachingPlanHistory is for IFMS event history, not for versioning
-    // No need to create a history entry when creating an AI-generated plan
-
-    return savedPlan;
+    if (planToSave) {
+      // Update existing plan
+      Object.assign(planToSave, planData);
+      return await this.teachingPlanRepository.save(planToSave);
+    } else {
+      // Create new plan
+      const newPlan = this.teachingPlanRepository.create(planData);
+      return await this.teachingPlanRepository.save(newPlan);
+    }
   }
 
   /**
@@ -1030,12 +1069,34 @@ export class AcademicService {
       );
 
       if (result.success) {
+        // If success, proceed to fill the proposal (Detalhamento da Proposta de Trabalho)
+        if (plan.propostaTrabalho && plan.propostaTrabalho.length > 0) {
+          this.logger.log(`🌐 [Step 7.1/7] Preenchendo proposta de trabalho...`);
+          if (onProgress) onProgress('Preenchendo proposta de trabalho...');
+
+          const proposalResult = await this.scrapingService.fillTeachingPlanProposal(
+            credential.username,
+            password,
+            plan.diary.externalId,
+            plan.externalId,
+            plan.propostaTrabalho
+          );
+
+          if (!proposalResult.success) {
+            this.logger.warn(`⚠️ Erro ao preencher proposta: ${proposalResult.message}`);
+            // We consider the main plan filling a success, but warn about proposal
+            result.message += `. Proposta não preenchida: ${proposalResult.message}`;
+          } else {
+            this.logger.log(`✅ Proposta de trabalho preenchida com sucesso`);
+          }
+        }
+
         plan.status = 'Sincronizado com Sucesso (Rascunho)';
         plan.sentToIFMS = true;
         plan.sentAt = new Date();
         await this.teachingPlanRepository.save(plan);
         this.logger.log(`✅ Plan ${planId} sent successfully to IFMS`);
-        return { success: true, message: 'Plano preenchido com sucesso no IFMS!' };
+        return { success: true, message: 'Plano e proposta preenchidos com sucesso no IFMS!' };
       } else {
         plan.status = 'Erro na Sincronização';
         await this.teachingPlanRepository.save(plan);

@@ -366,6 +366,10 @@ export const llmConfigApi = {
     const response = await api.put<LLMConfig>(`/llm-config/${id}/activate`);
     return response.data;
   },
+  async getOpenRouterModels(apiKey?: string): Promise<Array<{ id: string; name: string; context_length: number }>> {
+    const response = await api.post<Array<{ id: string; name: string; context_length: number }>>('/llm-config/openrouter/models', { apiKey });
+    return response.data;
+  },
 };
 
 // AI Teaching Plan Generation API

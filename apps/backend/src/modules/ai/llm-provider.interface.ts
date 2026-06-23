@@ -35,4 +35,5 @@ export interface LLMConfig {
   apiKey: string;
   model?: string;
   options?: Partial<LLMOptions>;
+  defaultOptions?: Partial<LLMOptions>;
 }

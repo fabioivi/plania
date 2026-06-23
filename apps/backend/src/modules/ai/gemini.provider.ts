@@ -5,7 +5,10 @@ import { LLMProvider, LLMOptions } from './llm-provider.interface';
 export class GeminiProvider implements LLMProvider {
   private readonly logger = new Logger(GeminiProvider.name);
 
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly defaultOptions?: LLMOptions,
+  ) { }
 
   private sanitizeResponseSchema(schema?: any): any {
     if (!schema) return undefined;
@@ -61,7 +64,8 @@ export class GeminiProvider implements LLMProvider {
 
   async generateCompletion(prompt: string, options?: LLMOptions): Promise<string> {
     // Tenta usar o modelo mais recente disponível
-    let model = options?.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    let model = options?.model || this.defaultOptions?.model || process.env.GEMINI_MODEL || 'gemini-3.0-flash';
+    this.logger.debug(`Generating completion using Gemini model: ${model}`); // Verification log
     let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
 
     const sanitizedSchema = this.sanitizeResponseSchema(options?.responseSchema);
@@ -80,10 +84,10 @@ export class GeminiProvider implements LLMProvider {
         },
       ],
       generationConfig: {
-        temperature: options?.temperature ?? 0.7,
-        maxOutputTokens: options?.maxTokens ?? 8192,
-        topP: options?.topP ?? 0.95,
-        topK: options?.topK ?? 40,
+        temperature: options?.temperature ?? this.defaultOptions?.temperature ?? 0.7,
+        maxOutputTokens: options?.maxTokens ?? this.defaultOptions?.maxTokens ?? 8192,
+        topP: options?.topP ?? this.defaultOptions?.topP ?? 0.95,
+        topK: options?.topK ?? this.defaultOptions?.topK ?? 40,
         ...(sanitizedSchema && {
           responseMimeType: 'application/json',
           responseSchema: sanitizedSchema,
@@ -106,9 +110,9 @@ export class GeminiProvider implements LLMProvider {
         this.logger.error(`Modelo ${model} não encontrado. Listando modelos disponíveis...`);
         const availableModels = await this.listModels();
         this.logger.log(`Modelos disponíveis: ${availableModels.join(', ')}`);
-        
+
         const fallbackModels = availableModels.filter(m => m !== model);
-        
+
         for (const fallbackModel of fallbackModels) {
           this.logger.warn(`Tentando fallback para ${fallbackModel}`);
           model = fallbackModel;
@@ -152,7 +156,8 @@ export class GeminiProvider implements LLMProvider {
     options?: LLMOptions,
     onChunk?: (chunk: string) => void,
   ): Promise<string> {
-    let model = options?.model || 'gemini-2.5-flash';
+    let model = options?.model || this.defaultOptions?.model || 'gemini-3.0-flash';
+    this.logger.debug(`Streaming completion using Gemini model: ${model}`);
     let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${this.apiKey}&alt=sse`;
 
     const sanitizedSchema = this.sanitizeResponseSchema(options?.responseSchema);
@@ -170,10 +175,10 @@ export class GeminiProvider implements LLMProvider {
         },
       ],
       generationConfig: {
-        temperature: options?.temperature ?? 0.7,
-        maxOutputTokens: options?.maxTokens ?? 8192,
-        topP: options?.topP ?? 0.95,
-        topK: options?.topK ?? 40,
+        temperature: options?.temperature ?? this.defaultOptions?.temperature ?? 0.7,
+        maxOutputTokens: options?.maxTokens ?? this.defaultOptions?.maxTokens ?? 8192,
+        topP: options?.topP ?? this.defaultOptions?.topP ?? 0.95,
+        topK: options?.topK ?? this.defaultOptions?.topK ?? 40,
         ...(sanitizedSchema && {
           responseMimeType: 'application/json',
           responseSchema: sanitizedSchema,
@@ -198,9 +203,9 @@ export class GeminiProvider implements LLMProvider {
           this.logger.error(`Modelo ${model} não encontrado. Listando modelos disponíveis...`);
           const availableModels = await this.listModels();
           this.logger.log(`Modelos disponíveis: ${availableModels.join(', ')}`);
-          
+
           const fallbackModels = availableModels.filter(m => m !== model);
-          
+
           for (const fallbackModel of fallbackModels) {
             this.logger.warn(`Tentando fallback para ${fallbackModel}`);
             model = fallbackModel;
@@ -218,7 +223,7 @@ export class GeminiProvider implements LLMProvider {
             }
           }
         }
-        
+
         if (!response.ok) {
           const error = await response.json();
           throw new Error(`Gemini API error: ${error.error?.message || response.statusText}`);
@@ -245,7 +250,7 @@ export class GeminiProvider implements LLMProvider {
             try {
               const data = JSON.parse(line.slice(6));
               const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-              
+
               if (text) {
                 fullText += text;
                 if (onChunk) {

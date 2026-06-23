@@ -11,7 +11,7 @@ import { OpenRouterProvider } from './openrouter.provider';
 export class LLMService {
   private readonly logger = new Logger(LLMService.name);
 
-  constructor(private readonly llmConfigService: LLMConfigService) {}
+  constructor(private readonly llmConfigService: LLMConfigService) { }
 
   /**
    * Get LLM provider instance for a user
@@ -38,19 +38,43 @@ export class LLMService {
       provider = activeConfig.provider as LLMProviderEnum;
     }
 
+    // Ensure we have the config object if we came from preferredProvider but didn't fetch it yet
+    // Optimizing: if we already have activeConfig (from the else block), use it. 
+    // If not (preferredProvider case), we might need to fetch it to get additionalConfig.
+    // However, getProvider is often called with just userId. 
+    // Let's refactor slightly to ensure we have the config.
+
+    let config = await this.llmConfigService.getActiveConfig(userId, provider);
+
     // Get decrypted API key
     const apiKey = await this.llmConfigService.getDecryptedApiKey(userId, provider);
 
     // Create provider instance
     switch (provider) {
       case LLMProviderEnum.GEMINI:
-        return new GeminiProvider(apiKey);
+        return new GeminiProvider(apiKey, {
+          model: config?.modelName,
+          ...config?.additionalConfig,
+        });
       case LLMProviderEnum.OPENAI:
-        return new OpenAIProvider(apiKey);
+        return new OpenAIProvider(apiKey, {
+          model: config?.modelName,
+          ...config?.additionalConfig,
+        });
       case LLMProviderEnum.CLAUDE:
-        return new ClaudeProvider(apiKey);
+        return new ClaudeProvider(apiKey, {
+          model: config?.modelName,
+          ...config?.additionalConfig,
+        });
       case LLMProviderEnum.OPENROUTER:
-        return new OpenRouterProvider(apiKey);
+        this.logger.debug(`[DEBUG] Initializing OpenRouter with config: ${JSON.stringify({
+          model: config?.modelName,
+          ...config?.additionalConfig
+        })}`);
+        return new OpenRouterProvider(apiKey, {
+          model: config?.modelName,
+          ...config?.additionalConfig,
+        });
       case LLMProviderEnum.GROK:
         throw new Error('Grok provider not yet implemented');
       default:

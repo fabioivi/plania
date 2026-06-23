@@ -177,13 +177,14 @@ export class AcademicController {
   @ApiResponse({ status: 404, description: 'Diary or base plan not found' })
   async saveAIGeneratedTeachingPlan(
     @Request() req,
-    @Body() body: { diaryId: string; generatedPlan: any; basePlanId?: string },
+    @Body() body: { diaryId: string; generatedPlan: any; basePlanId?: string; targetExternalId?: string },
   ) {
     const savedPlan = await this.academicService.saveAIGeneratedTeachingPlan(
       req.user.id,
       body.diaryId,
       body.generatedPlan,
       body.basePlanId,
+      body.targetExternalId,
     );
     return {
       success: true,

@@ -5,10 +5,13 @@ import { LLMProvider, LLMOptions } from './llm-provider.interface';
 export class ClaudeProvider implements LLMProvider {
   private readonly logger = new Logger(ClaudeProvider.name);
 
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly defaultOptions?: LLMOptions,
+  ) { }
 
   async generateCompletion(prompt: string, options?: LLMOptions): Promise<string> {
-    const model = options?.model || 'claude-3-5-sonnet-20241022';
+    const model = options?.model || this.defaultOptions?.model || 'claude-3-5-sonnet-20241022';
     const url = 'https://api.anthropic.com/v1/messages';
 
     const body = {

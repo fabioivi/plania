@@ -36,7 +36,7 @@ export class LLMConfigService {
     @InjectRepository(LLMConfig)
     private llmConfigRepository: Repository<LLMConfig>,
     private cryptoService: CryptoService,
-  ) {}
+  ) { }
 
   /**
    * Create or update LLM configuration for a user
@@ -298,7 +298,7 @@ export class LLMConfigService {
         case LLMProvider.CLAUDE:
           return await this.testClaudeApiKey(apiKey);
         case LLMProvider.OPENROUTER:
-          return await this.testOpenRouterApiKey(apiKey);
+          return await this.testOpenRouterApiKey(apiKey, config.modelName);
         case LLMProvider.GROK:
           return await this.testGrokApiKey(apiKey);
         default:
@@ -327,13 +327,11 @@ export class LLMConfigService {
     };
   }
 
-  // API Testing Methods
-
   private async testGeminiApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
     const response = await this.fetchImpl(
       `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
     );
-    
+
     if (response.ok) {
       return { success: true, message: 'API key is valid' };
     } else {
@@ -395,9 +393,12 @@ export class LLMConfigService {
     }
   }
 
-  private async testOpenRouterApiKey(apiKey: string): Promise<{ success: boolean; message: string }> {
+  private async testOpenRouterApiKey(apiKey: string, modelName?: string): Promise<{ success: boolean; message: string }> {
     const url = process.env.OPENROUTER_URL || 'https://openrouter.ai/api/v1/chat/completions';
     try {
+      const model = modelName || process.env.OPENROUTER_MODEL || 'google/gemini-2.0-flash-lite-preview-02-05:free';
+      console.log(`[DEBUG] Testing OpenRouter with model: ${model}`);
+
       const res = await this.fetchImpl(url, {
         method: 'POST',
         headers: {
@@ -405,7 +406,7 @@ export class LLMConfigService {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: process.env.OPENROUTER_MODEL || 'mistralai/devstral-2512:free',
+          model: model,
           messages: [{ role: 'user', content: ' testar ' }],
           max_tokens: 1,
         }),
@@ -421,6 +422,65 @@ export class LLMConfigService {
       return { success: false, message: body?.error?.message || `Invalid API key (status ${res.status})` };
     } catch (e: any) {
       return { success: false, message: e.message || 'Failed to test OpenRouter key' };
+    }
+  }
+  /**
+   * List available free models from OpenRouter
+   */
+  async listOpenRouterModels(userId: string, apiKey?: string): Promise<any[]> {
+    const url = process.env.OPENROUTER_MODELS_URL || 'https://openrouter.ai/api/v1/models';
+
+    // Use provided key or try to find an active one for the user
+    let keyToUse = apiKey;
+    if (!keyToUse) {
+      try {
+        keyToUse = await this.getDecryptedApiKey(userId, LLMProvider.OPENROUTER);
+      } catch (e) {
+        // No active key found, and none provided
+        // We can still try to fetch models if the endpoint is public, but OpenRouter usually requires auth or at least it's better with it.
+        // Actually OpenRouter models endpoint is public but rate limited without key.
+        // Let's try without key if none found.
+      }
+    }
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (keyToUse) {
+      headers['Authorization'] = `Bearer ${keyToUse}`;
+    }
+
+    try {
+      const res = await this.fetchImpl(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!res.ok) {
+        let errBody;
+        try { errBody = await res.json(); } catch { errBody = await res.text(); }
+        throw new Error(`Failed to fetch models: ${res.statusText} - ${typeof errBody === 'string' ? errBody : JSON.stringify(errBody)}`);
+      }
+
+      const data = await res.json();
+      // Filter for free models (pricing.prompt === '0' and pricing.completion === '0')
+      // OpenRouter response structure: { data: [ { id, name, pricing: { prompt, completion } } ] }
+
+      const allModels = data.data || [];
+      const freeModels = allModels.filter((model: any) => {
+        const promptPrice = parseFloat(model.pricing?.prompt || '0');
+        const completionPrice = parseFloat(model.pricing?.completion || '0');
+        return promptPrice === 0 && completionPrice === 0;
+      });
+
+      return freeModels.map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        context_length: m.context_length,
+      }));
+    } catch (error) {
+      console.error('Error fetching OpenRouter models:', error);
+      throw new BadRequestException('Failed to fetch OpenRouter models');
     }
   }
 }

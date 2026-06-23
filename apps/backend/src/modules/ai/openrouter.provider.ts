@@ -6,7 +6,10 @@ import teachingPlanSchema from './teaching-plan.schema.json';
 export class OpenRouterProvider implements LLMProvider {
   private readonly logger = new Logger(OpenRouterProvider.name);
 
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly defaultOptions?: LLMOptions,
+  ) { }
 
   private sanitizeJsonSchema(schema?: any): any {
     if (!schema) return undefined;
@@ -45,7 +48,20 @@ export class OpenRouterProvider implements LLMProvider {
   }
 
   async generateCompletion(prompt: string, options?: LLMOptions): Promise<string> {
-    const model = options?.model || process.env.OPENROUTER_MODEL || 'mistralai/devstral-2512:free';
+    const explicitModel = options?.model;
+    const defaultModel = this.defaultOptions?.model;
+    const envModel = process.env.OPENROUTER_MODEL;
+    const fallbackModel = 'google/gemini-2.0-flash-lite-preview-02-05:free';
+
+    const model = explicitModel || defaultModel || envModel || fallbackModel;
+
+    this.logger.debug(`[DEBUG] OpenRouter Model Selection:
+      - Options Model: ${explicitModel}
+      - Default Options Model: ${defaultModel}
+      - Env Model: ${envModel}
+      - Fallback: ${fallbackModel}
+      - FINAL SELECTED: ${model}
+    `);
     const url = process.env.OPENROUTER_URL || 'https://openrouter.ai/api/v1/chat/completions';
 
     const messages: any[] = [];
@@ -102,20 +118,28 @@ export class OpenRouterProvider implements LLMProvider {
         const messageText = (typeof errBody === 'string') ? errBody : (errBody?.error?.message || errBody?.message || JSON.stringify(errBody));
         const mentionsModel = /model|modelo|unknown model|invalid model|Model not found/i.test(String(messageText));
 
+        let detailedError = `OpenRouter error: ${res.status} ${res.statusText} - ${messageText}`;
+
         if (statusLooksLikeModelProblem || mentionsModel) {
           try {
             const models = await this.listModels();
             const modelsText = JSON.stringify(models);
-            throw new Error(`OpenRouter error: ${res.status} ${res.statusText} - ${messageText}. Available models: ${modelsText}`);
+            detailedError += `. Available models: ${modelsText}`;
           } catch (listErr) {
             // If listing models failed, include both errors
             const listMsg = listErr?.message ?? String(listErr);
-            throw new Error(`OpenRouter error: ${res.status} ${res.statusText} - ${messageText}. Additionally, failed to list models: ${listMsg}`);
+            detailedError += `. Additionally, failed to list models: ${listMsg}`;
           }
         }
 
-        // Generic non-model error
-        throw new Error(`OpenRouter error: ${res.status} ${res.statusText} - ${messageText}`);
+        // Append full body for debugging if it wasn't fully used in messageText
+        if (errBody && typeof errBody === 'object' && JSON.stringify(errBody) !== messageText) {
+          detailedError += ` \nFull Response Body: ${JSON.stringify(errBody, null, 2)}`;
+        }
+
+        const error = new Error(detailedError);
+        (error as any).rawResponse = typeof errBody === 'string' ? errBody : JSON.stringify(errBody, null, 2);
+        throw error;
       }
 
       const data = await res.json();

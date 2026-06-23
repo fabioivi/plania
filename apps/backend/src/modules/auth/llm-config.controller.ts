@@ -15,7 +15,7 @@ import { LLMConfigService, CreateLLMConfigDto, UpdateLLMConfigDto } from './llm-
 @Controller('llm-config')
 @UseGuards(JwtAuthGuard)
 export class LLMConfigController {
-  constructor(private llmConfigService: LLMConfigService) {}
+  constructor(private llmConfigService: LLMConfigService) { }
 
   /**
    * Get all LLM configurations for the authenticated user
@@ -76,5 +76,12 @@ export class LLMConfigController {
   @Post(':id/test')
   async testApiKey(@Request() req, @Param('id') id: string) {
     return this.llmConfigService.testApiKey(req.user.id, id);
+  }
+  /**
+   * Get available free models from OpenRouter
+   */
+  @Post('openrouter/models')
+  async getOpenRouterModels(@Request() req, @Body() body: { apiKey?: string }) {
+    return this.llmConfigService.listOpenRouterModels(req.user.id, body.apiKey);
   }
 }

@@ -116,40 +116,18 @@ export default function GenerateDiaryContentPage() {
   }, [generatedContents])
 
   const handleApplyBulkRule = () => {
-    // 1. Agrupar aulas por data para determinar a ordem (1º, 2º horário...)
-    const classesByDate: Record<string, DiaryContent[]> = {}
-    generatedContents.forEach(c => {
-      const dStr = c.date.split('T')[0]
-      if (!classesByDate[dStr]) {
-        classesByDate[dStr] = []
-      }
-      classesByDate[dStr].push(c)
-    })
-
-    // Ordenar cronologicamente em cada data
-    Object.keys(classesByDate).forEach(dateStr => {
-      classesByDate[dateStr].sort((a, b) => a.timeRange.localeCompare(b.timeRange))
-    })
-
-    // 2. Mapear e atualizar o status nas aulas correspondentes
+    // Mapear e atualizar o status nas aulas correspondentes
     const updated = generatedContents.map(item => {
-      const dStr = item.date.split('T')[0]
-      const dayClasses = classesByDate[dStr]
-
       const dateObj = new Date(item.date)
       const dayOfWeek = dateObj.getUTCDay()
       const isCorrectDay = dayOfWeek === bulkDayOfWeek
 
       if (!isCorrectDay) return item
 
-      // Validar horário/posição da aula
+      // Validar horário da aula
       let isCorrectTime = false
       if (bulkTimeRange === 'all') {
         isCorrectTime = true
-      } else if (['1', '2', '3', '4'].includes(bulkTimeRange)) {
-        const slotIndex = Number(bulkTimeRange) - 1
-        const itemIndex = dayClasses.findIndex(c => c.id === item.id)
-        isCorrectTime = itemIndex === slotIndex
       } else {
         isCorrectTime = item.timeRange === bulkTimeRange
       }
@@ -424,7 +402,7 @@ export default function GenerateDiaryContentPage() {
                 className="gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50"
               >
                 <Sparkles className="h-4 w-4" />
-                Preenchimento Rápido
+                Preenchimento Rápido (EAD/ANP)
               </Button>
 
               <Button
@@ -484,10 +462,10 @@ export default function GenerateDiaryContentPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-indigo-500" />
-              Preenchimento Rápido
+              Preenchimento Rápido (EAD/ANP)
             </DialogTitle>
             <DialogDescription>
-              Marque ou desmarque aulas em lote de acordo com o dia da semana e o horário correspondente.
+              Marque ou desmarque aulas como EAD ou ANP em lote, de acordo com o dia da semana e o horário correspondente.
             </DialogDescription>
           </DialogHeader>
 
@@ -545,10 +523,6 @@ export default function GenerateDiaryContentPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os horários do dia</SelectItem>
-                  <SelectItem value="1">1º horário de aula do dia</SelectItem>
-                  <SelectItem value="2">2º horário de aula do dia</SelectItem>
-                  <SelectItem value="3">3º horário de aula do dia</SelectItem>
-                  <SelectItem value="4">4º horário de aula do dia</SelectItem>
                   {uniqueTimeRanges.map(slot => (
                     <SelectItem key={slot} value={slot}>{slot}</SelectItem>
                   ))}

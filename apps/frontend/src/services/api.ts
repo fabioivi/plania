@@ -253,6 +253,7 @@ export interface DiaryContent {
   timeRange: string;
   type: 'N' | 'A' | 'R'; // Normal, Antecipação, Reposição
   isNonPresential: boolean;
+  isEad: boolean;
   content: string;
   observations: string;
   isAntecipation: boolean;

@@ -63,6 +63,7 @@ export interface DiaryContentFormData {
   timeRange: string
   type: 'N' | 'A' | 'R'
   isNonPresential: boolean
+  isEad: boolean
   content: string
   observations?: string
   isAntecipation?: boolean

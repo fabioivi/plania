@@ -107,7 +107,7 @@ export default function GenerateDiaryContentPage() {
     }
   }
 
-  const handleContentChange = (contentId: string, field: 'content' | 'observations', value: string) => {
+  const handleContentChange = (contentId: string, field: string, value: any) => {
     setGeneratedContents(prev =>
       prev.map(item =>
         item.id === contentId ? { ...item, [field]: value } : item

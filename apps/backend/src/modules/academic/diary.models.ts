@@ -290,6 +290,12 @@ export class DiaryContentModel {
   isNonPresential: boolean;
 
   @ApiProperty({
+    description: 'Indica se a aula é ead',
+    example: false,
+  })
+  isEad: boolean;
+
+  @ApiProperty({
     description: 'Conteúdo ministrado na aula',
     example: 'Introdução aos serviços de rede',
     required: false,

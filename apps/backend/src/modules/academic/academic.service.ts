@@ -1198,6 +1198,7 @@ export class AcademicService {
             timeRange: existingContent.timeRange,
             type: existingContent.type,
             isNonPresential: existingContent.isNonPresential,
+            isEad: existingContent.isEad,
             isAntecipation: existingContent.isAntecipation,
             originalContentId: existingContent.originalContentId,
             originalDate: existingContent.originalDate,
@@ -1223,6 +1224,7 @@ export class AcademicService {
                 timeRange: originalContent.timeRange,
                 type: originalContent.type,
                 isNonPresential: originalContent.isNonPresential,
+                isEad: originalContent.isEad,
                 isAntecipation: originalContent.isAntecipation,
                 originalContentId: originalContent.originalContentId,
                 originalDate: originalContent.originalDate,
@@ -1288,6 +1290,8 @@ export class AcademicService {
         Object.assign(existing, {
           content: contentData.content,
           observations: contentData.observations,
+          isEad: contentData.isEad,
+          isNonPresential: contentData.isNonPresential,
         });
         const saved = await this.diaryContentRepository.save(existing);
         savedContents.push(saved);
@@ -1307,6 +1311,8 @@ export class AcademicService {
             Object.assign(originalContent, {
               content: contentData.content,
               observations: contentData.observations,
+              isEad: contentData.isEad,
+              isNonPresential: contentData.isNonPresential,
             });
             await this.diaryContentRepository.save(originalContent);
             console.log(`Conteúdo da antecipação ${existing.contentId} copiado para aula original ${originalContent.contentId}`);
@@ -1388,6 +1394,8 @@ export class AcademicService {
       password,
       contentId,
       diaryContent.content || '',
+      diaryContent.isEad,
+      diaryContent.isNonPresential,
     );
 
     return result;
@@ -1520,6 +1528,8 @@ export class AcademicService {
         contentsToSend.push({
           contentId,
           content: diaryContent.content || '',
+          isEad: diaryContent.isEad,
+          isNonPresential: diaryContent.isNonPresential,
         });
       } else {
         results.push({

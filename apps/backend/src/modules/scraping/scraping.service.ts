@@ -1290,6 +1290,14 @@ export class ScrapingService {
         const timeIdx = getColIdx('horár', 2);
         const typeIdx = getColIdx('tipo', 3);
         const npIdx = getColIdx('presencial', 4);
+        
+        // EAD could be named "EAD", "Ead", or "Educação a Distância"
+        const eadIdx = headers.findIndex(h => {
+          const lower = h.toLowerCase();
+          return lower.includes('ead') || lower.includes('distân') || lower.includes('distanc');
+        });
+        const hasEadColumn = eadIdx !== -1;
+
         const contentIdx = getColIdx('conteúd', 5);
         const obsIdx = getColIdx('observaç', 6);
 
@@ -1348,6 +1356,7 @@ export class ScrapingService {
               timeRange: originalTimeRange,
               type: originalType,
               isNonPresential: false,
+              isEad: false,
               content: originalContentData.text,
               observations: originalObsData.text,
               isAntecipation: false,
@@ -1373,6 +1382,12 @@ export class ScrapingService {
               const anteIsNonPresential =
                 (anteCheckbox as HTMLInputElement)?.checked || false;
 
+              const anteEadCheckbox = hasEadColumn
+                ? nextCells[eadIdx - shift]?.querySelector('input[type="checkbox"]')
+                : null;
+              const anteIsEad =
+                (anteEadCheckbox as HTMLInputElement)?.checked || false;
+
               const anteContentData = getCellData(nextRow, contentIdx - shift, 'conteudo');
               const anteObsData = getCellData(nextRow, obsIdx - shift, 'obs');
 
@@ -1383,6 +1398,7 @@ export class ScrapingService {
                 timeRange: anteTimeRange,
                 type: anteType,
                 isNonPresential: anteIsNonPresential,
+                isEad: anteIsEad,
                 content: anteContentData.text,
                 observations: anteObsData.text,
                 isAntecipation: true,
@@ -1404,6 +1420,12 @@ export class ScrapingService {
             const isNonPresential =
               (checkbox as HTMLInputElement)?.checked || false;
 
+            const eadCheckbox = hasEadColumn
+              ? cells[eadIdx]?.querySelector('input[type="checkbox"]')
+              : null;
+            const isEad =
+              (eadCheckbox as HTMLInputElement)?.checked || false;
+
             const contentData = getCellData(row, contentIdx, 'conteudo');
             const obsData = getCellData(row, obsIdx, 'obs');
 
@@ -1414,6 +1436,7 @@ export class ScrapingService {
               timeRange,
               type,
               isNonPresential,
+              isEad,
               content: contentData.text,
               observations: obsData.text,
               isAntecipation: false,
@@ -1486,6 +1509,8 @@ export class ScrapingService {
     page: any,
     contentId: string,
     content: string,
+    isEad?: boolean,
+    isNonPresential?: boolean,
   ): Promise<{ success: boolean; message?: string }> {
     console.log(`📤 Enviando conteúdo ${contentId}...`);
 
@@ -1516,10 +1541,77 @@ export class ScrapingService {
     console.log(`[DEBUG sendContent] Response body preview: ${responseText.substring(0, 1000)}`);
 
     if (!response.ok()) {
-      throw new Error(`Erro HTTP: ${response.status()} - ${response.statusText()}`);
+      throw new Error(`Erro HTTP ao salvar conteúdo: ${response.status()} - ${response.statusText()}`);
     }
 
     console.log(`✅ Conteúdo ${contentId} enviado com sucesso!`);
+
+    // Now, if isNonPresential is provided, save ANP
+    if (isNonPresential !== undefined) {
+      console.log(`📤 Enviando status ANP (${isNonPresential}) para conteúdo ${contentId}...`);
+      const anpUrl = buildIFMSUrl(`/administrativo/Professores/salvarANP/${contentId}`);
+      const anpFormData = new URLSearchParams();
+      anpFormData.append('anp', String(isNonPresential));
+
+      try {
+        const anpResponse = await page.request.post(anpUrl, {
+          data: anpFormData.toString(),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': '*/*',
+          },
+        });
+
+        if (!anpResponse.ok()) {
+          console.warn(`⚠️ Erro ao salvar status ANP para ${contentId}: ${anpResponse.status()} - ${anpResponse.statusText()}`);
+        } else {
+          console.log(`✅ Status ANP para ${contentId} enviado com sucesso!`);
+        }
+      } catch (err) {
+        console.warn(`⚠️ Exceção ao salvar status ANP para ${contentId}:`, err);
+      }
+    }
+
+    // Now, if isEad is provided, save EAD
+    if (isEad !== undefined) {
+      console.log(`📤 Enviando status EAD (${isEad}) para conteúdo ${contentId}...`);
+      const eadUrl = buildIFMSUrl(`/administrativo/Professores/salvarEAD/${contentId}`);
+      const eadFormData = new URLSearchParams();
+      eadFormData.append('ead', String(isEad));
+
+      try {
+        let eadResponse = await page.request.post(eadUrl, {
+          data: eadFormData.toString(),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': '*/*',
+          },
+        });
+
+        if (eadResponse.status() === 404) {
+          console.log(`⚠️ URL /salvarEAD retornou 404. Tentando URL alternativa /salvarEad...`);
+          const altEadUrl = buildIFMSUrl(`/administrativo/Professores/salvarEad/${contentId}`);
+          eadResponse = await page.request.post(altEadUrl, {
+            data: eadFormData.toString(),
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': '*/*',
+            },
+          });
+        }
+
+        if (!eadResponse.ok()) {
+          console.warn(`⚠️ Erro ao salvar status EAD para ${contentId}: ${eadResponse.status()} - ${eadResponse.statusText()}`);
+        } else {
+          console.log(`✅ Status EAD para ${contentId} enviado com sucesso!`);
+        }
+      } catch (err) {
+        console.warn(`⚠️ Exceção ao salvar status EAD para ${contentId}:`, err);
+      }
+    }
 
     return {
       success: true,
@@ -1535,6 +1627,8 @@ export class ScrapingService {
     password: string,
     contentId: string,
     content: string,
+    isEad?: boolean,
+    isNonPresential?: boolean,
   ): Promise<{ success: boolean; message?: string }> {
     const context = await this.createContext();
     const page = await context.newPage();
@@ -1543,12 +1637,13 @@ export class ScrapingService {
       console.log(`🚀 Enviando conteúdo único para o sistema acadêmico...`);
       console.log(`   ContentId: ${contentId}`);
       console.log(`   Content length: ${content.length} caracteres`);
+      console.log(`   isEad: ${isEad}, isNonPresential: ${isNonPresential}`);
 
       // Login to IFMS
       await this.loginToIFMS(page, username, password);
 
       // Send content using authenticated page
-      return await this.sendContentWithAuthenticatedPage(page, contentId, content);
+      return await this.sendContentWithAuthenticatedPage(page, contentId, content, isEad, isNonPresential);
     } catch (error) {
       console.error('❌ Erro ao enviar conteúdo para o sistema:', error);
       return {
@@ -1729,7 +1824,7 @@ export class ScrapingService {
   async sendDiaryContentBulkToSystem(
     username: string,
     password: string,
-    contents: Array<{ contentId: string; content: string }>,
+    contents: Array<{ contentId: string; content: string; isEad?: boolean; isNonPresential?: boolean }>,
     onProgress?: (current: number, total: number, contentId: string, success: boolean, message: string) => void,
   ): Promise<Array<{ contentId: string; success: boolean; message?: string }>> {
     const context = await this.createContext();
@@ -1744,10 +1839,10 @@ export class ScrapingService {
 
       // Send each content using the same authenticated session
       let current = 0;
-      for (const { contentId, content } of contents) {
+      for (const { contentId, content, isEad, isNonPresential } of contents) {
         current++;
         try {
-          const result = await this.sendContentWithAuthenticatedPage(page, contentId, content);
+          const result = await this.sendContentWithAuthenticatedPage(page, contentId, content, isEad, isNonPresential);
           results.push({
             contentId,
             success: result.success,

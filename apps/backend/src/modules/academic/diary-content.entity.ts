@@ -39,6 +39,9 @@ export class DiaryContent {
   @Column({ name: 'is_non_presential', type: 'boolean', default: false })
   isNonPresential: boolean; // Se a aula é não presencial
 
+  @Column({ name: 'is_ead', type: 'boolean', default: false })
+  isEad: boolean; // Se a aula é EAD
+
   @Column({ type: 'text', nullable: true })
   content: string; // Conteúdo ministrado
 

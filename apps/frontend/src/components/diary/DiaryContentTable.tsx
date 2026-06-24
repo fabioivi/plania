@@ -40,7 +40,7 @@ export interface DiaryContentTableProps {
   editable?: boolean
 
   /** Callback quando o conteúdo é editado */
-  onContentChange?: (contentId: string, field: 'content' | 'observations', value: string) => void
+  onContentChange?: (contentId: string, field: 'content' | 'observations' | 'isEad' | 'isNonPresential', value: any) => void
 
   /** Classe CSS adicional */
   className?: string
@@ -264,6 +264,8 @@ export function DiaryContentTable({
               <th className="p-4 pl-6 text-center text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[100px]">Data</th>
               <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[140px]">Horário</th>
               <th className="hidden sm:table-cell p-4 text-center text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[120px]">Tipo</th>
+              <th className="p-4 text-center text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[80px]">EAD</th>
+              <th className="p-4 text-center text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider w-[80px]">ANP</th>
               <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Conteúdo</th>
               {editable && (
                 <th className="p-4 text-left text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-wider">Observações</th>
@@ -366,6 +368,42 @@ export function DiaryContentTable({
                               </div>
                             )}
                           </div>
+                        </td>
+
+                        {/* EAD Column */}
+                        <td className="py-1.5 px-2 sm:py-2 sm:px-4 align-middle text-center">
+                          {editable ? (
+                            <input
+                              type="checkbox"
+                              checked={item.isEad || false}
+                              onChange={(e) => onContentChange?.(item.id, 'isEad', e.target.checked)}
+                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            />
+                          ) : (
+                            item.isEad ? (
+                              <Badge variant="secondary" className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 text-[10px] font-bold">Sim</Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )
+                          )}
+                        </td>
+
+                        {/* ANP Column */}
+                        <td className="py-1.5 px-2 sm:py-2 sm:px-4 align-middle text-center">
+                          {editable ? (
+                            <input
+                              type="checkbox"
+                              checked={item.isNonPresential || false}
+                              onChange={(e) => onContentChange?.(item.id, 'isNonPresential', e.target.checked)}
+                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                            />
+                          ) : (
+                            item.isNonPresential ? (
+                              <Badge variant="secondary" className="bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px] font-bold">Sim</Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )
+                          )}
                         </td>
 
                         {/* Conteúdo (sortable) */}

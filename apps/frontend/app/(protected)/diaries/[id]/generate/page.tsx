@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,6 +39,8 @@ export default function GenerateDiaryContentPage() {
   const searchParams = useSearchParams()
   const diaryId = params.id as string
   const initialPlanId = searchParams.get('planId')
+  
+  const queryClient = useQueryClient()
 
   const [diary, setDiary] = useState<DiaryWithPlans | null>(null)
   const [teachingPlans, setTeachingPlans] = useState<TeachingPlan[]>([])
@@ -129,6 +132,9 @@ export default function GenerateDiaryContentPage() {
       const result = await academicApi.saveDiaryContentBulk(diaryId, generatedContents)
 
       if (result.success) {
+        // Invalidate React Query cache for this diary to ensure pages show fresh data immediately
+        queryClient.invalidateQueries({ queryKey: ['diaries', 'detail', diaryId] })
+
         setSuccess(`${result.savedCount} conteúdos salvos com sucesso!`)
         
         // Redirecionar para a página do diário após 2 segundos

@@ -24,3 +24,6 @@ redis_data/
 storage/
 apps/backend/storage/
 **/scraping-debug/screenshots/
+
+# TypeScript cache
+*.tsbuildinfo

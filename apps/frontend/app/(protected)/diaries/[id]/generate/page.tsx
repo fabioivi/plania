@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function GenerateDiaryContentPage() {
   const params = useParams()
@@ -52,6 +61,113 @@ export default function GenerateDiaryContentPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // Estados para a funcionalidade de Preenchimento Rápido
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
+  const [bulkField, setBulkField] = useState<'isEad' | 'isNonPresential'>('isEad')
+  const [bulkDayOfWeek, setBulkDayOfWeek] = useState<number>(1)
+  const [bulkTimeRange, setBulkTimeRange] = useState<string | 'all' | '1' | '2' | '3' | '4'>('all')
+  const [bulkAction, setBulkAction] = useState<boolean>(true)
+
+  const availableDaysOfWeek = useMemo(() => {
+    const days = new Set<number>()
+    generatedContents.forEach(c => {
+      if (c.date) {
+        const dateObj = new Date(c.date)
+        const dayOfWeek = dateObj.getUTCDay()
+        days.add(dayOfWeek)
+      }
+    })
+
+    const dayLabels: Record<number, string> = {
+      1: 'Segunda-feira',
+      2: 'Terça-feira',
+      3: 'Quarta-feira',
+      4: 'Quinta-feira',
+      5: 'Sexta-feira',
+      6: 'Sábado',
+      0: 'Domingo',
+    }
+
+    return Array.from(days)
+      .sort((a, b) => {
+        const sortOrder = [1, 2, 3, 4, 5, 6, 0]
+        return sortOrder.indexOf(a) - sortOrder.indexOf(b)
+      })
+      .map(d => ({
+        value: d,
+        label: dayLabels[d] || 'Dia Desconhecido',
+      }))
+  }, [generatedContents])
+
+  // Ajustar o dia da semana padrão de acordo com os dias reais que possuem aula
+  useEffect(() => {
+    if (availableDaysOfWeek.length > 0 && !availableDaysOfWeek.some(d => d.value === bulkDayOfWeek)) {
+      setBulkDayOfWeek(availableDaysOfWeek[0].value)
+    }
+  }, [availableDaysOfWeek, bulkDayOfWeek])
+
+  const uniqueTimeRanges = useMemo(() => {
+    const slots = new Set<string>()
+    generatedContents.forEach(c => {
+      if (c.timeRange) slots.add(c.timeRange)
+    })
+    return Array.from(slots).sort()
+  }, [generatedContents])
+
+  const handleApplyBulkRule = () => {
+    // 1. Agrupar aulas por data para determinar a ordem (1º, 2º horário...)
+    const classesByDate: Record<string, DiaryContent[]> = {}
+    generatedContents.forEach(c => {
+      const dStr = c.date.split('T')[0]
+      if (!classesByDate[dStr]) {
+        classesByDate[dStr] = []
+      }
+      classesByDate[dStr].push(c)
+    })
+
+    // Ordenar cronologicamente em cada data
+    Object.keys(classesByDate).forEach(dateStr => {
+      classesByDate[dateStr].sort((a, b) => a.timeRange.localeCompare(b.timeRange))
+    })
+
+    // 2. Mapear e atualizar o status nas aulas correspondentes
+    const updated = generatedContents.map(item => {
+      const dStr = item.date.split('T')[0]
+      const dayClasses = classesByDate[dStr]
+
+      const dateObj = new Date(item.date)
+      const dayOfWeek = dateObj.getUTCDay()
+      const isCorrectDay = dayOfWeek === bulkDayOfWeek
+
+      if (!isCorrectDay) return item
+
+      // Validar horário/posição da aula
+      let isCorrectTime = false
+      if (bulkTimeRange === 'all') {
+        isCorrectTime = true
+      } else if (['1', '2', '3', '4'].includes(bulkTimeRange)) {
+        const slotIndex = Number(bulkTimeRange) - 1
+        const itemIndex = dayClasses.findIndex(c => c.id === item.id)
+        isCorrectTime = itemIndex === slotIndex
+      } else {
+        isCorrectTime = item.timeRange === bulkTimeRange
+      }
+
+      if (isCorrectTime) {
+        return {
+          ...item,
+          [bulkField]: bulkAction
+        }
+      }
+
+      return item
+    })
+
+    setGeneratedContents(updated)
+    setIsBulkDialogOpen(false)
+    toast.success('Preenchimento rápido aplicado com sucesso!')
+  }
 
   // Carregar diário e planos de ensino
   useEffect(() => {
@@ -303,6 +419,15 @@ export default function GenerateDiaryContentPage() {
               </div>
               <div className="flex gap-2">
               <Button
+                onClick={() => setIsBulkDialogOpen(true)}
+                variant="outline"
+                className="gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 border-indigo-200 dark:border-indigo-900/50"
+              >
+                <Sparkles className="h-4 w-4" />
+                Preenchimento Rápido
+              </Button>
+
+              <Button
                 onClick={handleSave}
                 disabled={saving}
                 className="gap-2"
@@ -352,6 +477,128 @@ export default function GenerateDiaryContentPage() {
           </div>
         </Card>
       )}
+
+      {/* Modal de Preenchimento Rápido */}
+      <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-indigo-500" />
+              Preenchimento Rápido
+            </DialogTitle>
+            <DialogDescription>
+              Marque ou desmarque aulas em lote de acordo com o dia da semana e o horário correspondente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Campo */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider">
+                Campo de Aula
+              </label>
+              <Select
+                value={bulkField}
+                onValueChange={(val: 'isEad' | 'isNonPresential') => setBulkField(val)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o campo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="isEad">EAD (Aula a Distância)</SelectItem>
+                  <SelectItem value="isNonPresential">ANP (Aula Não Presencial)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Dia da Semana */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider">
+                Dia da Semana
+              </label>
+              <Select
+                value={String(bulkDayOfWeek)}
+                onValueChange={(val) => setBulkDayOfWeek(Number(val))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o dia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDaysOfWeek.map(d => (
+                    <SelectItem key={d.value} value={String(d.value)}>{d.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Horário */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider">
+                Horário da Aula
+              </label>
+              <Select
+                value={bulkTimeRange}
+                onValueChange={(val) => setBulkTimeRange(val)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o horário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os horários do dia</SelectItem>
+                  <SelectItem value="1">1º horário de aula do dia</SelectItem>
+                  <SelectItem value="2">2º horário de aula do dia</SelectItem>
+                  <SelectItem value="3">3º horário de aula do dia</SelectItem>
+                  <SelectItem value="4">4º horário de aula do dia</SelectItem>
+                  {uniqueTimeRanges.map(slot => (
+                    <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Ação */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider">
+                Ação
+              </label>
+              <div className="flex rounded-md bg-slate-100 dark:bg-zinc-800 p-1">
+                <button
+                  type="button"
+                  onClick={() => setBulkAction(true)}
+                  className={`flex-1 rounded-sm py-1.5 text-xs font-bold transition-all ${
+                    bulkAction
+                      ? "bg-white dark:bg-zinc-700 text-slate-900 dark:text-foreground shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                  }`}
+                >
+                  Marcar / Ativo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBulkAction(false)}
+                  className={`flex-1 rounded-sm py-1.5 text-xs font-bold transition-all ${
+                    !bulkAction
+                      ? "bg-white dark:bg-zinc-700 text-slate-900 dark:text-foreground shadow-sm"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                  }`}
+                >
+                  Desmarcar / Inativo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleApplyBulkRule} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1">
+              <Sparkles className="h-4 w-4" />
+              Aplicar Regra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

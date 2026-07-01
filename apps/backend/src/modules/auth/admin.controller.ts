@@ -62,16 +62,7 @@ export class AdminController {
 
         await this.userRepository.update(id, { isActive });
 
-        await this.auditService.log(
-            'UPDATE_USER_STATUS',
-            'ADMIN',
-            req.user.id,
-            { targetUserId: id, newStatus: isActive },
-            req.ip,
-            req.headers['user-agent'],
-        );
-
-        return { success: true };
+        return { success: true, targetUserId: id, newStatus: isActive };
     }
 
     @Patch('users/:id/role')
@@ -91,16 +82,7 @@ export class AdminController {
 
         await this.userRepository.update(id, { role });
 
-        await this.auditService.log(
-            'UPDATE_USER_ROLE',
-            'ADMIN',
-            req.user.id,
-            { targetUserId: id, newRole: role },
-            req.ip,
-            req.headers['user-agent'],
-        );
-
-        return { success: true };
+        return { success: true, targetUserId: id, newRole: role };
     }
 
     @Get('audit-logs')

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { AcademicModule } from './modules/academic/academic.module';
 import { ScrapingModule } from './modules/scraping/scraping.module';
@@ -12,6 +12,7 @@ import { SyncModule } from './modules/sync/sync.module';
 import { AIModule } from './modules/ai/ai.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { AuditInterceptor } from './modules/audit/audit.interceptor';
 import { CryptoService } from './common/services/crypto.service';
 import { SessionCacheService } from './common/services/session-cache.service';
 import { SentryFilter } from './common/filters/sentry.filter';
@@ -80,6 +81,10 @@ import { SentryFilter } from './common/filters/sentry.filter';
     {
       provide: APP_FILTER,
       useClass: SentryFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
   ],
   exports: [CryptoService, SessionCacheService],
